@@ -446,14 +446,9 @@ let telaJaFechada = false;
 let pausaPorHover = false;
 let termoPesquisaCarrossel = '';
 
-// ===== FUNÇÃO AJUSTADA: BUSCA DADOS PRIMEIRO, DEPOIS FECHA A TELA =====
-async function esconderTelaBoasVindas() {
+function esconderTelaBoasVindas() {
     if (telaJaFechada) return;
     telaJaFechada = true;
-    
-    // CARREGA OS DADOS ANTES DE FAZER QUALQUER COISA
-    await carregarDadosPlanilha();
-    
     const tela = document.getElementById('telaBoasVindas');
     tela.classList.add('tela-oculta');
     setTimeout(() => {
@@ -462,8 +457,7 @@ async function esconderTelaBoasVindas() {
     }, 1200);
 }
 
-// INICIA AGORA — NÃO ESPERA 15 SEGUNDOS MAIS!
-esconderTelaBoasVindas();
+setTimeout(esconderTelaBoasVindas, 15000);
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
@@ -477,6 +471,7 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
+// === FUNÇÃO DE PESQUISA INTELIGENTE ===
 function buscaInteligente(textoBusca, textoAlvo) {
     if (!textoBusca) return true;
     const termos = textoBusca.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
@@ -484,6 +479,7 @@ function buscaInteligente(textoBusca, textoAlvo) {
     return termos.every(termo => alvo.includes(termo));
 }
 
+// === PESQUISA NO CARROSSEL COM PAUSA NA ROTAÇÃO ===
 document.getElementById('pesquisaCarrossel').addEventListener('input', e => {
     termoPesquisaCarrossel = e.target.value.trim();
     indicePaginaCarrossel = 0;
@@ -549,6 +545,8 @@ async function carregarDadosPlanilha() {
     } catch (e) {
         console.error("Erro ao carregar planilha:", e);
         dadosGlobais = [];
+    } finally {
+        esconderTelaBoasVindas();
     }
 }
 
@@ -564,6 +562,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
+// === LOGICA DO CARROSSEL ===
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -579,6 +578,7 @@ function pararCarrossel() {
 }
 
 function renderizarPaginaCarrossel() {
+    // Para rotação se estiver com texto na pesquisa OU com mouse sobre o card
     if (!carrosselAtivo || pausaPorHover || termoPesquisaCarrossel.length > 0) {
         if (timerCarrossel) clearTimeout(timerCarrossel);
     }
@@ -589,6 +589,7 @@ function renderizarPaginaCarrossel() {
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
 
+    // FILTRO INTELIGENTE: todos os termos digitados devem existir na descrição OU marca
     let produtosFiltrados = dadosGlobais.filter(p => {
         if (!termoPesquisaCarrossel) return true;
         const desc = String(p[hDesc] || '');
@@ -634,6 +635,7 @@ function renderizarPaginaCarrossel() {
     document.getElementById('contadorVitrine').textContent = 
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
+    // Só agenda próxima página se não houver pesquisa ativa
     if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
         timerCarrossel = setTimeout(() => {
             indicePaginaCarrossel++;
@@ -659,6 +661,7 @@ window.addEventListener('resize', () => {
     }
 });
 
+// === RESTO DO CÓDIGO - TUDO EXATAMENTE COMO ESTAVA ===
 function atualizarContadorSelecionados() {
     const selecionados = document.querySelectorAll('.chk-produto:checked').length;
     document.getElementById('contadorSelecionados').textContent = `${selecionados} produto(s) selecionado(s)`;
@@ -804,6 +807,7 @@ document.getElementById('pesqCodigo').oninput = renderizarTabela;
 document.getElementById('pesqNome').oninput = renderizarTabela;
 document.getElementById('pesqMarca').oninput = renderizarTabela;
 
+window.onload = carregarDadosPlanilha;
 </script>
 </body>
 </html>
