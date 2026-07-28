@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SICLAR - Catálogo e Gestão</title>
 <style>
 :root { 
@@ -104,7 +105,7 @@ body {
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes aparecerSpinner { to { opacity: 1; } }
 
-/* Carrossel */
+/* === CARROSSEL ATUALIZADO === */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
@@ -112,62 +113,158 @@ body {
     z-index: 9990;
     display: none;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     padding: 20px;
     overflow: hidden;
 }
 
 .carrossel-barra-topo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 40px;
+    padding: 15px 30px;
     background: linear-gradient(to bottom, rgba(15,23,42,0.95), transparent);
     z-index: 10;
 }
 
 .carrossel-logo { color: white; font-weight: 800; font-size: 24px; letter-spacing: 2px; }
-.carrossel-frase-destaque { color: #fdba74; font-size: clamp(16px, 2vw, 22px); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-.btn-admin-topo { background: var(--primary-color); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); transition: all 0.2s; }
+.carrossel-frase-destaque { color: #fdba74; font-size: clamp(16px, 2vw, 22px); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+.btn-admin-topo { background: var(--primary-color); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
 .btn-admin-topo:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
-.card-quadrado-vitrine {
-    width: min(85vw, 650px);
-    height: min(85vw, 650px);
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+.carrossel-grade-container {
+    flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    padding: 35px;
-    box-sizing: border-box;
-    text-align: center;
+    justify-content: center;
     position: relative;
-    animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    padding: 20px;
 }
 
-@keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.95) translateY(15px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-.vitrine-foto-container { width: 100%; height: 52%; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
-.vitrine-foto-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.vitrine-info { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-.vitrine-marca { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 1.5px; }
-.vitrine-descricao { font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; color: #0f172a; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.vitrine-rodape-preco { display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-.vitrine-codigo { font-size: 13px; color: #94a3b8; font-weight: 600; }
-.vitrine-preco { font-size: clamp(24px, 3.5vw, 32px); font-weight: 900; color: var(--primary-color); }
-.carrossel-progresso-barra { position: absolute; bottom: 0; left: 0; height: 6px; background: var(--primary-color); width: 0%; transition: width linear; }
-.carrossel-controles-inferior { margin-top: 20px; display: flex; gap: 15px; align-items: center; color: #94a3b8; font-size: 14px; font-weight: 600; }
-.btn-controle-carrossel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+.carrossel-grade {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    max-width: 1400px;
+    transition: all 0.3s ease;
+}
+
+/* 8 por linha em DESKTOP */
+@media (min-width: 1025px) {
+    .carrossel-grade {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}
+
+/* 4 por linha em CELULAR */
+@media (max-width: 1024px) {
+    .carrossel-grade {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+.card-quadrado-vitrine {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efeito: só o item em destaque cresce */
+.card-quadrado-vitrine:hover {
+    transform: scale(1.08);
+    box-shadow: 0 20px 40px -8px rgba(234, 88, 12, 0.4);
+    z-index: 10;
+}
+
+.vitrine-foto-container { 
+    width: 100%; 
+    padding-top: 75%; 
+    position: relative;
+    background: #f8fafc; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+.vitrine-foto-container img { 
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+}
+.vitrine-info { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px;
+    flex: 1;
+}
+.vitrine-marca { 
+    font-size: 11px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    color: #64748b; 
+    letter-spacing: 1px; 
+}
+.vitrine-descricao { 
+    font-size: 13px; 
+    font-weight: 600; 
+    color: #0f172a; 
+    line-height: 1.2; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 2; 
+    -webkit-box-orient: vertical; 
+    overflow: hidden; 
+}
+.vitrine-rodape-preco { 
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+}
+.vitrine-codigo { 
+    font-size: 10px; 
+    color: #94a3b8; 
+    font-weight: 600; 
+    display: block;
+    margin-bottom: 2px;
+}
+.vitrine-preco { 
+    font-size: 16px; 
+    font-weight: 900; 
+    color: var(--primary-color); 
+}
+
+.carrossel-controles-inferior { 
+    margin-top: 15px; 
+    display: flex; 
+    gap: 15px; 
+    align-items: center; 
+    justify-content: center;
+    color: #94a3b8; 
+    font-size: 14px; 
+    font-weight: 600; 
+}
+.btn-controle-carrossel { 
+    background: rgba(255, 255, 255, 0.1); 
+    color: white; 
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    transition: background 0.2s; 
+}
 .btn-controle-carrossel:hover { background: rgba(255, 255, 255, 0.2); }
 
-/* Módulo Administrativo */
+/* Módulo Administrativo - TUDO PRESERVADO */
 #moduloAdministrativo { display: none; padding: 30px 20px; }
 .container { max-width: 1200px; margin: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); overflow: hidden; }
 .header { background: var(--header-bg); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
@@ -222,22 +319,24 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Carrossel -->
+<!-- Carrossel Atualizado -->
 <div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
         <div class="carrossel-frase-destaque">Aprecie nossos produtos</div>
         <button class="btn-admin-topo" onclick="abrirPainelAdministrativo()">⚙️ Administrativo</button>
     </div>
-    <div id="containerCardVitrine"></div>
+    <div class="carrossel-grade-container">
+        <div id="containerGradeVitrine" class="carrossel-grade"></div>
+    </div>
     <div class="carrossel-controles-inferior">
         <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(-1)">❮ Anterior</button>
-        <span id="contadorVitrine">Produto 0 de 10</span>
-        <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(1)">Próximo ❯</button>
+        <span id="contadorVitrine">Página 1 de 1</span>
+        <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(1)">Próxima ❯</button>
     </div>
 </div>
 
-<!-- Administrativo -->
+<!-- Administrativo - TUDO IGUAL -->
 <div id="moduloAdministrativo">
     <div class="container">
         <div class="header">
@@ -263,7 +362,7 @@ body {
     </div>
 </div>
 
-<!-- Modais -->
+<!-- Modais - TUDO IGUAL -->
 <div class="modal-fundo" id="janela">
     <div class="modal">
         <div class="modal-topo">
@@ -308,14 +407,16 @@ let headers = [];
 let dadosGlobais = [];
 let listaFiltradaAtual = [];
 let indiceEdicaoAtual = 0;
-let indiceCarrosselAtual = 0;
+let indicePaginaCarrossel = 0;
+let itensPorPagina = window.innerWidth >= 1025 ? 8 : 4;
 let timerCarrossel = null;
 let carrosselAtivo = false;
 let telaJaFechada = false;
+let pausaPorHover = false;
 
-// FECHAR TELA - AGORA COM GARANTIA ABSOLUTA
+// FECHAR TELA - GARANTIDA
 function esconderTelaBoasVindas() {
-    if (telaJaFechada) return; // Evita rodar duas vezes
+    if (telaJaFechada) return;
     telaJaFechada = true;
     const tela = document.getElementById('telaBoasVindas');
     tela.classList.add('tela-oculta');
@@ -325,7 +426,6 @@ function esconderTelaBoasVindas() {
     }, 1200);
 }
 
-// SEGURANÇA EXTRA: Fecha automaticamente após 15 segundos, mesmo se a planilha demorar
 setTimeout(esconderTelaBoasVindas, 15000);
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
@@ -400,7 +500,7 @@ async function carregarDadosPlanilha() {
         console.error("Erro ao carregar planilha:", e);
         dadosGlobais = [];
     } finally {
-        esconderTelaBoasVindas(); // Executa SEMPRE
+        esconderTelaBoasVindas();
     }
 }
 
@@ -416,11 +516,14 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
+// === NOVA LOGICA DO CARROSSEL ===
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
+    itensPorPagina = window.innerWidth >= 1025 ? 8 : 4;
+    indicePaginaCarrossel = 0;
     document.getElementById('moduloCarrossel').style.display = 'flex';
-    renderizarSlideVitrine();
+    renderizarPaginaCarrossel();
 }
 
 function pararCarrossel() {
@@ -428,21 +531,32 @@ function pararCarrossel() {
     if (timerCarrossel) clearTimeout(timerCarrossel);
 }
 
-function renderizarSlideVitrine() {
-    if (!carrosselAtivo) return;
-    const total = Math.min(10, dadosGlobais.length);
-    if (indiceCarrosselAtual >= total) indiceCarrosselAtual = 0;
-    const p = dadosGlobais[indiceCarrosselAtual];
+function renderizarPaginaCarrossel() {
+    if (!carrosselAtivo || pausaPorHover) return;
+
+    const totalPaginas = Math.ceil(dadosGlobais.length / itensPorPagina);
+    if (indicePaginaCarrossel >= totalPaginas) indicePaginaCarrossel = 0;
+
+    const inicio = indicePaginaCarrossel * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const produtosPagina = dadosGlobais.slice(inicio, fim);
+
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
-    let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
-        ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
-        : `<div style="color:#94a3b8">Sem imagem</div>`;
-    document.getElementById('containerCardVitrine').innerHTML = `
-        <div class="card-quadrado-vitrine">
+
+    let html = '';
+    produtosPagina.forEach(p => {
+        let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
+            ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
+            : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
+
+        html += `
+        <div class="card-quadrado-vitrine" 
+             onmouseenter="pausaPorHover=true;" 
+             onmouseleave="pausaPorHover=false; renderizarPaginaCarrossel();">
             <div class="vitrine-foto-container">${fotoHtml}</div>
             <div class="vitrine-info">
                 <div class="vitrine-marca">${p[hMarca] || ''}</div>
@@ -452,23 +566,38 @@ function renderizarSlideVitrine() {
                 <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
                 <span class="vitrine-preco">${p[hPreco] || ''}</span>
             </div>
-            <div class="carrossel-progresso-barra"></div>
         </div>`;
-    document.getElementById('contadorVitrine').textContent = `Produto ${indiceCarrosselAtual + 1} de ${total}`;
-    setTimeout(() => {
-        const barra = document.querySelector('.carrossel-progresso-barra');
-        if(barra) { barra.style.transition = 'width 6s linear'; barra.style.width = '100%'; }
-    }, 50);
-    timerCarrossel = setTimeout(() => { indiceCarrosselAtual++; renderizarSlideVitrine(); }, 6000);
+    });
+
+    document.getElementById('containerGradeVitrine').innerHTML = html;
+    document.getElementById('contadorVitrine').textContent = `Página ${indicePaginaCarrossel + 1} de ${totalPaginas}`;
+
+    timerCarrossel = setTimeout(() => {
+        if (!pausaPorHover) {
+            indicePaginaCarrossel++;
+            renderizarPaginaCarrossel();
+        }
+    }, 6000);
 }
 
 function mudarSlideCarrossel(d) {
     if (!carrosselAtivo) return;
     clearTimeout(timerCarrossel);
-    indiceCarrosselAtual += d;
-    renderizarSlideVitrine();
+    pausaPorHover = false;
+    indicePaginaCarrossel += d;
+    renderizarPaginaCarrossel();
 }
 
+window.addEventListener('resize', () => {
+    const novoTamanho = window.innerWidth >= 1025 ? 8 : 4;
+    if (novoTamanho !== itensPorPagina) {
+        itensPorPagina = novoTamanho;
+        indicePaginaCarrossel = 0;
+        renderizarPaginaCarrossel();
+    }
+});
+
+// === RESTO DO CÓDIGO - TUDO EXATAMENTE COMO ESTAVA ===
 function atualizarContadorSelecionados() {
     const selecionados = document.querySelectorAll('.chk-produto:checked').length;
     document.getElementById('contadorSelecionados').textContent = `${selecionados} produto(s) selecionado(s)`;
