@@ -105,7 +105,7 @@ body {
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes aparecerSpinner { to { opacity: 1; } }
 
-/* === CARROSSEL === */
+/* === CARROSSEL COM PESQUISA === */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
@@ -121,6 +121,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
     padding: 15px 30px;
     background: linear-gradient(to bottom, rgba(15,23,42,0.95), transparent);
     z-index: 10;
@@ -128,6 +130,30 @@ body {
 
 .carrossel-logo { color: white; font-weight: 800; font-size: 24px; letter-spacing: 2px; }
 .carrossel-frase-destaque { color: #fdba74; font-size: clamp(16px, 2vw, 22px); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* CAMPO DE PESQUISA NO CARROSSEL */
+.pesquisa-carrossel {
+    flex: 1;
+    min-width: 250px;
+    max-width: 450px;
+}
+.pesquisa-carrossel input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+}
+.pesquisa-carrossel input::placeholder { color: #94a3b8; }
+.pesquisa-carrossel input:focus {
+    border-color: var(--primary-color);
+    background: rgba(255,255,255,0.15);
+}
+
 .btn-admin-topo { background: var(--primary-color); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
 .btn-admin-topo:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
@@ -327,11 +353,15 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Carrossel -->
+<!-- Carrossel com Pesquisa -->
 <div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
         <div class="carrossel-frase-destaque">Aprecie nossos produtos</div>
+        <!-- CAMPO DE PESQUISA ADICIONADO -->
+        <div class="pesquisa-carrossel">
+            <input type="text" id="pesquisaCarrossel" placeholder="🔍 Pesquise por descrição ou marca...">
+        </div>
         <button class="btn-admin-topo" onclick="abrirPainelAdministrativo()">⚙️ Administrativo</button>
     </div>
     <div class="carrossel-grade-container">
@@ -421,6 +451,7 @@ let timerCarrossel = null;
 let carrosselAtivo = false;
 let telaJaFechada = false;
 let pausaPorHover = false;
+let termoPesquisaCarrossel = ''; // Variável para filtro
 
 // FECHAR TELA - GARANTIDA
 function esconderTelaBoasVindas() {
@@ -447,6 +478,13 @@ function resolverUrlImagem(valFoto) {
     let base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
+
+// === PESQUISA INTELIGENTE NO CARROSSEL ===
+document.getElementById('pesquisaCarrossel').addEventListener('input', e => {
+    termoPesquisaCarrossel = e.target.value.toLowerCase().trim();
+    indicePaginaCarrossel = 0; // Volta para primeira página ao pesquisar
+    renderizarPaginaCarrossel();
+});
 
 csvFile.onchange = e => {
     const file = e.target.files[0]; 
@@ -524,7 +562,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// === LOGICA DO CARROSSEL ===
+// === LOGICA DO CARROSSEL COM FILTRO ===
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -542,47 +580,60 @@ function pararCarrossel() {
 function renderizarPaginaCarrossel() {
     if (!carrosselAtivo || pausaPorHover) return;
 
-    const totalPaginas = Math.ceil(dadosGlobais.length / itensPorPagina);
-    if (indicePaginaCarrossel >= totalPaginas) indicePaginaCarrossel = 0;
-
-    const inicio = indicePaginaCarrossel * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    const produtosPagina = dadosGlobais.slice(inicio, fim);
-
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
 
-    let html = '';
-    produtosPagina.forEach(p => {
-        let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
-            ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
-            : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
-
-        html += `
-        <div class="card-quadrado-vitrine" 
-             onclick="this.classList.toggle('ativo-clique')"
-             onmouseenter="pausaPorHover=true;" 
-             onmouseleave="if(!this.classList.contains('ativo-clique')){ pausaPorHover=false; renderizarPaginaCarrossel(); }">
-            <div class="vitrine-foto-container">${fotoHtml}</div>
-            <div class="vitrine-info">
-                <div class="vitrine-marca">${p[hMarca] || ''}</div>
-                <div class="vitrine-descricao">${p[hDesc] || ''}</div>
-            </div>
-            <div class="vitrine-rodape-preco">
-                <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
-                <span class="vitrine-preco">${p[hPreco] || ''}</span>
-            </div>
-        </div>`;
+    // APLICA O FILTRO INTELIGENTE: DESCRIÇÃO OU MARCA
+    let produtosFiltrados = dadosGlobais.filter(p => {
+        if (!termoPesquisaCarrossel) return true;
+        const desc = String(p[hDesc] || '').toLowerCase();
+        const marca = String(p[hMarca] || '').toLowerCase();
+        return desc.includes(termoPesquisaCarrossel) || marca.includes(termoPesquisaCarrossel);
     });
 
+    const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
+    if (indicePaginaCarrossel >= totalPaginas && totalPaginas > 0) indicePaginaCarrossel = 0;
+
+    const inicio = indicePaginaCarrossel * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const produtosPagina = produtosFiltrados.slice(inicio, fim);
+
+    let html = '';
+    if (produtosPagina.length === 0) {
+        html = `<p style="color:#94a3b8; grid-column: 1 / -1; text-align:center; font-size:15px;">Nenhum produto encontrado para esta pesquisa.</p>`;
+    } else {
+        produtosPagina.forEach(p => {
+            let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
+                ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
+                : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
+
+            html += `
+            <div class="card-quadrado-vitrine" 
+                 onclick="this.classList.toggle('ativo-clique')"
+                 onmouseenter="pausaPorHover=true;" 
+                 onmouseleave="if(!this.classList.contains('ativo-clique')){ pausaPorHover=false; renderizarPaginaCarrossel(); }">
+                <div class="vitrine-foto-container">${fotoHtml}</div>
+                <div class="vitrine-info">
+                    <div class="vitrine-marca">${p[hMarca] || ''}</div>
+                    <div class="vitrine-descricao">${p[hDesc] || ''}</div>
+                </div>
+                <div class="vitrine-rodape-preco">
+                    <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
+                    <span class="vitrine-preco">${p[hPreco] || ''}</span>
+                </div>
+            </div>`;
+        });
+    }
+
     document.getElementById('containerGradeVitrine').innerHTML = html;
-    document.getElementById('contadorVitrine').textContent = `Página ${indicePaginaCarrossel + 1} de ${totalPaginas}`;
+    document.getElementById('contadorVitrine').textContent = 
+        produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
     timerCarrossel = setTimeout(() => {
-        if (!pausaPorHover) {
+        if (!pausaPorHover && produtosFiltrados.length > 0) {
             indicePaginaCarrossel++;
             renderizarPaginaCarrossel();
         }
