@@ -24,7 +24,7 @@ body {
     padding: 0; 
 }
 
-/* Tela de Boas-Vindas - CORRIGIDO */
+/* Tela de Boas-Vindas */
 #telaBoasVindas {
     position: fixed;
     inset: 0;
@@ -103,7 +103,7 @@ body {
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes aparecerSpinner { to { opacity: 1; } }
 
-/* Carrossel - INALTERADO */
+/* Carrossel */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
@@ -166,7 +166,7 @@ body {
 .btn-controle-carrossel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
 .btn-controle-carrossel:hover { background: rgba(255, 255, 255, 0.2); }
 
-/* Módulo Administrativo - INALTERADO */
+/* Módulo Administrativo */
 #moduloAdministrativo { display: none; padding: 30px 20px; }
 .container { max-width: 1200px; margin: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); overflow: hidden; }
 .header { background: var(--header-bg); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
@@ -176,8 +176,11 @@ body {
 .btn:disabled { background: #94a3b8; cursor: not-allowed; }
 .btn-excluir { background: var(--danger-color); padding: 6px 12px; font-size: 12px; }
 .btn-excluir:hover { background: var(--danger-hover); }
+.btn-excluir-lote { background: var(--danger-color); margin-bottom: 12px; }
+.btn-excluir-lote:hover { background: var(--danger-hover); }
 .btn-editar-acao { padding: 6px 12px; font-size: 12px; }
 .area-botoes-acao { display: flex; gap: 8px; align-items: center; }
+.contador-selecionados { margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--danger-color); }
 .conteudo-principal { padding: 32px; }
 .area-pesquisa { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; }
 .campo-pesquisa label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569; }
@@ -250,6 +253,11 @@ body {
                 <div class="campo-pesquisa"><label>Marca:</label><input type="text" id="pesqMarca" placeholder="Pesquisar por marca..."></div>
             </div>
             <p id="infoQtd"></p>
+
+            <!-- Área de exclusão em lote -->
+            <button class="btn btn-excluir-lote" id="btnExcluirLote" onclick="excluirSelecionados()" disabled>🗑️ Excluir Selecionados</button>
+            <div class="contador-selecionados" id="contadorSelecionados">Nenhum produto selecionado</div>
+
             <div id="areaLista" class="tabela-container"><p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p></div>
         </div>
     </div>
@@ -304,7 +312,7 @@ let indiceCarrosselAtual = 0;
 let timerCarrossel = null;
 let carrosselAtivo = false;
 
-// Função de FECHAR TELA DE BOAS-VINDAS - GARANTIDA
+// Fechar tela de boas-vindas
 function esconderTelaBoasVindas() {
     const tela = document.getElementById('telaBoasVindas');
     tela.classList.add('tela-oculta');
@@ -314,7 +322,6 @@ function esconderTelaBoasVindas() {
     }, 1200);
 }
 
-// Abrir/Fechar modais
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
 
@@ -327,7 +334,7 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
-// Importação CSV - INALTERADO
+// Importação CSV
 csvFile.onchange = e => {
     const file = e.target.files[0]; 
     if(!file) return;
@@ -377,7 +384,7 @@ btnProcess.onclick = async () => {
     carregarDadosPlanilha();
 };
 
-// CARREGAR DADOS - CORRIGIDO: SEMPRE FECHA A TELA
+// Carregar dados
 async function carregarDadosPlanilha() {
     try {
         const res = await fetch(URL_DO_GAS);
@@ -389,11 +396,11 @@ async function carregarDadosPlanilha() {
         console.error("Erro ao carregar planilha:", e);
         dadosGlobais = [];
     } finally {
-        esconderTelaBoasVindas(); // Executa DE QUALQUER FORMA
+        esconderTelaBoasVindas();
     }
 }
 
-// Navegação - INALTERADO
+// Navegação
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -406,7 +413,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// Carrossel - INALTERADO
+// Carrossel
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -460,7 +467,39 @@ function mudarSlideCarrossel(d) {
     renderizarSlideVitrine();
 }
 
-// Tabela completa com Editar/Excluir - INALTERADO
+// Atualizar contador de selecionados
+function atualizarContadorSelecionados() {
+    const selecionados = document.querySelectorAll('.chk-produto:checked').length;
+    document.getElementById('contadorSelecionados').textContent = `${selecionados} produto(s) selecionado(s)`;
+    document.getElementById('btnExcluirLote').disabled = selecionados === 0;
+}
+
+// Exclusão em lote
+async function excluirSelecionados() {
+    const codigosParaExcluir = [];
+    document.querySelectorAll('.chk-produto:checked').forEach(chk => {
+        codigosParaExcluir.push(chk.value);
+    });
+
+    if (!confirm(`Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\nEsta ação não pode ser desfeita!`)) return;
+
+    try {
+        for (const cod of codigosParaExcluir) {
+            await fetch(URL_DO_GAS, {
+                method: "POST",
+                body: JSON.stringify({ acao: "excluir", codigo: cod, headers })
+            });
+        }
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        dadosGlobais = dadosGlobais.filter(i => !codigosParaExcluir.includes(String(i[hCod])));
+        renderizarTabela();
+        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) com sucesso!`);
+    } catch(e) {
+        alert("Erro na exclusão em lote: " + e.message);
+    }
+}
+
+// Renderizar tabela completa
 function renderizarTabela() {
     const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
     const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
@@ -470,20 +509,27 @@ function renderizarTabela() {
     const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
+
     listaFiltradaAtual = dadosGlobais.filter(p => {
         return String(p[hCod]||'').toLowerCase().includes(fCod) &&
                String(p[hDesc]||'').toLowerCase().includes(fNome) &&
                String(p[hMarca]||'').toLowerCase().includes(fMarca);
     });
+
     document.getElementById('infoQtd').textContent = `${listaFiltradaAtual.length} de ${dadosGlobais.length} registros`;
+
     let html = `<table class="tabela-produtos"><thead><tr>
+        <th><input type="checkbox" id="selecionarTodos" onchange="document.querySelectorAll('.chk-produto').forEach(c=>c.checked=this.checked); atualizarContadorSelecionados()"></th>
         <th>Código</th><th>Descrição</th><th>Marca</th><th>Preço</th><th>Foto</th><th>Ações</th>
     </tr></thead><tbody>`;
+
     listaFiltradaAtual.forEach(p => {
         let foto = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
             ? `<img src="${resolverUrlImagem(p[hFoto])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` 
             : '<span style="color:#94a3b8">—</span>';
+
         html += `<tr>
+            <td><input type="checkbox" class="chk-produto" value="${p[hCod]}" onchange="atualizarContadorSelecionados()"></td>
             <td>${p[hCod]}</td>
             <td>${p[hDesc]}</td>
             <td>${p[hMarca]}</td>
@@ -497,20 +543,13 @@ function renderizarTabela() {
             </td>
         </tr>`;
     });
+
     html += `</tbody></table>`;
     document.getElementById('areaLista').innerHTML = html;
+    atualizarContadorSelecionados();
 }
 
-// Edição e Exclusão - INALTERADO
-function editarRegistroPorCodigo(cod) {
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
-    if (indiceEdicaoAtual !== -1) {
-        preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
-        document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
-    }
-}
-
+// Exclusão individual
 async function confirmarExclusao(cod, desc) {
     if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
     try {
@@ -523,6 +562,16 @@ async function confirmarExclusao(cod, desc) {
         renderizarTabela();
         alert("Excluído!");
     } catch(e) { alert("Erro: " + e.message); }
+}
+
+// Edição
+function editarRegistroPorCodigo(cod) {
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
+    if (indiceEdicaoAtual !== -1) {
+        preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
+        document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
+    }
 }
 
 function preencherFormularioEdicao(prod) {
@@ -564,7 +613,7 @@ async function salvarEProximoProduto() {
     } catch(e) { alert("Erro: " + e.message); }
 }
 
-// Iniciar busca e carregamento
+// Iniciar sistema
 document.getElementById('pesqCodigo').oninput = renderizarTabela;
 document.getElementById('pesqNome').oninput = renderizarTabela;
 document.getElementById('pesqMarca').oninput = renderizarTabela;
