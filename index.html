@@ -25,7 +25,7 @@ body {
     padding: 0; 
 }
 
-/* Tela de Boas-Vindas */
+/* Tela de Boas-Vindas - GARANTIDA */
 #telaBoasVindas {
     position: fixed;
     inset: 0;
@@ -42,18 +42,70 @@ body {
     visibility: visible;
     transition: opacity 1.2s ease, visibility 1.2s ease;
 }
-.tela-oculta { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
-.conteudo-animado { width: 90vw; max-width: 1200px; animation: crescerSuaveAte90 11s cubic-bezier(0.05, 0.7, 0.1, 1) forwards; }
-@keyframes crescerSuaveAte90 { 0% { transform: scale(0.005); opacity: 0; } 100% { transform: scale(0.90); opacity: 1; } }
-.linha-1 { font-size: clamp(45px, 8vw, 100px); font-weight: 900; color: var(--primary-color); letter-spacing: 10px; margin-bottom: 16px; text-shadow: 0 0 35px rgba(234, 88, 12, 0.7); }
-.linha-2 { font-size: clamp(18px, 3vw, 34px); font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
-.linha-3 { font-size: clamp(14px, 2.2vw, 24px); color: #cbd5e1; line-height: 1.5; margin-bottom: 24px; }
-.linha-boas-vindas { font-size: clamp(22px, 3.5vw, 42px); font-weight: 600; color: #fdba74; letter-spacing: 3px; text-transform: uppercase; }
-.spinner-carregando { margin-top: 30px; width: 55px; height: 55px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--primary-color); border-radius: 50%; opacity: 0; animation: aparecerSpinner 1.5s ease 2s forwards, spin 0.8s linear infinite; }
+
+.tela-oculta {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.conteudo-animado {
+    width: 90vw;
+    max-width: 1200px;
+    animation: crescerSuaveAte90 11s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+}
+
+@keyframes crescerSuaveAte90 {
+    0% { transform: scale(0.005); opacity: 0; }
+    100% { transform: scale(0.90); opacity: 1; }
+}
+
+.linha-1 {
+    font-size: clamp(45px, 8vw, 100px);
+    font-weight: 900;
+    color: var(--primary-color);
+    letter-spacing: 10px;
+    margin-bottom: 16px;
+    text-shadow: 0 0 35px rgba(234, 88, 12, 0.7);
+}
+
+.linha-2 {
+    font-size: clamp(18px, 3vw, 34px);
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 14px;
+}
+
+.linha-3 {
+    font-size: clamp(14px, 2.2vw, 24px);
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.linha-boas-vindas {
+    font-size: clamp(22px, 3.5vw, 42px);
+    font-weight: 600;
+    color: #fdba74;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.spinner-carregando {
+    margin-top: 30px;
+    width: 55px;
+    height: 55px;
+    border: 5px solid rgba(255,255,255,0.1);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    opacity: 0;
+    animation: aparecerSpinner 1.5s ease 2s forwards, spin 0.8s linear infinite;
+}
+
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes aparecerSpinner { to { opacity: 1; } }
 
-/* CARROSSEL */
+/* === CARROSSEL COM PESQUISA === */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
@@ -64,65 +116,194 @@ body {
     padding: 20px;
     overflow: hidden;
 }
-.carrossel-barra-topo { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 15px 30px; background: linear-gradient(to bottom, rgba(15,23,42,0.95), transparent); z-index: 10; }
+
+.carrossel-barra-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px 30px;
+    background: linear-gradient(to bottom, rgba(15,23,42,0.95), transparent);
+    z-index: 10;
+}
+
 .carrossel-logo { color: white; font-weight: 800; font-size: 24px; letter-spacing: 2px; }
 .carrossel-frase-destaque { color: #fdba74; font-size: clamp(16px, 2vw, 22px); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-.pesquisa-carrossel { flex: 1; min-width: 250px; max-width: 450px; }
-.pesquisa-carrossel input { width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; transition: all 0.2s; }
+
+/* CAMPO DE PESQUISA NO CARROSSEL */
+.pesquisa-carrossel {
+    flex: 1;
+    min-width: 250px;
+    max-width: 450px;
+}
+.pesquisa-carrossel input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+}
 .pesquisa-carrossel input::placeholder { color: #94a3b8; }
-.pesquisa-carrossel input:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.15); }
+.pesquisa-carrossel input:focus {
+    border-color: var(--primary-color);
+    background: rgba(255,255,255,0.15);
+}
+
 .btn-admin-topo { background: var(--primary-color); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
 .btn-admin-topo:hover { background: var(--primary-hover); transform: translateY(-2px); }
-.carrossel-grade-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px; }
-.carrossel-grade { display: grid; gap: 18px; width: 100%; max-width: 1400px; transition: all 0.3s ease; }
-@media (min-width: 1025px) { .carrossel-grade { grid-template-columns: repeat(8, 1fr); } }
-@media (max-width: 1024px) { .carrossel-grade { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-.card-quadrado-vitrine { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); display: flex; flex-direction: column; padding: 12px; box-sizing: border-box; text-align: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; position: relative; overflow: visible; z-index: 1; }
-.card-quadrado-vitrine:hover { transform: scale(1.08); box-shadow: 0 20px 40px -8px rgba(234, 88, 12, 0.4); z-index: 10; }
-.card-quadrado-vitrine.ativo-clique { transform: scale(2); z-index: 9999 !important; box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6); }
-.vitrine-foto-container { width: 100%; padding-top: 75%; position: relative; background: #f8fafc; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 8px; }
-.vitrine-foto-container img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.vitrine-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-.vitrine-marca { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
-.vitrine-descricao { font-size: 13px; font-weight: 600; color: #0f172a; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.vitrine-rodape-preco { margin-top: auto; padding-top: 8px; border-top: 1px solid #e2e8f0; }
-.vitrine-codigo { font-size: 10px; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 2px; }
-.vitrine-preco { font-size: 16px; font-weight: 900; color: var(--primary-color); }
-.carrossel-controles-inferior { margin-top: 15px; display: flex; gap: 15px; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px; font-weight: 600; }
-.btn-controle-carrossel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+
+.carrossel-grade-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+}
+
+.carrossel-grade {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    max-width: 1400px;
+    transition: all 0.3s ease;
+}
+
+/* 8 por linha em DESKTOP */
+@media (min-width: 1025px) {
+    .carrossel-grade {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}
+
+/* 4 por linha em CELULAR */
+@media (max-width: 1024px) {
+    .carrossel-grade {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+.card-quadrado-vitrine {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+}
+
+.card-quadrado-vitrine:hover {
+    transform: scale(1.08);
+    box-shadow: 0 20px 40px -8px rgba(234, 88, 12, 0.4);
+    z-index: 10;
+}
+
+.card-quadrado-vitrine.ativo-clique {
+    transform: scale(2);
+    z-index: 9999 !important;
+    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6);
+}
+
+.vitrine-foto-container { 
+    width: 100%; 
+    padding-top: 75%; 
+    position: relative;
+    background: #f8fafc; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+.vitrine-foto-container img { 
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+}
+.vitrine-info { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px;
+    flex: 1;
+}
+.vitrine-marca { 
+    font-size: 11px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    color: #64748b; 
+    letter-spacing: 1px; 
+}
+.vitrine-descricao { 
+    font-size: 13px; 
+    font-weight: 600; 
+    color: #0f172a; 
+    line-height: 1.2; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 2; 
+    -webkit-box-orient: vertical; 
+    overflow: hidden; 
+}
+.vitrine-rodape-preco { 
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+}
+.vitrine-codigo { 
+    font-size: 10px; 
+    color: #94a3b8; 
+    font-weight: 600; 
+    display: block;
+    margin-bottom: 2px;
+}
+.vitrine-preco { 
+    font-size: 16px; 
+    font-weight: 900; 
+    color: var(--primary-color); 
+}
+
+.carrossel-controles-inferior { 
+    margin-top: 15px; 
+    display: flex; 
+    gap: 15px; 
+    align-items: center; 
+    justify-content: center;
+    color: #94a3b8; 
+    font-size: 14px; 
+    font-weight: 600; 
+}
+.btn-controle-carrossel { 
+    background: rgba(255, 255, 255, 0.1); 
+    color: white; 
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    transition: background 0.2s; 
+}
 .btn-controle-carrossel:hover { background: rgba(255, 255, 255, 0.2); }
 
-/* MÓDULOS NOVOS: CPF E CADASTRO */
-.modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
-.modal-ativo { display: flex; }
-.modal { background: white; border-radius: 12px; width: 100%; max-width: 500px; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-.modal-cadastro { max-width: 600px; }
-.modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.modal-topo h3 { margin: 0; font-size: 20px; color: var(--primary-color); }
-.fechar-modal { background: transparent; border: none; font-size: 24px; cursor: pointer; color: #64748b; transition: color 0.2s; }
-.fechar-modal:hover { color: var(--danger-color); }
-.grupo-campo { margin-bottom: 15px; }
-.grupo-campo label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #334155; }
-.grupo-campo input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
-.grupo-campo input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15); }
-.area-botoes { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
-.btn { background: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 15px; transition: background 0.2s; }
-.btn:hover { background: var(--primary-hover); }
-.btn-secundario { background: #64748b; }
-.btn-secundario:hover { background: #475569; }
-.btn:disabled { background: #94a3b8; cursor: not-allowed; }
-.mensagem { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: 500; display: none; }
-.sucesso { background: #dcfce7; color: #166534; border: 1px solid #22c55e; display: block; }
-.erro { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; display: block; }
-.aviso { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; display: block; }
-.grid-cadastro { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.grid-cadastro .grupo-campo:last-child { grid-column: 1 / -1; }
-
-/* Módulo Administrativo - ORIGINAL */
+/* Módulo Administrativo - TUDO PRESERVADO */
 #moduloAdministrativo { display: none; padding: 30px 20px; }
 .container { max-width: 1200px; margin: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); overflow: hidden; }
 .header { background: var(--header-bg); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
 .header h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.btn { background: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+.btn:hover { background: var(--primary-hover); }
+.btn:disabled { background: #94a3b8; cursor: not-allowed; }
 .btn-excluir { background: var(--danger-color); padding: 6px 12px; font-size: 12px; }
 .btn-excluir:hover { background: var(--danger-hover); }
 .btn-excluir-lote { background: var(--danger-color); margin-bottom: 12px; }
@@ -142,14 +323,23 @@ body {
 .tabela-produtos td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
 .tabela-produtos tr:hover { background-color: #f8fafc; }
 .preco { color: var(--primary-color); font-weight: 700; font-size: 15px; }
+.modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.modal-ativo { display: flex; }
+.modal { background: white; border-radius: 12px; width: 100%; max-width: 650px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+.modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-topo h3 { margin: 0; font-size: 18px; }
 .modal-edicao-ampla { max-width: 850px; max-height: 90vh; overflow-y: auto; }
+.grid-edicao-ampla { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grupo-campo-edicao { margin-bottom: 5px; }
+.grupo-campo-edicao label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #334155; }
+.grupo-campo-edicao input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f8fafc; outline: none; transition: all 0.2s; }
+.grupo-campo-edicao input:focus { background: #ffffff; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15); }
 .progress-container { width: 100%; background: #e2e8f0; border-radius: 6px; margin: 20px 0; overflow: hidden; display: none; }
 .progress-bar { width: 0%; height: 24px; background: #16a34a; text-align: center; color: white; font-weight: bold; font-size: 12px; line-height: 24px; transition: width 0.2s; }
 </style>
 </head>
 <body>
 
-<!-- Tela de Boas-Vindas -->
 <div id="telaBoasVindas">
     <div class="conteudo-animado">
         <div class="linha-1">SICLAR</div>
@@ -160,7 +350,6 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Carrossel -->
 <div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
@@ -180,79 +369,6 @@ body {
     </div>
 </div>
 
-<!-- MODAL DE CPF -->
-<div class="modal-fundo" id="modalCpf">
-    <div class="modal">
-        <div class="modal-topo">
-            <h3>Identificação do Cliente</h3>
-            <button class="fechar-modal" onclick="fecharModalCpf()">✕</button>
-        </div>
-        <div id="msgCpf" class="mensagem"></div>
-        <div class="grupo-campo">
-            <label>Informe seu CPF:</label>
-            <input type="text" id="campoCpf" placeholder="000.000.000-00" maxlength="14">
-        </div>
-        <div class="area-botoes">
-            <button class="btn btn-secundario" onclick="fecharModalCpf()">Voltar</button>
-            <button class="btn" id="btnVerificarCpf" onclick="verificarCpf()">Verificar</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL DE CADASTRO -->
-<div class="modal-fundo" id="modalCadastro">
-    <div class="modal modal-cadastro">
-        <div class="modal-topo">
-            <h3>Cadastro de Cliente</h3>
-            <button class="fechar-modal" onclick="fecharModalCadastro()">✕</button>
-        </div>
-        <div id="msgCadastro" class="mensagem"></div>
-        <div class="grid-cadastro">
-            <div class="grupo-campo">
-                <label>CPF:</label>
-                <input type="text" id="cadCpf" readonly style="background:#f1f5f9;">
-            </div>
-            <div class="grupo-campo">
-                <label>Nome Completo:</label>
-                <input type="text" id="cadNome" required>
-            </div>
-            <div class="grupo-campo">
-                <label>Telefone com DDD:</label>
-                <input type="text" id="cadTelefone" maxlength="15" required>
-            </div>
-            <div class="grupo-campo">
-                <label>E-mail:</label>
-                <input type="email" id="cadEmail" required>
-            </div>
-            <div class="grupo-campo">
-                <label>CEP:</label>
-                <input type="text" id="cadCep" maxlength="9" required>
-            </div>
-            <div class="grupo-campo">
-                <label>Endereço:</label>
-                <input type="text" id="cadEndereco" required>
-            </div>
-            <div class="grupo-campo">
-                <label>Número:</label>
-                <input type="text" id="cadNumero" required>
-            </div>
-            <div class="grupo-campo">
-                <label>Bairro:</label>
-                <input type="text" id="cadBairro" required>
-            </div>
-            <div class="grupo-campo">
-                <label>Cidade / UF:</label>
-                <input type="text" id="cadCidadeUf" placeholder="Ex: Barra do Garças / MT" required>
-            </div>
-        </div>
-        <div class="area-botoes">
-            <button class="btn btn-secundario" onclick="fecharModalCadastro()">Cancelar</button>
-            <button class="btn" id="btnSalvarCadastro" onclick="salvarCadastro()">Finalizar Cadastro</button>
-        </div>
-    </div>
-</div>
-
-<!-- Módulo Administrativo - ORIGINAL -->
 <div id="moduloAdministrativo">
     <div class="container">
         <div class="header">
@@ -269,19 +385,20 @@ body {
                 <div class="campo-pesquisa"><label>Marca:</label><input type="text" id="pesqMarca" placeholder="Pesquisar por marca..."></div>
             </div>
             <p id="infoQtd"></p>
+
             <button class="btn btn-excluir-lote" id="btnExcluirLote" onclick="excluirSelecionados()" disabled>🗑️ Excluir Selecionados</button>
             <div class="contador-selecionados" id="contadorSelecionados">Nenhum produto selecionado</div>
+
             <div id="areaLista" class="tabela-container"><p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p></div>
         </div>
     </div>
 </div>
 
-<!-- Modais Originais -->
 <div class="modal-fundo" id="janela">
     <div class="modal">
         <div class="modal-topo">
             <h3>Importação Direta para o Google Sheets</h3>
-            <button onclick="fechar()" class="fechar-modal">✕</button>
+            <button onclick="fechar()" style="background:transparent;border:none;cursor:pointer;font-size:18px;font-weight:bold;color:#64748b;">✕</button>
         </div>
         <div>
             <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 10px;">
@@ -289,7 +406,7 @@ body {
             <div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar">0%</div></div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button id="btnProcess" class="btn" disabled>Iniciar Importação</button>
-                <button id="btnCancelar" class="btn btn-excluir" style="display:none;">Interromper</button>
+                <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper</button>
             </div>
             <div id="log" style="margin-top:20px; font-weight: 500;"></div>
         </div>
@@ -303,11 +420,11 @@ body {
                 <h3 style="color: var(--primary-color);">Edição de Produto</h3>
                 <p id="infoProgressoEdicao" style="font-size: 12px; color: #64748b;"></p>
             </div>
-            <button onclick="fecharModalEdicao()" class="fechar-modal">✕</button>
+            <button onclick="fecharModalEdicao()" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:#64748b;">✕</button>
         </div>
         <div id="containerCamposEdicao" class="grid-edicao-ampla"></div>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
-            <button class="btn btn-secundario" onclick="fecharModalEdicao()">Cancelar</button>
+            <button class="btn" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
             <button class="btn" id="btnSalvarEProximo" onclick="salvarEProximoProduto()">💾 Salvar e Próximo</button>
         </div>
     </div>
@@ -328,138 +445,13 @@ let carrosselAtivo = false;
 let telaJaFechada = false;
 let pausaPorHover = false;
 let termoPesquisaCarrossel = '';
-let cpfTemp = '';
 
-// ===== FUNÇÕES DE MÁSCARA =====
-function aplicarMascaraCPF(campo) {
-    let valor = campo.value.replace(/\D/g, "");
-    if (valor.length > 11) valor = valor.substring(0,11);
-    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-    valor = valor.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    campo.value = valor;
-}
-document.getElementById('campoCpf').addEventListener('input', e => aplicarMascaraCPF(e.target));
-
-// ===== FUNÇÕES DE CPF E CADASTRO =====
-function abrirModalCpf() {
-    document.getElementById('modalCpf').classList.add('modal-ativo');
-    document.getElementById('campoCpf').value = '';
-    document.getElementById('msgCpf').style.display = 'none';
-}
-function fecharModalCpf() {
-    document.getElementById('modalCpf').classList.remove('modal-ativo');
-}
-function fecharModalCadastro() {
-    document.getElementById('modalCadastro').classList.remove('modal-ativo');
-}
-
-async function verificarCpf() {
-    let cpf = document.getElementById('campoCpf').value.replace(/\D/g, "").trim();
-    const msg = document.getElementById('msgCpf');
-
-    if (cpf.length !== 11) {
-        msg.className = 'mensagem aviso';
-        msg.textContent = 'Informe um CPF válido com 11 números';
-        return;
-    }
-
-    document.getElementById('btnVerificarCpf').disabled = true;
-    msg.className = 'mensagem';
-    msg.textContent = 'Verificando...';
-    msg.style.display = 'block';
-
-    try {
-        const res = await fetch(URL_DO_GAS, {
-            method: "POST",
-            body: JSON.stringify({ acao: "verificarCpf", cpf: cpf })
-        });
-        const dados = await res.json();
-
-        if (dados.cpfCadastrado) {
-            msg.className = 'mensagem sucesso';
-            msg.textContent = '✅ CPF já cadastrado! Nenhuma ação necessária por enquanto.';
-        } else {
-            fecharModalCpf();
-            cpfTemp = cpf;
-            document.getElementById('cadCpf').value = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-            document.getElementById('modalCadastro').classList.add('modal-ativo');
-        }
-    } catch (erro) {
-        msg.className = 'mensagem erro';
-        msg.textContent = 'Erro ao verificar: ' + erro.message;
-    } finally {
-        document.getElementById('btnVerificarCpf').disabled = false;
-    }
-}
-
-async function salvarCadastro() {
-    const msg = document.getElementById('msgCadastro');
-    msg.style.display = 'none';
-
-    const dadosCliente = {
-        CPF: cpfTemp,
-        NOME_COMPLETO: document.getElementById('cadNome').value.trim(),
-        TELEFONE: document.getElementById('cadTelefone').value.replace(/\D/g,""),
-        EMAIL: document.getElementById('cadEmail').value.trim(),
-        CEP: document.getElementById('cadCep').value.replace(/\D/g,""),
-        ENDERECO: document.getElementById('cadEndereco').value.trim(),
-        NUMERO: document.getElementById('cadNumero').value.trim(),
-        BAIRRO: document.getElementById('cadBairro').value.trim(),
-        CIDADE: document.getElementById('cadCidadeUf').value.split('/')[0].trim(),
-        UF: document.getElementById('cadCidadeUf').value.split('/')[1]?.trim() || ''
-    };
-
-    for(let campo in dadosCliente) {
-        if(!dadosCliente[campo]) {
-            msg.className = 'mensagem aviso';
-            msg.textContent = 'Preencha todos os campos corretamente';
-            return;
-        }
-    }
-
-    document.getElementById('btnSalvarCadastro').disabled = true;
-    msg.textContent = 'Salvando cadastro...';
-    msg.style.display = 'block';
-
-    try {
-        const res = await fetch(URL_DO_GAS, {
-            method: "POST",
-            body: JSON.stringify({ acao: "salvarCliente", cliente: dadosCliente })
-        });
-        const dados = await res.json();
-
-        if (dados.sucesso) {
-            msg.className = 'mensagem sucesso';
-            msg.textContent = '✅ Cadastro realizado com sucesso!';
-            setTimeout(() => fecharModalCadastro(), 2000);
-        } else {
-            msg.className = 'mensagem erro';
-            msg.textContent = dados.erro || 'Erro ao salvar cadastro';
-        }
-    } catch (erro) {
-        msg.className = 'mensagem erro';
-        msg.textContent = 'Erro de conexão: ' + erro.message;
-    } finally {
-        document.getElementById('btnSalvarCadastro').disabled = false;
-    }
-}
-
-// ===== CLIQUE DO PRODUTO AJUSTADO =====
-document.addEventListener('click', e => {
-    const card = e.target.closest('.card-quadrado-vitrine');
-    if (card) {
-        card.classList.toggle('ativo-clique');
-        abrirModalCpf();
-    }
-});
-
-// ===== FUNÇÃO AJUSTADA PARA ESPERAR OS DADOS =====
+// ===== FUNÇÃO AJUSTADA: BUSCA DADOS PRIMEIRO, DEPOIS FECHA A TELA =====
 async function esconderTelaBoasVindas() {
     if (telaJaFechada) return;
     telaJaFechada = true;
     
-    // Carrega os dados PRIMEIRO, DEPOIS fecha a tela
+    // CARREGA OS DADOS ANTES DE FAZER QUALQUER COISA
     await carregarDadosPlanilha();
     
     const tela = document.getElementById('telaBoasVindas');
@@ -470,7 +462,7 @@ async function esconderTelaBoasVindas() {
     }, 1200);
 }
 
-// Inicia o processo imediatamente, SEM ESPERA DE 15 SEGUNDOS
+// INICIA AGORA — NÃO ESPERA 15 SEGUNDOS MAIS!
 esconderTelaBoasVindas();
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
@@ -621,7 +613,10 @@ function renderizarPaginaCarrossel() {
                 : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
 
             html += `
-            <div class="card-quadrado-vitrine">
+            <div class="card-quadrado-vitrine" 
+                 onclick="this.classList.toggle('ativo-clique')"
+                 onmouseenter="pausaPorHover=true;" 
+                 onmouseleave="if(!this.classList.contains('ativo-clique')){ pausaPorHover=false; renderizarPaginaCarrossel(); }">
                 <div class="vitrine-foto-container">${fotoHtml}</div>
                 <div class="vitrine-info">
                     <div class="vitrine-marca">${p[hMarca] || ''}</div>
@@ -723,33 +718,92 @@ function renderizarTabela() {
             : '<span style="color:#94a3b8">—</span>';
 
         html += `<tr>
-            <td><input type="checkbox" class="chk-produto" value="${p[hCod]}"></td>
-            <td>${p[hCod] || ''}</td>
-            <td>${p[hDesc] || ''}</td>
-            <td>${p[hMarca] || ''}</td>
-            <td class="preco">${p[hPreco] || ''}</td>
+            <td><input type="checkbox" class="chk-produto" value="${p[hCod]}" onchange="atualizarContadorSelecionados()"></td>
+            <td>${p[hCod]}</td>
+            <td>${p[hDesc]}</td>
+            <td>${p[hMarca]}</td>
+            <td class="preco">${p[hPreco]}</td>
             <td>${foto}</td>
             <td>
-                <button class="btn btn-editar-acao" onclick="editarProduto('${p[hCod]}')">Editar</button>
+                <div class="area-botoes-acao">
+                    <button class="btn btn-editar-acao" onclick="editarRegistroPorCodigo('${p[hCod]}')">Editar</button>
+                    <button class="btn btn-excluir" onclick="confirmarExclusao('${p[hCod]}', '${(p[hDesc]||'').replace(/'/g, "\\'")}')">Excluir</button>
+                </div>
             </td>
         </tr>`;
     });
 
     html += `</tbody></table>`;
     document.getElementById('areaLista').innerHTML = html;
+    atualizarContadorSelecionados();
+}
+
+async function confirmarExclusao(cod, desc) {
+    if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
+    try {
+        await fetch(URL_DO_GAS, {
+            method: "POST",
+            body: JSON.stringify({ acao: "excluir", codigo: cod, headers })
+        });
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        dadosGlobais = dadosGlobais.filter(i => String(i[hCod]) !== String(cod));
+        renderizarTabela();
+        alert("Excluído!");
+    } catch(e) { alert("Erro: " + e.message); }
+}
+
+function editarRegistroPorCodigo(cod) {
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
+    if (indiceEdicaoAtual !== -1) {
+        preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
+        document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
+    }
+}
+
+function preencherFormularioEdicao(prod) {
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    document.getElementById('infoProgressoEdicao').textContent = `Item ${indiceEdicaoAtual+1} de ${listaFiltradaAtual.length}`;
+    let html = '';
+    headers.forEach(h => {
+        html += `<div class="grupo-campo-edicao">
+            <label>${h}</label>
+            <input type="text" id="campo_${h.replace(/\W/g,'_')}" value="${prod[h]||''}" ${h===hCod?'readonly style="background:#eee"':''}>
+        </div>`;
+    });
+    document.getElementById('containerCamposEdicao').innerHTML = html;
 }
 
 function fecharModalEdicao() {
     document.getElementById('modalEdicaoFundo').classList.remove('modal-ativo');
 }
 
-function editarProduto(codigo) {
-    indiceEdicaoAtual = dadosGlobais.findIndex(p => String(p[headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0]]) === String(codigo));
-    if (indiceEdicaoAtual === -1) return;
-    const produto = dadosGlobais[indiceEdicaoAtual];
-    const container = document.getElementById('containerCamposEdicao');
-    container.innerHTML = '';
-    headers.forEach(h => {
-        const div = document.createElement('div');
-        div.className = 'grupo-campo';
-       
+async function salvarEProximoProduto() {
+    let obj = {};
+    headers.forEach(h => obj[h] = document.getElementById(`campo_${h.replace(/\W/g,'_')}`).value);
+    try {
+        await fetch(URL_DO_GAS, {
+            method: "POST",
+            body: JSON.stringify({ headers, items: [{ data: obj }] })
+        });
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        const idx = dadosGlobais.findIndex(i => String(i[hCod]) === String(obj[hCod]));
+        if(idx !== -1) dadosGlobais[idx] = obj;
+        renderizarTabela();
+        indiceEdicaoAtual++;
+        if(indiceEdicaoAtual < listaFiltradaAtual.length) {
+            preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
+        } else {
+            fecharModalEdicao();
+            alert("Todos os itens revisados!");
+        }
+    } catch(e) { alert("Erro: " + e.message); }
+}
+
+document.getElementById('pesqCodigo').oninput = renderizarTabela;
+document.getElementById('pesqNome').oninput = renderizarTabela;
+document.getElementById('pesqMarca').oninput = renderizarTabela;
+
+</script>
+</body>
+</html>
