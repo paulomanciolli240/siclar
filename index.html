@@ -351,7 +351,7 @@ function fecharModalCpf() {
     document.getElementById('modalCpf').classList.remove('modal-ativo');
 }
 function fecharModalCadastro() {
-    document.getElementById('modalCadastro').classList.remove('modal-cadastro');
+    document.getElementById('modalCadastro').classList.remove('modal-ativo');
 }
 
 async function verificarCpf() {
@@ -445,16 +445,16 @@ async function salvarCadastro() {
     }
 }
 
-// ===== ALTERAÇÃO NO CLIQUE DO PRODUTO =====
-// Troquei o clique do produto para abrir a verificação de CPF
-// Mantive o efeito de clique para ampliar
+// ===== CLIQUE DO PRODUTO AJUSTADO =====
 document.addEventListener('click', e => {
-    if (e.target.closest('.card-quadrado-vitrine')) {
+    const card = e.target.closest('.card-quadrado-vitrine');
+    if (card) {
+        card.classList.toggle('ativo-clique');
         abrirModalCpf();
     }
 });
 
-// ===== RESTO DO SEU CÓDIGO ORIGINAL =====
+// ===== RESTO DO CÓDIGO ORIGINAL COM CORREÇÃO DE CARREGAMENTO =====
 function esconderTelaBoasVindas() {
     if (telaJaFechada) return;
     telaJaFechada = true;
@@ -462,7 +462,12 @@ function esconderTelaBoasVindas() {
     tela.classList.add('tela-oculta');
     setTimeout(() => {
         tela.style.display = 'none';
-        iniciarCarrossel();
+        // Garante que os dados sejam carregados antes de iniciar o carrossel
+        if (dadosGlobais.length === 0) {
+            carregarDadosPlanilha().then(() => iniciarCarrossel());
+        } else {
+            iniciarCarrossel();
+        }
     }, 1200);
 }
 
@@ -536,4 +541,186 @@ btnProcess.onclick = async () => {
     }
     alert(`Importação concluída! ${sucessos} de ${csvData.length} enviados.`);
     document.getElementById('btnCancelar').style.display = "none";
-    document.getElementById('csv
+    document.getElementById('csvFile').disabled = false;
+    btnProcess.disabled = true;
+    fechar();
+    carregarDadosPlanilha();
+};
+
+async function carregarDadosPlanilha() {
+    try {
+        const res = await fetch(URL_DO_GAS);
+        const json = await res.json();
+        dadosGlobais = json.data || [];
+        if(dadosGlobais.length > 0) headers = Object.keys(dadosGlobais[0]);
+        renderizarTabela();
+    } catch (e) {
+        console.error("Erro ao carregar planilha:", e);
+        dadosGlobais = [];
+    }
+}
+
+function abrirPainelAdministrativo() {
+    pararCarrossel();
+    document.getElementById('moduloCarrossel').style.display = 'none';
+    document.getElementById('moduloAdministrativo').style.display = 'block';
+}
+
+function voltarParaCarrossel() {
+    document.getElementById('moduloAdministrativo').style.display = 'none';
+    document.getElementById('moduloCarrossel').style.display = 'flex';
+    iniciarCarrossel();
+}
+
+function iniciarCarrossel() {
+    carrosselAtivo = true;
+    if (dadosGlobais.length === 0) return;
+    itensPorPagina = window.innerWidth >= 1025 ? 8 : 4;
+    indicePaginaCarrossel = 0;
+    document.getElementById('moduloCarrossel').style.display = 'flex';
+    renderizarPaginaCarrossel();
+}
+
+function pararCarrossel() {
+    carrosselAtivo = false;
+    if (timerCarrossel) clearTimeout(timerCarrossel);
+}
+
+function renderizarPaginaCarrossel() {
+    if (!carrosselAtivo || pausaPorHover || termoPesquisaCarrossel.length > 0) {
+        if (timerCarrossel) clearTimeout(timerCarrossel);
+    }
+
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
+    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
+    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
+    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
+
+    let produtosFiltrados = dadosGlobais.filter(p => {
+        if (!termoPesquisaCarrossel) return true;
+        const desc = String(p[hDesc] || '');
+        const marca = String(p[hMarca] || '');
+        return buscaInteligente(termoPesquisaCarrossel, desc) || buscaInteligente(termoPesquisaCarrossel, marca);
+    });
+
+    const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
+    if (indicePaginaCarrossel >= totalPaginas && totalPaginas > 0) indicePaginaCarrossel = 0;
+
+    const inicio = indicePaginaCarrossel * itensPorPagina;
+    const fim = inicio + itensPorPagina;
+    const produtosPagina = produtosFiltrados.slice(inicio, fim);
+
+    let html = '';
+    if (produtosPagina.length === 0) {
+        html = `<p style="color:#94a3b8; grid-column: 1 / -1; text-align:center; font-size:15px;">Nenhum produto encontrado para esta pesquisa.</p>`;
+    } else {
+        produtosPagina.forEach(p => {
+            let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
+                ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
+                : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
+
+            html += `
+            <div class="card-quadrado-vitrine">
+                <div class="vitrine-foto-container">${fotoHtml}</div>
+                <div class="vitrine-info">
+                    <div class="vitrine-marca">${p[hMarca] || ''}</div>
+                    <div class="vitrine-descricao">${p[hDesc] || ''}</div>
+                </div>
+                <div class="vitrine-rodape-preco">
+                    <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
+                    <span class="vitrine-preco">${p[hPreco] || ''}</span>
+                </div>
+            </div>`;
+        });
+    }
+
+    document.getElementById('containerGradeVitrine').innerHTML = html;
+    document.getElementById('contadorVitrine').textContent = 
+        produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
+
+    if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
+        timerCarrossel = setTimeout(() => {
+            indicePaginaCarrossel++;
+            renderizarPaginaCarrossel();
+        }, 6000);
+    }
+}
+
+function mudarSlideCarrossel(d) {
+    if (!carrosselAtivo) return;
+    clearTimeout(timerCarrossel);
+    pausaPorHover = false;
+    indicePaginaCarrossel += d;
+    renderizarPaginaCarrossel();
+}
+
+window.addEventListener('resize', () => {
+    const novoTamanho = window.innerWidth >= 1025 ? 8 : 4;
+    if (novoTamanho !== itensPorPagina) {
+        itensPorPagina = novoTamanho;
+        indicePaginaCarrossel = 0;
+        renderizarPaginaCarrossel();
+    }
+});
+
+function atualizarContadorSelecionados() {
+    const selecionados = document.querySelectorAll('.chk-produto:checked').length;
+    document.getElementById('contadorSelecionados').textContent = `${selecionados} produto(s) selecionado(s)`;
+    document.getElementById('btnExcluirLote').disabled = selecionados === 0;
+}
+
+async function excluirSelecionados() {
+    const codigosParaExcluir = [];
+    document.querySelectorAll('.chk-produto:checked').forEach(chk => {
+        codigosParaExcluir.push(chk.value);
+    });
+
+    if (!confirm(`Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\nEsta ação não pode ser desfeita!`)) return;
+
+    try {
+        for (const cod of codigosParaExcluir) {
+            await fetch(URL_DO_GAS, {
+                method: "POST",
+                body: JSON.stringify({ acao: "excluir", codigo: cod, headers })
+            });
+        }
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        dadosGlobais = dadosGlobais.filter(i => !codigosParaExcluir.includes(String(i[hCod])));
+        renderizarTabela();
+        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) com sucesso!`);
+    } catch(e) {
+        alert("Erro na exclusão em lote: " + e.message);
+    }
+}
+
+function renderizarTabela() {
+    const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
+    const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
+    const fMarca = document.getElementById('pesqMarca').value.toLowerCase();
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
+    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
+    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
+    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
+
+    listaFiltradaAtual = dadosGlobais.filter(p => {
+        return String(p[hCod]||'').toLowerCase().includes(fCod) &&
+               String(p[hDesc]||'').toLowerCase().includes(fNome) &&
+               String(p[hMarca]||'').toLowerCase().includes(fMarca);
+    });
+
+    document.getElementById('infoQtd').textContent = `${listaFiltradaAtual.length} de ${dadosGlobais.length} registros`;
+
+    let html = `<table class="tabela-produtos"><thead><tr>
+        <th><input type="checkbox" id="selecionarTodos" onchange="document.querySelectorAll('.chk-produto').forEach(c=>c.checked=this.checked); atualizarContadorSelecionados()"></th>
+        <th>Código</th><th>Descrição</th><th>Marca</th><th>Preço</th><th>Foto</th><th>Ações</th>
+    </tr></thead><tbody>`;
+
+    listaFiltradaAtual.forEach(p => {
+        let foto = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
+            ? `<img src="${resolverUrlImagem(p[hFoto])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` 
+            : '<span style="color:#94a3b8">—</span>';
+
+        html += `<tr>
+            <td><input type="checkbox" class="chk-produto" value="${p[
