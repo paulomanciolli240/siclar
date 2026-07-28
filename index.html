@@ -470,7 +470,7 @@ async function esconderTelaBoasVindas() {
     }, 1200);
 }
 
-// Inicia o processo imediatamente, não espera 15 segundos
+// Inicia o processo imediatamente, SEM ESPERA DE 15 SEGUNDOS
 esconderTelaBoasVindas();
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
@@ -752,7 +752,4 @@ function editarProduto(codigo) {
     headers.forEach(h => {
         const div = document.createElement('div');
         div.className = 'grupo-campo';
-        div.innerHTML = `<label>${h}:</label><input type="text" id="edt_${h}" value="${produto[h] || ''}">`;
-        container.appendChild(div);
-    });
-    document.getElementById('modalEdicao
+       
