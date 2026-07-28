@@ -122,7 +122,7 @@ body {
     overflow: hidden;
 }
 
-/* Barra superior fixa do carrossel com o botão Administrativo e a frase solicitada */
+/* Barra superior fixa do carrossel com o botão Administrativo */
 .carrossel-barra-topo {
     position: absolute;
     top: 0;
@@ -293,7 +293,7 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* Sistema Administrativo (Oculto inicialmente) */
+/* Sistema Administrativo */
 #moduloAdministrativo {
     display: none;
     padding: 30px 20px;
@@ -562,7 +562,7 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Módulo do Carrossel de Produtos (Vitrine Infinita limitada a 10 itens) -->
+<!-- Módulo do Carrossel de Produtos -->
 <div id="moduloCarrossel" style="display: none;">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
@@ -579,7 +579,7 @@ body {
     </div>
 </div>
 
-<!-- Módulo Administrativo (Sistema Original Mantido) -->
+<!-- Módulo Administrativo -->
 <div id="moduloAdministrativo">
     <div class="container">
         <div class="header">
@@ -597,7 +597,7 @@ body {
                 </div>
                 <div class="campo-pesquisa">
                     <label>Descrição:</label>
-                    <input type="text" id="pesqNome" placeholder="Ex: tom pad (busca inteligente)...">
+                    <input type="text" id="pesqNome" placeholder="Ex: tom pad...">
                 </div>
                 <div class="campo-pesquisa">
                     <label>Marca:</label>
@@ -614,7 +614,7 @@ body {
     </div>
 </div>
 
-<!-- Modais do Sistema Administrativo -->
+<!-- Modais -->
 <div class="modal-fundo" id="janela">
     <div class="modal">
         <div class="modal-topo">
@@ -631,33 +631,27 @@ body {
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button id="btnProcess" class="btn" disabled>Iniciar Importação</button>
-                <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper Sincronização</button>
+                <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper</button>
             </div>
             
-            <div id="log" style="margin-top:20px; font-weight: 500; font-size: 14px; line-height: 1.5;"></div>
+            <div id="log" style="margin-top:20px; font-weight: 500;"></div>
         </div>
     </div>
 </div>
 
 <div class="modal-fundo" id="modalEdicaoFundo">
     <div class="modal modal-edicao-ampla">
-        <div class="modal-topo" style="align-items: flex-start;">
+        <div class="modal-topo">
             <div>
-                <h3 style="color: var(--primary-color);">Edição Completa de Produto</h3>
-                <p id="infoProgressoEdicao" style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;"></p>
+                <h3 style="color: var(--primary-color);">Edição de Produto</h3>
+                <p id="infoProgressoEdicao" style="font-size: 12px; color: #64748b;"></p>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <button class="btn" id="btnSalvarEProximoTopo" onclick="salvarEProximoProduto()" style="padding: 8px 16px; font-size: 13px;">💾 Salvar e Próximo ➔</button>
-                <button onclick="fecharModalEdicao()" style="background:transparent;border:none;cursor:pointer;font-size:20px;font-weight:bold;color:#64748b;">✕</button>
-            </div>
+            <button onclick="fecharModalEdicao()" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:#64748b;">✕</button>
         </div>
-        <div>
-            <div id="containerCamposEdicao" class="grid-edicao-ampla"></div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-                <button class="btn" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
-                <button class="btn" id="btnSalvarEProximo" onclick="salvarEProximoProduto()">💾 Salvar e Próximo ➔</button>
-            </div>
+        <div id="containerCamposEdicao" class="grid-edicao-ampla"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+            <button class="btn" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
+            <button class="btn" id="btnSalvarEProximo" onclick="salvarEProximoProduto()">💾 Salvar e Próximo</button>
         </div>
     </div>
 </div>
@@ -668,182 +662,101 @@ const URL_DO_GAS = "https://script.google.com/macros/s/AKfycbwx30KYx6kGRD1fpUQSf
 let csvData = []; 
 let headers = [];
 let dadosGlobais = [];
-let cancelamentoSolicitado = false;
 let listaFiltradaAtual = [];
 let indiceEdicaoAtual = 0;
-
-// Variáveis do Carrossel Quadrado (Limitado a 10 itens)
 let indiceCarrosselAtual = 0;
 let timerCarrossel = null;
 let carrosselAtivo = false;
 
+// Abrir/Fechar modais
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
 
-document.getElementById('btnCancelar').onclick = () => {
-    cancelamentoSolicitado = true;
-    document.getElementById('log').innerHTML += "<br>⚠️ Interrupção solicitada... Finalizando lote atual.";
-};
-
+// Função de imagem
 function resolverUrlImagem(valFoto) {
     if (!valFoto) return '';
     let limpa = valFoto.trim();
     if (limpa.toUpperCase() === 'NÃO' || limpa.toUpperCase() === 'NAO') return '';
-    
-    if (limpa.startsWith('http://') || limpa.startsWith('https://')) {
-        return limpa;
-    }
-    
-    let baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    
-    if (limpa.startsWith('imagens/')) {
-        return baseUrl + limpa;
-    } else {
-        return baseUrl + 'imagens/' + limpa;
-    }
+    if (limpa.startsWith('http')) return limpa;
+    let base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
+// Importação CSV
 csvFile.onchange = e => {
     const file = e.target.files[0]; 
     if(!file) return;
     fileName.textContent = file.name;
-    
     const reader = new FileReader(); 
     reader.readAsText(file, 'ISO-8859-1');
     reader.onload = ev => {
-        const text = ev.target.result;
-        const lines = text.split(/\r\n|\n/); 
+        const lines = ev.target.result.split(/\r\n|\n/); 
         if (lines.length === 0) return;
-
         const sep = lines[0].includes(';') ? ';' : ',';
         headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
-        
         csvData = [];
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i].trim();
             if (!line) continue;
-            
-            const row = line.split(sep).map(val => val.trim().replace(/^"|"$/g, ''));
+            const row = line.split(sep).map(v => v.trim().replace(/^"|"$/g, ''));
             let obj = {}; 
-            headers.forEach((h, index) => {
-                obj[h] = row[index] !== undefined ? row[index] : '';
-            });
+            headers.forEach((h, idx) => obj[h] = row[idx] || '');
             csvData.push(obj);
         }
-        
         btnProcess.disabled = false;
-        document.getElementById('log').textContent = `Arquivo carregado com sucesso! ${csvData.length} linhas prontas para enviar.`;
+        document.getElementById('log').textContent = `${csvData.length} linhas carregadas.`;
     }
 };
 
 btnProcess.onclick = async () => {
-    cancelamentoSolicitado = false;
     btnProcess.disabled = true;
     document.getElementById('csvFile').disabled = true;
-    const btnCancelar = document.getElementById('btnCancelar');
-    btnCancelar.style.display = "inline-block";
+    document.getElementById('btnCancelar').style.display = "inline-block";
+    document.getElementById('progressContainer').style.display = "block";
     
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
-    progressContainer.style.display = "block";
-
-    const tamanhoLote = 1000;
-    const totalItens = csvData.length;
-    let lotes = [];
-    
-    for (let i = 0; i < totalItens; i += tamanhoLote) {
-        lotes.push(csvData.slice(i, i + tamanhoLote));
-    }
-
-    let lotesProcessados = 0;
-    let totalNovos = 0;
-    let totalAtualizados = 0;
-    let totalIgnorados = 0;
-
-    for (let i = 0; i < lotes.length; i++) {
-        if (cancelamentoSolicitado) break;
-
-        let payload = {
-            headers: headers,
-            items: lotes[i].map(item => ({ data: item }))
-        };
-
+    let sucessos = 0;
+    for (let i = 0; i < csvData.length; i++) {
         try {
-            const resposta = await fetch(URL_DO_GAS, {
+            await fetch(URL_DO_GAS, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ headers, items: [{ data: csvData[i] }] })
             });
-            
-            const resultado = await resposta.json();
-            if (resultado && resultado.success) {
-                totalNovos += resultado.novos || 0;
-                totalAtualizados += resultado.atualizados || 0;
-                totalIgnorados += resultado.ignorados || 0;
-            }
-        } catch (erro) {
-            console.error("Erro de conexão:", erro);
-            document.getElementById('log').innerHTML = `<span style="color:red">❌ Erro de conexão: ${erro.message}</span>`;
-            break;
-        }
-
-        lotesProcessados++;
-        let progresso = Math.round((lotesProcessados / lotes.length) * 100);
-        progressBar.style.width = progresso + "%";
-        progressBar.textContent = progresso + "%";
+            sucessos++;
+            document.getElementById('progressBar').style.width = `${Math.round(((i+1)/csvData.length)*100)}%`;
+        } catch(e) { console.error(e); }
     }
-
-    btnCancelar.style.display = "none";
-    document.getElementById('csvFile').disabled = false;
-    btnProcess.disabled = false;
-
-    let mensagemResumo = cancelamentoSolicitado ? "⚠️ **Importação Interrompida pelo Usuário!**<br>" : "✅ **Importação Concluída com Sucesso!**<br>";
-    mensagemResumo += `• Total Lidos: ${totalItens}<br>`;
-    mensagemResumo += `• Novos Adicionados: ${totalNovos}<br>`;
-    mensagemResumo += `• Atualizados: ${totalAtualizados}<br>`;
-    mensagemResumo += `• Ignorados (Sem alteração): ${totalIgnorados}`;
     
-    document.getElementById('log').innerHTML = mensagemResumo;
+    alert(`Importação concluída! ${sucessos} de ${csvData.length} enviados.`);
+    document.getElementById('btnCancelar').style.display = "none";
+    document.getElementById('csvFile').disabled = false;
+    btnProcess.disabled = true;
+    fechar();
     carregarDadosPlanilha();
 };
 
+// CARREGAR DADOS E PASSAR DA TELA DE BOAS-VINDAS
 async function carregarDadosPlanilha() {
     try {
-        const resposta = await fetch(URL_DO_GAS);
-        const resJson = await resposta.json();
-        
-        if (!resJson || !resJson.success) {
-            throw new Error(resJson.error || "Erro desconhecido ao buscar dados.");
-        }
-        
-        dadosGlobais = resJson.data || [];
-        if(headers.length === 0 && dadosGlobais.length > 0) {
-            headers = Object.keys(dadosGlobais[0]);
-        }
-
+        const res = await fetch(URL_DO_GAS);
+        const json = await res.json();
+        dadosGlobais = json.data || [];
+        if(dadosGlobais.length > 0) headers = Object.keys(dadosGlobais[0]);
         renderizarTabela();
-        
-        // Finaliza a tela de boas-vindas após carregar os dados
-        const telaBoasVindas = document.getElementById('telaBoasVindas');
-        telaBoasVindas.style.opacity = '0';
-        setTimeout(() => {
-            telaBoasVindas.style.display = 'none';
-            // Inicia o carrossel automático após as boas-vindas
-            iniciarCarrossel();
-        }, 1200);
-
     } catch (e) {
-        console.error("Erro:", e);
-        const telaBoasVindas = document.getElementById('telaBoasVindas');
-        telaBoasVindas.style.opacity = '0';
+        console.error("Erro ao carregar:", e);
+        dadosGlobais = [];
+    } finally {
+        // SEMPRE FECHA A TELA DE BOAS-VINDAS, MESMO SE DER ERRO
+        const tela = document.getElementById('telaBoasVindas');
+        tela.style.opacity = '0';
         setTimeout(() => {
-            telaBoasVindas.style.display = 'none';
+            tela.style.display = 'none';
             iniciarCarrossel();
         }, 1200);
     }
 }
 
-// Lógica de Transição entre Carrossel e Administrativo
+// Navegação
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -856,7 +769,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// Funções do Carrossel de 6 Segundos Infinito (limitado aos primeiros 10 itens)
+// Carrossel
 function iniciarCarrossel() {
     if (dadosGlobais.length === 0) return;
     carrosselAtivo = true;
@@ -866,242 +779,138 @@ function iniciarCarrossel() {
 
 function pararCarrossel() {
     carrosselAtivo = false;
-    if (timerCarrossel) {
-        clearTimeout(timerCarrossel);
-        timerCarrossel = null;
-    }
+    if (timerCarrossel) clearTimeout(timerCarrossel);
 }
 
 function renderizarSlideVitrine() {
     if (!carrosselAtivo || dadosGlobais.length === 0) return;
-
-    const totalItensVitrine = Math.min(10, dadosGlobais.length);
-
-    if (indiceCarrosselAtual >= totalItensVitrine) {
-        indiceCarrosselAtual = 0;
-    }
-    if (indiceCarrosselAtual < 0) {
-        indiceCarrosselAtual = totalItensVitrine - 1;
-    }
-
+    const total = Math.min(10, dadosGlobais.length);
+    if (indiceCarrosselAtual >= total) indiceCarrosselAtual = 0;
+    
     const p = dadosGlobais[indiceCarrosselAtual];
-    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.toLowerCase().includes('desc') || h.toLowerCase().includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.toLowerCase().includes('marca')) || headers[2];
-    const hPreco = headers.find(h => h.toLowerCase().includes('preço') || h.toLowerCase().includes('valor') || h.toLowerCase().includes('venda')) || headers[3];
-    const hFoto = headers.find(h => h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) || '';
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
+    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
+    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
+    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
 
-    let valCod = p[hCod] || '';
-    let valDesc = p[hDesc] || '';
-    let valMarca = p[hMarca] || '';
-    let valPreco = hPreco ? (p[hPreco] || '') : '';
-    let valFoto = hFoto ? (p[hFoto] || '') : '';
+    let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
+        ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
+        : `<div style="color:#94a3b8">Sem imagem</div>`;
 
-    let renderFoto = '';
-    if (valFoto && valFoto.toUpperCase() !== 'NÃO' && valFoto.toUpperCase() !== 'NAO') {
-        let urlCompleta = resolverUrlImagem(valFoto);
-        renderFoto = `<img src="${urlCompleta}" alt="Produto" onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=Sem+Imagem';">`;
-    } else {
-        renderFoto = `<div style="color: #94a3b8; font-weight: 600;">Produto sem imagem</div>`;
-    }
-
-    let htmlCard = `
+    document.getElementById('containerCardVitrine').innerHTML = `
         <div class="card-quadrado-vitrine">
-            <div class="vitrine-foto-container">
-                ${renderFoto}
-            </div>
+            <div class="vitrine-foto-container">${fotoHtml}</div>
             <div class="vitrine-info">
-                <div class="vitrine-marca">${valMarca}</div>
-                <div class="vitrine-descricao">${valDesc}</div>
+                <div class="vitrine-marca">${p[hMarca] || ''}</div>
+                <div class="vitrine-descricao">${p[hDesc] || ''}</div>
             </div>
             <div class="vitrine-rodape-preco">
-                <span class="vitrine-codigo">Cód: ${valCod}</span>
-                <span class="vitrine-preco">${valPreco}</span>
+                <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
+                <span class="vitrine-preco">${p[hPreco] || ''}</span>
             </div>
-            <div class="carrossel-progresso-barra" id="barraProgressoSlide"></div>
-        </div>
-    `;
-
-    document.getElementById('containerCardVitrine').innerHTML = htmlCard;
-    document.getElementById('contadorVitrine').textContent = `Produto ${indiceCarrosselAtual + 1} de ${totalItensVitrine}`;
-
-    // Dispara animação de preenchimento da barra de progresso (6 segundos)
+            <div class="carrossel-progresso-barra"></div>
+        </div>`;
+    document.getElementById('contadorVitrine').textContent = `Produto ${indiceCarrosselAtual + 1} de ${total}`;
+    
     setTimeout(() => {
-        const barra = document.getElementById('barraProgressoSlide');
-        if (barra) {
-            barra.style.transition = 'width 6s linear';
-            barra.style.width = '100%';
-        }
+        const barra = document.querySelector('.carrossel-progresso-barra');
+        if(barra) { barra.style.transition = 'width 6s linear'; barra.style.width = '100%'; }
     }, 50);
 
-    // Agenda o próximo slide para exatamente 6 segundos
-    if (timerCarrossel) clearTimeout(timerCarrossel);
-    timerCarrossel = setTimeout(() => {
-        indiceCarrosselAtual++;
-        renderizarSlideVitrine();
-    }, 6000);
+    timerCarrossel = setTimeout(() => { indiceCarrosselAtual++; renderizarSlideVitrine(); }, 6000);
 }
 
-function mudarSlideCarrossel(direcao) {
+function mudarSlideCarrossel(d) {
     if (!carrosselAtivo) return;
-    if (timerCarrossel) clearTimeout(timerCarrossel);
-    indiceCarrosselAtual += direcao;
+    clearTimeout(timerCarrossel);
+    indiceCarrosselAtual += d;
     renderizarSlideVitrine();
 }
 
-function atendeTermosBusca(textoAlvo, termoBusca) {
-    if (!termoBusca) return true;
-    const palavras = termoBusca.split(/\s+/).filter(Boolean);
-    const alvo = String(textoAlvo || '').toLowerCase();
-    return palavras.every(palavra => alvo.includes(palavra));
-}
-
+// Tabela com Ações (Editar/Excluir)
 function renderizarTabela() {
-    const fCod = document.getElementById('pesqCodigo').value.toLowerCase().trim(); 
-    const fNome = document.getElementById('pesqNome').value.toLowerCase().trim(); 
-    const fMarca = document.getElementById('pesqMarca').value.toLowerCase().trim();
+    const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
+    const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
+    const fMarca = document.getElementById('pesqMarca').value.toLowerCase();
 
-    if(headers.length === 0 && dadosGlobais.length > 0) {
-        headers = Object.keys(dadosGlobais[0]);
-    }
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
+    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
+    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
+    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
 
     listaFiltradaAtual = dadosGlobais.filter(p => {
-        let chaves = Object.keys(p);
-        let chaveCod = headers[0] || chaves[0];
-        let chaveDesc = headers.find(h => h.toLowerCase().includes('desc') || h.toLowerCase().includes('nome')) || chaves[1];
-        let chaveMarca = headers.find(h => h.toLowerCase().includes('marca')) || chaves[2];
-
-        let valCodStr = String(p[chaveCod] || '').toLowerCase();
-        let valDescStr = String(p[chaveDesc] || '').toLowerCase();
-        let valMarcaStr = String(p[chaveMarca] || '').toLowerCase();
-
-        return valCodStr.includes(fCod) && 
-               atendeTermosBusca(valDescStr, fNome) && 
-               valMarcaStr.includes(fMarca);
+        return String(p[hCod]||'').toLowerCase().includes(fCod) &&
+               String(p[hDesc]||'').toLowerCase().includes(fNome) &&
+               String(p[hMarca]||'').toLowerCase().includes(fMarca);
     });
 
-    document.getElementById('infoQtd').textContent = `Exibindo ${listaFiltradaAtual.length} de ${dadosGlobais.length} registros na planilha`;
-    
-    if (dadosGlobais.length === 0) {
-        document.getElementById('areaLista').innerHTML = `<p style="padding: 20px; text-align: center; color: #64748b;">Nenhum dado encontrado na planilha.</p>`;
-        return;
-    }
+    document.getElementById('infoQtd').textContent = `${listaFiltradaAtual.length} de ${dadosGlobais.length} registros`;
 
-    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.toLowerCase().includes('desc') || h.toLowerCase().includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.toLowerCase().includes('marca')) || headers[2];
-    const hPreco = headers.find(h => h.toLowerCase().includes('preço') || h.toLowerCase().includes('valor') || h.toLowerCase().includes('venda')) || headers[3];
-    const hFoto = headers.find(h => h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) || '';
+    let html = `<table class="tabela-produtos"><thead><tr>
+        <th>Código</th><th>Descrição</th><th>Marca</th><th>Preço</th><th>Foto</th><th>Ações</th>
+    </tr></thead><tbody>`;
 
-    let html = '<table class="tabela-produtos"><thead><tr>';
-    html += `<th>Código</th>`;
-    html += `<th>Descrição</th>`;
-    html += `<th>Marca</th>`;
-    html += `<th>Preço</th>`;
-    html += `<th>Foto</th>`;
-    html += `<th>Ações</th>`;
-    html += '</tr></thead><tbody>';
+    listaFiltradaAtual.forEach(p => {
+        let foto = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
+            ? `<img src="${resolverUrlImagem(p[hFoto])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` 
+            : '<span style="color:#94a3b8">—</span>';
 
-    listaFiltradaAtual.slice(0, 100).forEach(p => {
-        let valCod = p[hCod] || '';
-        let valDesc = p[hDesc] || '';
-        let valMarca = p[hMarca] || '';
-        let valPreco = hPreco ? (p[hPreco] || '') : '';
-        let valFoto = hFoto ? (p[hFoto] || '') : '';
-
-        let renderFoto = '';
-        if (valFoto && valFoto.toUpperCase() !== 'NÃO' && valFoto.toUpperCase() !== 'NAO') {
-            let urlCompleta = resolverUrlImagem(valFoto);
-            renderFoto = `<a href="${urlCompleta}" target="_blank" title="Abrir imagem original"><img src="${urlCompleta}" alt="Foto" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Erro';"></a>`;
-        } else {
-            renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
-        }
-
-        html += '<tr>';
-        html += `<td>${valCod}</td>`;
-        html += `<td>${valDesc}</td>`;
-        html += `<td>${valMarca}</td>`;
-        html += `<td class="preco">${valPreco}</td>`;
-        html += `<td>${renderFoto}</td>`;
-        html += `<td>
-                    <div class="area-botoes-acao">
-                        <button class="btn btn-editar-acao" onclick="editarRegistroPorCodigo('${valCod}')">Editar</button>
-                        <button class="btn btn-excluir" onclick="confirmarExclusao('${valCod}', '${valDesc.replace(/'/g, "\\'")}')">Excluir</button>
-                    </div>
-                </td>`;
-        html += '</tr>';
+        html += `<tr>
+            <td>${p[hCod]}</td>
+            <td>${p[hDesc]}</td>
+            <td>${p[hMarca]}</td>
+            <td class="preco">${p[hPreco]}</td>
+            <td>${foto}</td>
+            <td>
+                <div class="area-botoes-acao">
+                    <button class="btn btn-editar-acao" onclick="editarRegistroPorCodigo('${p[hCod]}')">Editar</button>
+                    <button class="btn btn-excluir" onclick="confirmarExclusao('${p[hCod]}', '${(p[hDesc]||'').replace(/'/g, "\\'")}')">Excluir</button>
+                </div>
+            </td>
+        </tr>`;
     });
-    
-    html += '</tbody></table>';
+
+    html += `</tbody></table>`;
     document.getElementById('areaLista').innerHTML = html;
 }
 
-function editarRegistroPorCodigo(codigo) {
-    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
-    indiceEdicaoAtual = listaFiltradaAtual.findIndex(item => String(item[hCod]) === String(codigo));
-    
+// Funções de Edição e Exclusão
+function editarRegistroPorCodigo(cod) {
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
     if (indiceEdicaoAtual !== -1) {
         preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
         document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
     }
 }
 
-async function confirmarExclusao(codigo, descricao) {
-    if (!confirm(`Deseja realmente excluir o produto:\nCódigo: ${codigo}\nDescrição: ${descricao}\n\nEsta ação não pode ser desfeita!`)) {
-        return;
-    }
-
+async function confirmarExclusao(cod, desc) {
+    if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
     try {
-        const payload = {
-            acao: "excluir",
-            codigo: codigo,
-            headers: headers
-        };
-
-        const resposta = await fetch(URL_DO_GAS, {
+        await fetch(URL_DO_GAS, {
             method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ acao: "excluir", codigo: cod, headers })
         });
-
-        const resultado = await resposta.json();
-        
-        if (resultado && resultado.success) {
-            alert("✅ Produto excluído com sucesso!");
-            // Atualiza a lista local
-            const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
-            dadosGlobais = dadosGlobais.filter(item => String(item[hCod]) !== String(codigo));
-            renderizarTabela();
-        } else {
-            throw new Error(resultado.error || "Não foi possível excluir o produto.");
-        }
-    } catch (erro) {
-        console.error("Erro na exclusão:", erro);
-        alert("❌ Erro ao excluir: " + erro.message);
-    }
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        dadosGlobais = dadosGlobais.filter(i => String(i[hCod]) !== String(cod));
+        renderizarTabela();
+        alert("Excluído!");
+    } catch(e) { alert("Erro: " + e.message); }
 }
 
-function preencherFormularioEdicao(produtoObj) {
-    const container = document.getElementById('containerCamposEdicao');
-    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
-    
-    document.getElementById('infoProgressoEdicao').textContent = `Editando item ${indiceEdicaoAtual + 1} de ${listaFiltradaAtual.length} com o filtro ativo.`;
-
+function preencherFormularioEdicao(prod) {
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    document.getElementById('infoProgressoEdicao').textContent = `Item ${indiceEdicaoAtual+1} de ${listaFiltradaAtual.length}`;
     let html = '';
     headers.forEach(h => {
-        let valorAtual = produtoObj[h] !== undefined ? produtoObj[h] : '';
-        let ehCodigo = (h === hCod);
-        let ehFoto = h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url');
-        
-        let placeholderTxt = ehFoto ? "Ex: imagens/331.jpg" : `Digite ${h}...`;
-
-        html += `<div class="grupo-campo-edicao">`;
-        html += `<label>${h}${ehCodigo ? ' (Código fixo)' : ''}</label>`;
-        html += `<input type="text" id="input_edit_${h}" value="${valorAtual}" ${ehCodigo ? 'readonly style="background:#e2e8f0; color:#64748b; cursor:not-allowed;"' : ''} placeholder="${placeholderTxt}">`;
-        html += `</div>`;
+        html += `<div class="grupo-campo-edicao">
+            <label>${h}</label>
+            <input type="text" id="campo_${h.replace(/\W/g,'_')}" value="${prod[h]||''}" ${h===hCod?'readonly style="background:#eee"':''}>
+        </div>`;
     });
-
-    container.innerHTML = html;
+    document.getElementById('containerCamposEdicao').innerHTML = html;
 }
 
 function fecharModalEdicao() {
@@ -1109,78 +918,33 @@ function fecharModalEdicao() {
 }
 
 async function salvarEProximoProduto() {
-    let produtoModificado = {};
-    headers.forEach(h => {
-        const campoInput = document.getElementById(`input_edit_${h}`);
-        if(campoInput) {
-            produtoModificado[h] = campoInput.value;
-        }
-    });
-
-    const btnSalvar = document.getElementById('btnSalvarEProximo');
-    const btnSalvarTopo = document.getElementById('btnSalvarEProximoTopo');
-    
-    [btnSalvar, btnSalvarTopo].forEach(b => {
-        if(b) {
-            b.disabled = true;
-            b.textContent = "Salvando...";
-        }
-    });
-
-    let payload = {
-        headers: headers,
-        items: [{ data: produtoModificado }]
-    };
-
+    let obj = {};
+    headers.forEach(h => obj[h] = document.getElementById(`campo_${h.replace(/\W/g,'_')}`).value);
     try {
-        const resposta = await fetch(URL_DO_GAS, {
+        await fetch(URL_DO_GAS, {
             method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ headers, items: [{ data: obj }] })
         });
-        
-        const resultado = await resposta.json();
-        if (resultado && resultado.success) {
-            const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
-            const idxGlobal = dadosGlobais.findIndex(item => String(item[hCod]) === String(produtoModificado[hCod]));
-            if(idxGlobal !== -1) {
-                dadosGlobais[idxGlobal] = produtoModificado;
-            }
-
-            renderizarTabela();
-
-            indiceEdicaoAtual++;
-            if (indiceEdicaoAtual < listaFiltradaAtual.length) {
-                preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
-                [btnSalvar, btnSalvarTopo].forEach(b => {
-                    if(b) {
-                        b.disabled = false;
-                        b.textContent = "💾 Salvar e Próximo ➔";
-                    }
-                });
-            } else {
-                fecharModalEdicao();
-                alert("Parabéns! Todos os produtos deste filtro foram revisados e alterados com sucesso.");
-                [btnSalvar, btnSalvarTopo].forEach(b => {
-                    if(b) {
-                        b.disabled = false;
-                        b.textContent = "💾 Salvar e Próximo ➔";
-                    }
-                });
-            }
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        const idx = dadosGlobais.findIndex(i => String(i[hCod]) === String(obj[hCod]));
+        if(idx !== -1) dadosGlobais[idx] = obj;
+        renderizarTabela();
+        indiceEdicaoAtual++;
+        if(indiceEdicaoAtual < listaFiltradaAtual.length) {
+            preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
         } else {
-            throw new Error("Erro ao salvar no Google Sheets.");
+            fecharModalEdicao();
+            alert("Todos os itens revisados!");
         }
-    } catch (e) {
-        console.error("Erro:", e);
-        alert("Erro ao salvar: " + e.message);
-        [btnSalvar, btnSalvarTopo].forEach(b => {
-            if(b) {
-                b.disabled = false;
-                b.textContent = "💾 Salvar e Próximo ➔";
-            }
-        });
-    }
+    } catch(e) { alert("Erro: " + e.message); }
 }
 
-document.getElementById('
+// Iniciar busca
+document.getElementById('pesqCodigo').oninput = renderizarTabela;
+document.getElementById('pesqNome').oninput = renderizarTabela;
+document.getElementById('pesqMarca').oninput = renderizarTabela;
+
+window.onload = carregarDadosPlanilha;
+</script>
+</body>
+</html>
