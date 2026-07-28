@@ -454,24 +454,24 @@ document.addEventListener('click', e => {
     }
 });
 
-// ===== RESTO DO CÓDIGO ORIGINAL COM CORREÇÃO DE CARREGAMENTO =====
-function esconderTelaBoasVindas() {
+// ===== FUNÇÃO AJUSTADA PARA ESPERAR OS DADOS =====
+async function esconderTelaBoasVindas() {
     if (telaJaFechada) return;
     telaJaFechada = true;
+    
+    // Carrega os dados PRIMEIRO, DEPOIS fecha a tela
+    await carregarDadosPlanilha();
+    
     const tela = document.getElementById('telaBoasVindas');
     tela.classList.add('tela-oculta');
     setTimeout(() => {
         tela.style.display = 'none';
-        // Garante que os dados sejam carregados antes de iniciar o carrossel
-        if (dadosGlobais.length === 0) {
-            carregarDadosPlanilha().then(() => iniciarCarrossel());
-        } else {
-            iniciarCarrossel();
-        }
+        iniciarCarrossel();
     }, 1200);
 }
 
-setTimeout(esconderTelaBoasVindas, 15000);
+// Inicia o processo imediatamente, não espera 15 segundos
+esconderTelaBoasVindas();
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
@@ -723,4 +723,36 @@ function renderizarTabela() {
             : '<span style="color:#94a3b8">—</span>';
 
         html += `<tr>
-            <td><input type="checkbox" class="chk-produto" value="${p[
+            <td><input type="checkbox" class="chk-produto" value="${p[hCod]}"></td>
+            <td>${p[hCod] || ''}</td>
+            <td>${p[hDesc] || ''}</td>
+            <td>${p[hMarca] || ''}</td>
+            <td class="preco">${p[hPreco] || ''}</td>
+            <td>${foto}</td>
+            <td>
+                <button class="btn btn-editar-acao" onclick="editarProduto('${p[hCod]}')">Editar</button>
+            </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    document.getElementById('areaLista').innerHTML = html;
+}
+
+function fecharModalEdicao() {
+    document.getElementById('modalEdicaoFundo').classList.remove('modal-ativo');
+}
+
+function editarProduto(codigo) {
+    indiceEdicaoAtual = dadosGlobais.findIndex(p => String(p[headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0]]) === String(codigo));
+    if (indiceEdicaoAtual === -1) return;
+    const produto = dadosGlobais[indiceEdicaoAtual];
+    const container = document.getElementById('containerCamposEdicao');
+    container.innerHTML = '';
+    headers.forEach(h => {
+        const div = document.createElement('div');
+        div.className = 'grupo-campo';
+        div.innerHTML = `<label>${h}:</label><input type="text" id="edt_${h}" value="${produto[h] || ''}">`;
+        container.appendChild(div);
+    });
+    document.getElementById('modalEdicao
