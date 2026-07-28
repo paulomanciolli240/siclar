@@ -105,7 +105,7 @@ body {
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes aparecerSpinner { to { opacity: 1; } }
 
-/* === CARROSSEL ATUALIZADO === */
+/* === CARROSSEL === */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
@@ -175,14 +175,22 @@ body {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    z-index: 1;
 }
 
-/* Efeito: só o item em destaque cresce */
+/* Efeito hover normal */
 .card-quadrado-vitrine:hover {
     transform: scale(1.08);
     box-shadow: 0 20px 40px -8px rgba(234, 88, 12, 0.4);
     z-index: 10;
+}
+
+/* === EFEITO DE CLIQUE: DOBRA TAMANHO E SOBREPÕE === */
+.card-quadrado-vitrine.ativo-clique {
+    transform: scale(2);
+    z-index: 9999 !important;
+    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6);
 }
 
 .vitrine-foto-container { 
@@ -319,7 +327,7 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Carrossel Atualizado -->
+<!-- Carrossel -->
 <div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
@@ -516,7 +524,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// === NOVA LOGICA DO CARROSSEL ===
+// === LOGICA DO CARROSSEL ===
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -555,8 +563,9 @@ function renderizarPaginaCarrossel() {
 
         html += `
         <div class="card-quadrado-vitrine" 
+             onclick="this.classList.toggle('ativo-clique')"
              onmouseenter="pausaPorHover=true;" 
-             onmouseleave="pausaPorHover=false; renderizarPaginaCarrossel();">
+             onmouseleave="if(!this.classList.contains('ativo-clique')){ pausaPorHover=false; renderizarPaginaCarrossel(); }">
             <div class="vitrine-foto-container">${fotoHtml}</div>
             <div class="vitrine-info">
                 <div class="vitrine-marca">${p[hMarca] || ''}</div>
