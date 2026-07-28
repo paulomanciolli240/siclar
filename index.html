@@ -205,14 +205,12 @@ body {
     z-index: 1;
 }
 
-/* Efeito hover normal */
 .card-quadrado-vitrine:hover {
     transform: scale(1.08);
     box-shadow: 0 20px 40px -8px rgba(234, 88, 12, 0.4);
     z-index: 10;
 }
 
-/* === EFEITO DE CLIQUE: DOBRA TAMANHO E SOBREPÕE === */
 .card-quadrado-vitrine.ativo-clique {
     transform: scale(2);
     z-index: 9999 !important;
@@ -342,7 +340,6 @@ body {
 </head>
 <body>
 
-<!-- Tela de Boas-Vindas -->
 <div id="telaBoasVindas">
     <div class="conteudo-animado">
         <div class="linha-1">SICLAR</div>
@@ -353,12 +350,10 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Carrossel com Pesquisa -->
 <div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
         <div class="carrossel-frase-destaque">Aprecie nossos produtos</div>
-        <!-- CAMPO DE PESQUISA ADICIONADO -->
         <div class="pesquisa-carrossel">
             <input type="text" id="pesquisaCarrossel" placeholder="🔍 Pesquise por descrição ou marca...">
         </div>
@@ -374,7 +369,6 @@ body {
     </div>
 </div>
 
-<!-- Administrativo - TUDO IGUAL -->
 <div id="moduloAdministrativo">
     <div class="container">
         <div class="header">
@@ -400,7 +394,6 @@ body {
     </div>
 </div>
 
-<!-- Modais - TUDO IGUAL -->
 <div class="modal-fundo" id="janela">
     <div class="modal">
         <div class="modal-topo">
@@ -451,11 +444,8 @@ let timerCarrossel = null;
 let carrosselAtivo = false;
 let telaJaFechada = false;
 let pausaPorHover = false;
-let pausaPorPesquisa = false; // Nova variável: pausa durante digitação
 let termoPesquisaCarrossel = '';
-let timerPesquisa = null; // Timer para retomar rotação após parar de digitar
 
-// FECHAR TELA - GARANTIDA
 function esconderTelaBoasVindas() {
     if (telaJaFechada) return;
     telaJaFechada = true;
@@ -481,21 +471,19 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
-// === PESQUISA COM PAUSA NA ROTAÇÃO ===
-document.getElementById('pesquisaCarrossel').addEventListener('input', e => {
-    // Parar rotação enquanto digita
-    pausaPorPesquisa = true;
-    clearTimeout(timerPesquisa);
+// === FUNÇÃO DE PESQUISA INTELIGENTE ===
+function buscaInteligente(textoBusca, textoAlvo) {
+    if (!textoBusca) return true;
+    const termos = textoBusca.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
+    const alvo = textoAlvo.toLowerCase();
+    return termos.every(termo => alvo.includes(termo));
+}
 
-    termoPesquisaCarrossel = e.target.value.toLowerCase().trim();
+// === PESQUISA NO CARROSSEL COM PAUSA NA ROTAÇÃO ===
+document.getElementById('pesquisaCarrossel').addEventListener('input', e => {
+    termoPesquisaCarrossel = e.target.value.trim();
     indicePaginaCarrossel = 0;
     renderizarPaginaCarrossel();
-
-    // Retoma rotação 1 segundo após parar de digitar
-    timerPesquisa = setTimeout(() => {
-        pausaPorPesquisa = false;
-        renderizarPaginaCarrossel();
-    }, 1000);
 });
 
 csvFile.onchange = e => {
@@ -574,7 +562,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// === LOGICA DO CARROSSEL COM FILTRO E PAUSA ===
+// === LOGICA DO CARROSSEL ===
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -590,8 +578,10 @@ function pararCarrossel() {
 }
 
 function renderizarPaginaCarrossel() {
-    // AQUI: Para se estiver passando o mouse OU digitando na pesquisa
-    if (!carrosselAtivo || pausaPorHover || pausaPorPesquisa) return;
+    // Para rotação se estiver com texto na pesquisa OU com mouse sobre o card
+    if (!carrosselAtivo || pausaPorHover || termoPesquisaCarrossel.length > 0) {
+        if (timerCarrossel) clearTimeout(timerCarrossel);
+    }
 
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
@@ -599,12 +589,12 @@ function renderizarPaginaCarrossel() {
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
 
-    // APLICA O FILTRO INTELIGENTE: DESCRIÇÃO OU MARCA
+    // FILTRO INTELIGENTE: todos os termos digitados devem existir na descrição OU marca
     let produtosFiltrados = dadosGlobais.filter(p => {
         if (!termoPesquisaCarrossel) return true;
-        const desc = String(p[hDesc] || '').toLowerCase();
-        const marca = String(p[hMarca] || '').toLowerCase();
-        return desc.includes(termoPesquisaCarrossel) || marca.includes(termoPesquisaCarrossel);
+        const desc = String(p[hDesc] || '');
+        const marca = String(p[hMarca] || '');
+        return buscaInteligente(termoPesquisaCarrossel, desc) || buscaInteligente(termoPesquisaCarrossel, marca);
     });
 
     const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
@@ -645,19 +635,19 @@ function renderizarPaginaCarrossel() {
     document.getElementById('contadorVitrine').textContent = 
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
-    timerCarrossel = setTimeout(() => {
-        if (!pausaPorHover && !pausaPorPesquisa && produtosFiltrados.length > 0) {
+    // Só agenda próxima página se não houver pesquisa ativa
+    if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
+        timerCarrossel = setTimeout(() => {
             indicePaginaCarrossel++;
             renderizarPaginaCarrossel();
-        }
-    }, 6000);
+        }, 6000);
+    }
 }
 
 function mudarSlideCarrossel(d) {
     if (!carrosselAtivo) return;
     clearTimeout(timerCarrossel);
     pausaPorHover = false;
-    pausaPorPesquisa = false;
     indicePaginaCarrossel += d;
     renderizarPaginaCarrossel();
 }
