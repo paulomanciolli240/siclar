@@ -537,20 +537,18 @@ function renderizarTabela() {
             if (urlFoto.toUpperCase() === 'NÃO' || urlFoto.toUpperCase() === 'NAO') {
                 renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
             } else if (urlFoto.startsWith('http://') || urlFoto.startsWith('https://')) {
-                // Conversão robusta para link direto do Imgur
+                // Conversão robusta de links do Imgur (seja link de visualização ou direto)
                 if (urlFoto.includes('imgur.com')) {
                     urlFoto = urlFoto.split('?')[0];
-                    if (!urlFoto.endsWith('.jpg') && !urlFoto.endsWith('.png') && !urlFoto.endsWith('.gif') && !urlFoto.endsWith('.webp') && !urlFoto.endsWith('.jpeg')) {
-                        const partes = urlFoto.split('/');
-                        const idImg = partes[partes.length - 1];
-                        if (idImg) {
-                            urlFoto = `https://i.imgur.com/${idImg}.jpg`;
-                        }
-                    } else {
-                        urlFoto = urlFoto.replace('imgur.com', 'i.imgur.com').replace('_d.', '.');
+                    let partes = urlFoto.split('/');
+                    let idImg = partes[partes.length - 1];
+                    // Remove extensão se houver para pegar só o ID limpo
+                    idImg = idImg.replace(/\.[^/.]+$/, "");
+                    if (idImg) {
+                        urlFoto = `https://i.imgur.com/${idImg}.jpg`;
                     }
                 }
-                // Usando proxy de imagem público para evitar o bloqueio CORS do Imgur em tags HTML
+                // Proxy universal para bypassar restrições de CORS e hotlinking do Imgur
                 let urlExibicao = `https://images.weserv.nl/?url=${encodeURIComponent(urlFoto.replace(/^https?:\/\//, ''))}&w=80&h=80&fit=cover`;
                 
                 renderFoto = `<a href="${urlFoto}" target="_blank" title="Abrir imagem original"><img src="${urlExibicao}" alt="Foto" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Erro';"></a>`;
