@@ -347,6 +347,25 @@ document.getElementById('btnCancelar').onclick = () => {
     document.getElementById('log').innerHTML += "<br>⚠️ Interrupção solicitada... Finalizando lote atual.";
 };
 
+// Função auxiliar para padronizar links do Imgur para formato de imagem direta (.jpg)
+function formatarUrlImgur(url) {
+    if (!url) return url;
+    let limpa = url.trim();
+    if (limpa.includes('imgur.com')) {
+        // Remove parâmetros extras se houver
+        limpa = limpa.split('?')[0];
+        // Extrai o ID do final da URL
+        let partes = limpa.split('/');
+        let idImg = partes[partes.length - 1];
+        // Remove extensão antiga se houver (ex: .png, .jpg) para isolar o ID alfanumérico
+        idImg = idImg.replace(/\.[^/.]+$/, "");
+        if (idImg && idImg !== 'imgur.com') {
+            return `https://i.imgur.com/${idImg}.jpg`;
+        }
+    }
+    return limpa;
+}
+
 csvFile.onchange = e => {
     const file = e.target.files[0]; 
     if(!file) return;
@@ -370,7 +389,12 @@ csvFile.onchange = e => {
             const row = line.split(sep).map(val => val.trim().replace(/^"|"$/g, ''));
             let obj = {}; 
             headers.forEach((h, index) => {
-                obj[h] = row[index] !== undefined ? row[index] : '';
+                let val = row[index] !== undefined ? row[index] : '';
+                // Se for campo de foto/imagem, já padroniza o Imgur na importação
+                if (h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) {
+                    val = formatarUrlImgur(val);
+                }
+                obj[h] = val;
             });
             csvData.push(obj);
         }
@@ -537,18 +561,10 @@ function renderizarTabela() {
             if (urlFoto.toUpperCase() === 'NÃO' || urlFoto.toUpperCase() === 'NAO') {
                 renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
             } else if (urlFoto.startsWith('http://') || urlFoto.startsWith('https://')) {
-                // Conversão robusta de links do Imgur (seja link de visualização ou direto)
-                if (urlFoto.includes('imgur.com')) {
-                    urlFoto = urlFoto.split('?')[0];
-                    let partes = urlFoto.split('/');
-                    let idImg = partes[partes.length - 1];
-                    // Remove extensão se houver para pegar só o ID limpo
-                    idImg = idImg.replace(/\.[^/.]+$/, "");
-                    if (idImg) {
-                        urlFoto = `https://i.imgur.com/${idImg}.jpg`;
-                    }
-                }
-                // Proxy universal para bypassar restrições de CORS e hotlinking do Imgur
+                // Aplica a formatação limpa do Imgur
+                urlFoto = formatarUrlImgur(urlFoto);
+                
+                // Proxy universal para renderizar sem bloqueio de CORS / hotlinking
                 let urlExibicao = `https://images.weserv.nl/?url=${encodeURIComponent(urlFoto.replace(/^https?:\/\//, ''))}&w=80&h=80&fit=cover`;
                 
                 renderFoto = `<a href="${urlFoto}" target="_blank" title="Abrir imagem original"><img src="${urlExibicao}" alt="Foto" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Erro';"></a>`;
@@ -615,7 +631,12 @@ async function salvarEProximoProduto() {
     headers.forEach(h => {
         const campoInput = document.getElementById(`input_edit_${h}`);
         if(campoInput) {
-            produtoModificado[h] = campoInput.value;
+            let val = campoInput.value;
+            // Se for campo de foto, formata o link automaticamente antes de enviar para a planilha
+            if (h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) {
+                val = formatarUrlImgur(val);
+            }
+            produtoModificado[h] = val;
         }
     });
 
