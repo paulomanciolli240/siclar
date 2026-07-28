@@ -11,7 +11,9 @@
     --bg-color: #f1f5f9; 
     --card-bg: #ffffff; 
     --text-color: #1e293b; 
-    --border-color: #cbd5e1; 
+    --border-color: #cbd5e1;
+    --danger-color: #dc2626;
+    --danger-hover: #b91c1c;
 }
 
 body { 
@@ -342,6 +344,27 @@ body {
 .btn:disabled { 
     background: #94a3b8; 
     cursor: not-allowed; 
+}
+
+.btn-excluir {
+    background: var(--danger-color);
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-excluir:hover {
+    background: var(--danger-hover);
+}
+
+.btn-editar-acao {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.area-botoes-acao {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .conteudo-principal {
@@ -976,7 +999,7 @@ function renderizarTabela() {
     html += `<th>Marca</th>`;
     html += `<th>Preço</th>`;
     html += `<th>Foto</th>`;
-    html += `<th>Editar</th>`;
+    html += `<th>Ações</th>`;
     html += '</tr></thead><tbody>';
 
     listaFiltradaAtual.slice(0, 100).forEach(p => {
@@ -1000,7 +1023,12 @@ function renderizarTabela() {
         html += `<td>${valMarca}</td>`;
         html += `<td class="preco">${valPreco}</td>`;
         html += `<td>${renderFoto}</td>`;
-        html += `<td><button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="editarRegistroPorCodigo('${valCod}')">Editar</button></td>`;
+        html += `<td>
+                    <div class="area-botoes-acao">
+                        <button class="btn btn-editar-acao" onclick="editarRegistroPorCodigo('${valCod}')">Editar</button>
+                        <button class="btn btn-excluir" onclick="confirmarExclusao('${valCod}', '${valDesc.replace(/'/g, "\\'")}')">Excluir</button>
+                    </div>
+                </td>`;
         html += '</tr>';
     });
     
@@ -1015,6 +1043,41 @@ function editarRegistroPorCodigo(codigo) {
     if (indiceEdicaoAtual !== -1) {
         preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
         document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
+    }
+}
+
+async function confirmarExclusao(codigo, descricao) {
+    if (!confirm(`Deseja realmente excluir o produto:\nCódigo: ${codigo}\nDescrição: ${descricao}\n\nEsta ação não pode ser desfeita!`)) {
+        return;
+    }
+
+    try {
+        const payload = {
+            acao: "excluir",
+            codigo: codigo,
+            headers: headers
+        };
+
+        const resposta = await fetch(URL_DO_GAS, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+
+        const resultado = await resposta.json();
+        
+        if (resultado && resultado.success) {
+            alert("✅ Produto excluído com sucesso!");
+            // Atualiza a lista local
+            const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
+            dadosGlobais = dadosGlobais.filter(item => String(item[hCod]) !== String(codigo));
+            renderizarTabela();
+        } else {
+            throw new Error(resultado.error || "Não foi possível excluir o produto.");
+        }
+    } catch (erro) {
+        console.error("Erro na exclusão:", erro);
+        alert("❌ Erro ao excluir: " + erro.message);
     }
 }
 
@@ -1120,13 +1183,4 @@ async function salvarEProximoProduto() {
     }
 }
 
-document.getElementById('pesqCodigo').oninput = renderizarTabela;
-document.getElementById('pesqNome').oninput = renderizarTabela;
-document.getElementById('pesqMarca').oninput = renderizarTabela;
-
-window.onload = () => {
-    carregarDadosPlanilha();
-};
-</script>
-</body>
-</html>
+document.getElementById('
