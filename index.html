@@ -451,7 +451,9 @@ let timerCarrossel = null;
 let carrosselAtivo = false;
 let telaJaFechada = false;
 let pausaPorHover = false;
-let termoPesquisaCarrossel = ''; // Variável para filtro
+let pausaPorPesquisa = false; // Nova variável: pausa durante digitação
+let termoPesquisaCarrossel = '';
+let timerPesquisa = null; // Timer para retomar rotação após parar de digitar
 
 // FECHAR TELA - GARANTIDA
 function esconderTelaBoasVindas() {
@@ -479,11 +481,21 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
-// === PESQUISA INTELIGENTE NO CARROSSEL ===
+// === PESQUISA COM PAUSA NA ROTAÇÃO ===
 document.getElementById('pesquisaCarrossel').addEventListener('input', e => {
+    // Parar rotação enquanto digita
+    pausaPorPesquisa = true;
+    clearTimeout(timerPesquisa);
+
     termoPesquisaCarrossel = e.target.value.toLowerCase().trim();
-    indicePaginaCarrossel = 0; // Volta para primeira página ao pesquisar
+    indicePaginaCarrossel = 0;
     renderizarPaginaCarrossel();
+
+    // Retoma rotação 1 segundo após parar de digitar
+    timerPesquisa = setTimeout(() => {
+        pausaPorPesquisa = false;
+        renderizarPaginaCarrossel();
+    }, 1000);
 });
 
 csvFile.onchange = e => {
@@ -562,7 +574,7 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// === LOGICA DO CARROSSEL COM FILTRO ===
+// === LOGICA DO CARROSSEL COM FILTRO E PAUSA ===
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -578,7 +590,8 @@ function pararCarrossel() {
 }
 
 function renderizarPaginaCarrossel() {
-    if (!carrosselAtivo || pausaPorHover) return;
+    // AQUI: Para se estiver passando o mouse OU digitando na pesquisa
+    if (!carrosselAtivo || pausaPorHover || pausaPorPesquisa) return;
 
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
@@ -633,7 +646,7 @@ function renderizarPaginaCarrossel() {
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
     timerCarrossel = setTimeout(() => {
-        if (!pausaPorHover && produtosFiltrados.length > 0) {
+        if (!pausaPorHover && !pausaPorPesquisa && produtosFiltrados.length > 0) {
             indicePaginaCarrossel++;
             renderizarPaginaCarrossel();
         }
@@ -644,6 +657,7 @@ function mudarSlideCarrossel(d) {
     if (!carrosselAtivo) return;
     clearTimeout(timerCarrossel);
     pausaPorHover = false;
+    pausaPorPesquisa = false;
     indicePaginaCarrossel += d;
     renderizarPaginaCarrossel();
 }
