@@ -347,23 +347,26 @@ document.getElementById('btnCancelar').onclick = () => {
     document.getElementById('log').innerHTML += "<br>⚠️ Interrupção solicitada... Finalizando lote atual.";
 };
 
-// Função auxiliar para padronizar links do Imgur para formato de imagem direta (.jpg)
-function formatarUrlImgur(url) {
-    if (!url) return url;
-    let limpa = url.trim();
-    if (limpa.includes('imgur.com')) {
-        // Remove parâmetros extras se houver
-        limpa = limpa.split('?')[0];
-        // Extrai o ID do final da URL
-        let partes = limpa.split('/');
-        let idImg = partes[partes.length - 1];
-        // Remove extensão antiga se houver (ex: .png, .jpg) para isolar o ID alfanumérico
-        idImg = idImg.replace(/\.[^/.]+$/, "");
-        if (idImg && idImg !== 'imgur.com') {
-            return `https://i.imgur.com/${idImg}.jpg`;
-        }
+// Função para resolver o caminho da imagem (seja local do GitHub ou link externo completo)
+function resolverUrlImagem(valFoto) {
+    if (!valFoto) return '';
+    let limpa = valFoto.trim();
+    if (limpa.toUpperCase() === 'NÃO' || limpa.toUpperCase() === 'NAO') return '';
+    
+    // Se já for um link completo (http/https), retorna ele mesmo
+    if (limpa.startsWith('http://') || limpa.startsWith('https://')) {
+        return limpa;
     }
-    return limpa;
+    
+    // Se for caminho local (ex: imagens/331.jpg ou apenas 331.jpg), monta a URL do GitHub Pages
+    // Pega a URL atual do site até a pasta base (ex: https://paulamanciolli240.github.io/slicar/)
+    let baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    
+    if (limpa.startsWith('imagens/')) {
+        return baseUrl + limpa;
+    } else {
+        return baseUrl + 'imagens/' + limpa;
+    }
 }
 
 csvFile.onchange = e => {
@@ -389,12 +392,7 @@ csvFile.onchange = e => {
             const row = line.split(sep).map(val => val.trim().replace(/^"|"$/g, ''));
             let obj = {}; 
             headers.forEach((h, index) => {
-                let val = row[index] !== undefined ? row[index] : '';
-                // Se for campo de foto/imagem, já padroniza o Imgur na importação
-                if (h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) {
-                    val = formatarUrlImgur(val);
-                }
-                obj[h] = val;
+                obj[h] = row[index] !== undefined ? row[index] : '';
             });
             csvData.push(obj);
         }
@@ -556,21 +554,9 @@ function renderizarTabela() {
         let valFoto = hFoto ? (p[hFoto] || '') : '';
 
         let renderFoto = '';
-        if (valFoto) {
-            let urlFoto = valFoto.trim();
-            if (urlFoto.toUpperCase() === 'NÃO' || urlFoto.toUpperCase() === 'NAO') {
-                renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
-            } else if (urlFoto.startsWith('http://') || urlFoto.startsWith('https://')) {
-                // Aplica a formatação limpa do Imgur
-                urlFoto = formatarUrlImgur(urlFoto);
-                
-                // Proxy universal para renderizar sem bloqueio de CORS / hotlinking
-                let urlExibicao = `https://images.weserv.nl/?url=${encodeURIComponent(urlFoto.replace(/^https?:\/\//, ''))}&w=80&h=80&fit=cover`;
-                
-                renderFoto = `<a href="${urlFoto}" target="_blank" title="Abrir imagem original"><img src="${urlExibicao}" alt="Foto" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Erro';"></a>`;
-            } else {
-                renderFoto = urlFoto;
-            }
+        if (valFoto && valFoto.toUpperCase() !== 'NÃO' && valFoto.toUpperCase() !== 'NAO') {
+            let urlCompleta = resolverUrlImagem(valFoto);
+            renderFoto = `<a href="${urlCompleta}" target="_blank" title="Abrir imagem original"><img src="${urlCompleta}" alt="Foto" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Erro';"></a>`;
         } else {
             renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
         }
@@ -611,7 +597,7 @@ function preencherFormularioEdicao(produtoObj) {
         let ehCodigo = (h === hCod);
         let ehFoto = h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url');
         
-        let placeholderTxt = ehFoto ? "Cole aqui o link da imagem (ex: link do Imgur)" : `Digite ${h}...`;
+        let placeholderTxt = ehFoto ? "Ex: imagens/331.jpg" : `Digite ${h}...`;
 
         html += `<div class="grupo-campo-edicao">`;
         html += `<label>${h}${ehCodigo ? ' (Código fixo)' : ''}</label>`;
@@ -631,12 +617,7 @@ async function salvarEProximoProduto() {
     headers.forEach(h => {
         const campoInput = document.getElementById(`input_edit_${h}`);
         if(campoInput) {
-            let val = campoInput.value;
-            // Se for campo de foto, formata o link automaticamente antes de enviar para a planilha
-            if (h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) {
-                val = formatarUrlImgur(val);
-            }
-            produtoModificado[h] = val;
+            produtoModificado[h] = campoInput.value;
         }
     });
 
