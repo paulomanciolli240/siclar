@@ -106,7 +106,7 @@ body {
     to { opacity: 1; }
 }
 
-/* Módulo do Carrossel em Grid (10 itens por tela) */
+/* Módulo do Carrossel Quadrado (Modo Vitrine) */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
@@ -115,13 +115,12 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 90px 20px 20px 20px;
-    box-sizing: border-box;
+    justify-content: center;
+    padding: 20px;
     overflow: hidden;
 }
 
-/* Barra superior fixa do carrossel */
+/* Barra superior fixa do carrossel com o botão Administrativo e a frase solicitada */
 .carrossel-barra-topo {
     position: absolute;
     top: 0;
@@ -130,21 +129,21 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 40px;
-    background: linear-gradient(to bottom, rgba(15,23,42,0.98), rgba(15,23,42,0.8));
+    padding: 20px 40px;
+    background: linear-gradient(to bottom, rgba(15,23,42,0.95), transparent);
     z-index: 10;
 }
 
 .carrossel-logo {
     color: white;
     font-weight: 800;
-    font-size: 22px;
+    font-size: 24px;
     letter-spacing: 2px;
 }
 
 .carrossel-frase-destaque {
     color: #fdba74;
-    font-size: clamp(15px, 2vw, 22px);
+    font-size: clamp(16px, 2vw, 22px);
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -155,11 +154,11 @@ body {
     background: var(--primary-color);
     color: white;
     border: none;
-    padding: 8px 18px;
+    padding: 10px 22px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
     transition: all 0.2s;
 }
@@ -169,124 +168,112 @@ body {
     transform: translateY(-2px);
 }
 
-/* Grid de 10 Itens por Tela (5 colunas x 2 linhas) */
-.grade-produtos-vitrine {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 15px;
-    width: 100%;
-    max-width: 1500px;
-    height: calc(100vh - 160px);
+/* Tela Quadrada do Produto */
+.card-quadrado-vitrine {
+    width: min(85vw, 650px);
+    height: min(85vw, 650px);
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 35px;
     box-sizing: border-box;
+    text-align: center;
+    position: relative;
     animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.98) translateY(10px); }
+    0% { opacity: 0; transform: scale(0.95) translateY(15px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.card-mini-vitrine {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 12px;
-    box-sizing: border-box;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.mini-foto-container {
+.vitrine-foto-container {
     width: 100%;
-    height: 45%;
+    height: 52%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #f8fafc;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
     border: 1px solid #e2e8f0;
 }
 
-.mini-foto-container img {
+.vitrine-foto-container img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
 
-.mini-info {
+.vitrine-info {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-top: 4px;
+    gap: 8px;
 }
 
-.mini-marca {
-    font-size: 10px;
+.vitrine-marca {
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     color: #64748b;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
-.mini-descricao {
-    font-size: clamp(11px, 1.1vw, 13px);
+.vitrine-descricao {
+    font-size: clamp(16px, 2.2vw, 22px);
     font-weight: 700;
     color: #0f172a;
-    line-height: 1.2;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.mini-rodape-preco {
+.vitrine-rodape-preco {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     border-top: 1px solid #e2e8f0;
-    padding-top: 6px;
-    margin-top: 4px;
+    padding-top: 15px;
 }
 
-.mini-codigo {
-    font-size: 10px;
+.vitrine-codigo {
+    font-size: 13px;
     color: #94a3b8;
     font-weight: 600;
 }
 
-.mini-preco {
-    font-size: clamp(14px, 1.5vw, 18px);
+.vitrine-preco {
+    font-size: clamp(24px, 3.5vw, 32px);
     font-weight: 900;
     color: var(--primary-color);
 }
 
-/* Barra de Progresso do Tempo de Tela (12 segundos por lote de 10 itens) */
+/* Barra de Progresso do Tempo de Tela (6 segundos) */
 .carrossel-progresso-barra {
     position: absolute;
     bottom: 0;
     left: 0;
-    height: 5px;
+    height: 6px;
     background: var(--primary-color);
     width: 0%;
     transition: width linear;
 }
 
 .carrossel-controles-inferior {
-    position: absolute;
-    bottom: 8px;
+    margin-top: 20px;
     display: flex;
     gap: 15px;
     align-items: center;
     color: #94a3b8;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -294,8 +281,8 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 4px 12px;
-    border-radius: 4px;
+    padding: 8px 16px;
+    border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s;
 }
@@ -304,7 +291,7 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* Sistema Administrativo */
+/* Sistema Administrativo (Oculto inicialmente) */
 #moduloAdministrativo {
     display: none;
     padding: 30px 20px;
@@ -552,7 +539,7 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Módulo do Carrossel Infinito (10 itens por tela / Grid) -->
+<!-- Módulo do Carrossel de Produtos (Vitrine Infinita limitada a 10 itens) -->
 <div id="moduloCarrossel" style="display: none;">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
@@ -560,16 +547,16 @@ body {
         <button class="btn-admin-topo" onclick="abrirPainelAdministrativo()">⚙️ Administrativo</button>
     </div>
 
-    <div id="containerGradeVitrine" style="width: 100%; display: flex; justify-content: center;"></div>
+    <div id="containerCardVitrine"></div>
 
     <div class="carrossel-controles-inferior">
-        <button class="btn-controle-carrossel" onclick="mudarPaginaCarrossel(-1)">❮ Tela Anterior</button>
-        <span id="contadorVitrine">Tela 1</span>
-        <button class="btn-controle-carrossel" onclick="mudarPaginaCarrossel(1)">Próxima Tela ❯</button>
+        <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(-1)">❮ Anterior</button>
+        <span id="contadorVitrine">Produto 0 de 10</span>
+        <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(1)">Próximo ❯</button>
     </div>
 </div>
 
-<!-- Módulo Administrativo -->
+<!-- Módulo Administrativo (Sistema Original Mantido) -->
 <div id="moduloAdministrativo">
     <div class="container">
         <div class="header">
@@ -662,11 +649,10 @@ let cancelamentoSolicitado = false;
 let listaFiltradaAtual = [];
 let indiceEdicaoAtual = 0;
 
-// Variáveis do Carrossel em Grid (10 itens por tela, rotativo infinito)
-let paginaCarrosselAtual = 0;
+// Variáveis do Carrossel Quadrado (Limitado a 10 itens)
+let indiceCarrosselAtual = 0;
 let timerCarrossel = null;
 let carrosselAtivo = false;
-const ITENS_POR_TELA = 10;
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
@@ -814,10 +800,12 @@ async function carregarDadosPlanilha() {
 
         renderizarTabela();
         
+        // Finaliza a tela de boas-vindas após carregar os dados
         const telaBoasVindas = document.getElementById('telaBoasVindas');
         telaBoasVindas.style.opacity = '0';
         setTimeout(() => {
             telaBoasVindas.style.display = 'none';
+            // Inicia o carrossel automático após as boas-vindas
             iniciarCarrossel();
         }, 1200);
 
@@ -832,6 +820,7 @@ async function carregarDadosPlanilha() {
     }
 }
 
+// Lógica de Transição entre Carrossel e Administrativo
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -844,11 +833,12 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
+// Funções do Carrossel de 6 Segundos Infinito (limitado aos primeiros 10 itens)
 function iniciarCarrossel() {
     if (dadosGlobais.length === 0) return;
     carrosselAtivo = true;
     document.getElementById('moduloCarrossel').style.display = 'flex';
-    renderizarTelaCarrossel();
+    renderizarSlideVitrine();
 }
 
 function pararCarrossel() {
@@ -859,93 +849,81 @@ function pararCarrossel() {
     }
 }
 
-function renderizarTelaCarrossel() {
+function renderizarSlideVitrine() {
     if (!carrosselAtivo || dadosGlobais.length === 0) return;
 
-    const totalTelas = Math.ceil(dadosGlobais.length / ITENS_POR_TELA);
+    const totalItensVitrine = Math.min(10, dadosGlobais.length);
 
-    if (paginaCarrosselAtual >= totalTelas) {
-        paginaCarrosselAtual = 0;
+    if (indiceCarrosselAtual >= totalItensVitrine) {
+        indiceCarrosselAtual = 0;
     }
-    if (paginaCarrosselAtual < 0) {
-        paginaCarrosselAtual = totalTelas - 1;
+    if (indiceCarrosselAtual < 0) {
+        indiceCarrosselAtual = totalItensVitrine - 1;
     }
 
-    const inicio = paginaCarrosselAtual * ITENS_POR_TELA;
-    const fim = Math.min(inicio + ITENS_POR_TELA, dadosGlobais.length);
-    const itensDaTela = dadosGlobais.slice(inicio, fim);
-
+    const p = dadosGlobais[indiceCarrosselAtual];
     const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.toLowerCase().includes('desc') || h.toLowerCase().includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.toLowerCase().includes('marca')) || headers[2];
     const hPreco = headers.find(h => h.toLowerCase().includes('preço') || h.toLowerCase().includes('valor') || h.toLowerCase().includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) || '';
 
-    let htmlCards = '';
-    itensDaTela.forEach(p => {
-        let valCod = p[hCod] || '';
-        let valDesc = p[hDesc] || '';
-        let valMarca = p[hMarca] || '';
-        let valPreco = hPreco ? (p[hPreco] || '') : '';
-        let valFoto = hFoto ? (p[hFoto] || '') : '';
+    let valCod = p[hCod] || '';
+    let valDesc = p[hDesc] || '';
+    let valMarca = p[hMarca] || '';
+    let valPreco = hPreco ? (p[hPreco] || '') : '';
+    let valFoto = hFoto ? (p[hFoto] || '') : '';
 
-        let renderFoto = '';
-        if (valFoto && valFoto.toUpperCase() !== 'NÃO' && valFoto.toUpperCase() !== 'NAO') {
-            let urlCompleta = resolverUrlImagem(valFoto);
-            renderFoto = `<img src="${urlCompleta}" alt="Produto" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Sem+Imagem';">`;
-        } else {
-            renderFoto = `<div style="color: #94a3b8; font-size: 11px; font-weight: 600;">Sem foto</div>`;
-        }
+    let renderFoto = '';
+    if (valFoto && valFoto.toUpperCase() !== 'NÃO' && valFoto.toUpperCase() !== 'NAO') {
+        let urlCompleta = resolverUrlImagem(valFoto);
+        renderFoto = `<img src="${urlCompleta}" alt="Produto" onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=Sem+Imagem';">`;
+    } else {
+        renderFoto = `<div style="color: #94a3b8; font-weight: 600;">Produto sem imagem</div>`;
+    }
 
-        htmlCards += `
-            <div class="card-mini-vitrine">
-                <div class="mini-foto-container">
-                    ${renderFoto}
-                </div>
-                <div class="mini-info">
-                    <div class="mini-marca">${valMarca}</div>
-                    <div class="mini-descricao">${valDesc}</div>
-                </div>
-                <div class="mini-rodape-preco">
-                    <span class="mini-codigo">Cód: ${valCod}</span>
-                    <span class="mini-preco">${valPreco}</span>
-                </div>
+    let htmlCard = `
+        <div class="card-quadrado-vitrine">
+            <div class="vitrine-foto-container">
+                ${renderFoto}
             </div>
-        `;
-    });
-
-    let htmlGrade = `
-        <div class="grade-produtos-vitrine">
-            ${htmlCards}
+            <div class="vitrine-info">
+                <div class="vitrine-marca">${valMarca}</div>
+                <div class="vitrine-descricao">${valDesc}</div>
+            </div>
+            <div class="vitrine-rodape-preco">
+                <span class="vitrine-codigo">Cód: ${valCod}</span>
+                <span class="vitrine-preco">${valPreco}</span>
+            </div>
             <div class="carrossel-progresso-barra" id="barraProgressoSlide"></div>
         </div>
     `;
 
-    document.getElementById('containerGradeVitrine').innerHTML = htmlGrade;
-    document.getElementById('contadorVitrine').textContent = `Tela ${paginaCarrosselAtual + 1} de ${totalTelas} (${dadosGlobais.length} itens no total)`;
+    document.getElementById('containerCardVitrine').innerHTML = htmlCard;
+    document.getElementById('contadorVitrine').textContent = `Produto ${indiceCarrosselAtual + 1} de ${totalItensVitrine}`;
 
-    // Barra de progresso rodando por 12 segundos para a tela atual
+    // Dispara animação de preenchimento da barra de progresso (6 segundos)
     setTimeout(() => {
         const barra = document.getElementById('barraProgressoSlide');
         if (barra) {
-            barra.style.transition = 'width 12s linear';
+            barra.style.transition = 'width 6s linear';
             barra.style.width = '100%';
         }
     }, 50);
 
-    // Passa para a próxima tela de 10 itens a cada 12 segundos
+    // Agenda o próximo slide para exatamente 6 segundos
     if (timerCarrossel) clearTimeout(timerCarrossel);
     timerCarrossel = setTimeout(() => {
-        paginaCarrosselAtual++;
-        renderizarTelaCarrossel();
-    }, 12000);
+        indiceCarrosselAtual++;
+        renderizarSlideVitrine();
+    }, 6000);
 }
 
-function mudarPaginaCarrossel(direcao) {
+function mudarSlideCarrossel(direcao) {
     if (!carrosselAtivo) return;
     if (timerCarrossel) clearTimeout(timerCarrossel);
-    paginaCarrosselAtual += direcao;
-    renderizarTelaCarrossel();
+    indiceCarrosselAtual += direcao;
+    renderizarSlideVitrine();
 }
 
 function atendeTermosBusca(textoAlvo, termoBusca) {
