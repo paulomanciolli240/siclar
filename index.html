@@ -202,17 +202,17 @@ body {
     z-index: 1;
 }
 
-/* ✅ AO PASSAR O MOUSE: FICA NO MESMO TAMANHO DO CLIQUE */
+/* ✅ AO PASSAR O MOUSE: MESMO EFEITO E TAMANHO DO CLIQUE */
 .card-quadrado-vitrine:hover {
-    transform: scale(2);
-    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6);
-    z-index: 9999;
+    transform: scale(2) !important;
+    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6) !important;
+    z-index: 9999 !important;
 }
 
 .card-quadrado-vitrine.ativo-clique {
-    transform: scale(2);
+    transform: scale(2) !important;
     z-index: 9999 !important;
-    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6);
+    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6) !important;
 }
 
 .vitrine-foto-container { 
@@ -444,7 +444,7 @@ let telaJaFechada = false;
 let pausaPorHover = false;
 let termoPesquisaCarrossel = '';
 
-// ✅ Agora espera os dados carregarem antes de abrir o catálogo — SEM ESPERA DE 15s
+// ✅ Fecha a tela só quando os dados estiverem prontos — SEM ESPERA MANUAL
 async function esconderTelaBoasVindas() {
     if (telaJaFechada) return;
     telaJaFechada = true;
@@ -459,7 +459,7 @@ async function esconderTelaBoasVindas() {
     }, 1200);
 }
 
-// Inicia logo ao abrir — sem atraso manual
+// Inicia automaticamente
 esconderTelaBoasVindas();
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
