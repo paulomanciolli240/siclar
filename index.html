@@ -24,7 +24,7 @@ body {
     padding: 0; 
 }
 
-/* Tela de Boas-Vindas */
+/* Tela de Boas-Vindas - GARANTIDA */
 #telaBoasVindas {
     position: fixed;
     inset: 0;
@@ -45,6 +45,7 @@ body {
 .tela-oculta {
     opacity: 0 !important;
     visibility: hidden !important;
+    pointer-events: none !important;
 }
 
 .conteudo-animado {
@@ -254,7 +255,6 @@ body {
             </div>
             <p id="infoQtd"></p>
 
-            <!-- Área de exclusão em lote -->
             <button class="btn btn-excluir-lote" id="btnExcluirLote" onclick="excluirSelecionados()" disabled>🗑️ Excluir Selecionados</button>
             <div class="contador-selecionados" id="contadorSelecionados">Nenhum produto selecionado</div>
 
@@ -311,9 +311,12 @@ let indiceEdicaoAtual = 0;
 let indiceCarrosselAtual = 0;
 let timerCarrossel = null;
 let carrosselAtivo = false;
+let telaJaFechada = false;
 
-// Fechar tela de boas-vindas
+// FECHAR TELA - AGORA COM GARANTIA ABSOLUTA
 function esconderTelaBoasVindas() {
+    if (telaJaFechada) return; // Evita rodar duas vezes
+    telaJaFechada = true;
     const tela = document.getElementById('telaBoasVindas');
     tela.classList.add('tela-oculta');
     setTimeout(() => {
@@ -321,6 +324,9 @@ function esconderTelaBoasVindas() {
         iniciarCarrossel();
     }, 1200);
 }
+
+// SEGURANÇA EXTRA: Fecha automaticamente após 15 segundos, mesmo se a planilha demorar
+setTimeout(esconderTelaBoasVindas, 15000);
 
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
@@ -334,7 +340,6 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
-// Importação CSV
 csvFile.onchange = e => {
     const file = e.target.files[0]; 
     if(!file) return;
@@ -384,7 +389,6 @@ btnProcess.onclick = async () => {
     carregarDadosPlanilha();
 };
 
-// Carregar dados
 async function carregarDadosPlanilha() {
     try {
         const res = await fetch(URL_DO_GAS);
@@ -396,11 +400,10 @@ async function carregarDadosPlanilha() {
         console.error("Erro ao carregar planilha:", e);
         dadosGlobais = [];
     } finally {
-        esconderTelaBoasVindas();
+        esconderTelaBoasVindas(); // Executa SEMPRE
     }
 }
 
-// Navegação
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -413,7 +416,6 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// Carrossel
 function iniciarCarrossel() {
     carrosselAtivo = true;
     if (dadosGlobais.length === 0) return;
@@ -467,14 +469,12 @@ function mudarSlideCarrossel(d) {
     renderizarSlideVitrine();
 }
 
-// Atualizar contador de selecionados
 function atualizarContadorSelecionados() {
     const selecionados = document.querySelectorAll('.chk-produto:checked').length;
     document.getElementById('contadorSelecionados').textContent = `${selecionados} produto(s) selecionado(s)`;
     document.getElementById('btnExcluirLote').disabled = selecionados === 0;
 }
 
-// Exclusão em lote
 async function excluirSelecionados() {
     const codigosParaExcluir = [];
     document.querySelectorAll('.chk-produto:checked').forEach(chk => {
@@ -499,7 +499,6 @@ async function excluirSelecionados() {
     }
 }
 
-// Renderizar tabela completa
 function renderizarTabela() {
     const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
     const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
@@ -549,7 +548,6 @@ function renderizarTabela() {
     atualizarContadorSelecionados();
 }
 
-// Exclusão individual
 async function confirmarExclusao(cod, desc) {
     if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
     try {
@@ -564,7 +562,6 @@ async function confirmarExclusao(cod, desc) {
     } catch(e) { alert("Erro: " + e.message); }
 }
 
-// Edição
 function editarRegistroPorCodigo(cod) {
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
@@ -613,7 +610,6 @@ async function salvarEProximoProduto() {
     } catch(e) { alert("Erro: " + e.message); }
 }
 
-// Iniciar sistema
 document.getElementById('pesqCodigo').oninput = renderizarTabela;
 document.getElementById('pesqNome').oninput = renderizarTabela;
 document.getElementById('pesqMarca').oninput = renderizarTabela;
