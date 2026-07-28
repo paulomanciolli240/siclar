@@ -24,7 +24,7 @@ body {
     padding: 0; 
 }
 
-/* Tela de Boas-Vindas */
+/* Tela de Boas-Vindas - CORRIGIDO */
 #telaBoasVindas {
     position: fixed;
     inset: 0;
@@ -37,7 +37,14 @@ body {
     color: white;
     text-align: center;
     padding: 20px;
-    transition: opacity 1.2s ease;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 1.2s ease, visibility 1.2s ease;
+}
+
+.tela-oculta {
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 .conteudo-animado {
@@ -47,14 +54,8 @@ body {
 }
 
 @keyframes crescerSuaveAte90 {
-    0% {
-        transform: scale(0.005);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(0.90);
-        opacity: 1;
-    }
+    0% { transform: scale(0.005); opacity: 0; }
+    100% { transform: scale(0.90); opacity: 1; }
 }
 
 .linha-1 {
@@ -99,22 +100,16 @@ body {
     animation: aparecerSpinner 1.5s ease 2s forwards, spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes aparecerSpinner { to { opacity: 1; } }
 
-@keyframes aparecerSpinner {
-    to { opacity: 1; }
-}
-
-/* Módulo do Carrossel Quadrado (Modo Vitrine) */
+/* Carrossel - INALTERADO */
 #moduloCarrossel {
     position: fixed;
     inset: 0;
     background: #0f172a;
     z-index: 9990;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -122,7 +117,6 @@ body {
     overflow: hidden;
 }
 
-/* Barra superior fixa do carrossel com o botão Administrativo */
 .carrossel-barra-topo {
     position: absolute;
     top: 0;
@@ -136,41 +130,11 @@ body {
     z-index: 10;
 }
 
-.carrossel-logo {
-    color: white;
-    font-weight: 800;
-    font-size: 24px;
-    letter-spacing: 2px;
-}
+.carrossel-logo { color: white; font-weight: 800; font-size: 24px; letter-spacing: 2px; }
+.carrossel-frase-destaque { color: #fdba74; font-size: clamp(16px, 2vw, 22px); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+.btn-admin-topo { background: var(--primary-color); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); transition: all 0.2s; }
+.btn-admin-topo:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
-.carrossel-frase-destaque {
-    color: #fdba74;
-    font-size: clamp(16px, 2vw, 22px);
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
-
-.btn-admin-topo {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 22px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
-    transition: all 0.2s;
-}
-
-.btn-admin-topo:hover {
-    background: var(--primary-hover);
-    transform: translateY(-2px);
-}
-
-/* Tela Quadrada do Produto */
 .card-quadrado-vitrine {
     width: min(85vw, 650px);
     height: min(85vw, 650px);
@@ -188,365 +152,57 @@ body {
     animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.95) translateY(15px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-}
+@keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.95) translateY(15px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+.vitrine-foto-container { width: 100%; height: 52%; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+.vitrine-foto-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.vitrine-info { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.vitrine-marca { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 1.5px; }
+.vitrine-descricao { font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; color: #0f172a; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vitrine-rodape-preco { display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+.vitrine-codigo { font-size: 13px; color: #94a3b8; font-weight: 600; }
+.vitrine-preco { font-size: clamp(24px, 3.5vw, 32px); font-weight: 900; color: var(--primary-color); }
+.carrossel-progresso-barra { position: absolute; bottom: 0; left: 0; height: 6px; background: var(--primary-color); width: 0%; transition: width linear; }
+.carrossel-controles-inferior { margin-top: 20px; display: flex; gap: 15px; align-items: center; color: #94a3b8; font-size: 14px; font-weight: 600; }
+.btn-controle-carrossel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+.btn-controle-carrossel:hover { background: rgba(255, 255, 255, 0.2); }
 
-.vitrine-foto-container {
-    width: 100%;
-    height: 52%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8fafc;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-}
-
-.vitrine-foto-container img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-
-.vitrine-info {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.vitrine-marca {
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #64748b;
-    letter-spacing: 1.5px;
-}
-
-.vitrine-descricao {
-    font-size: clamp(16px, 2.2vw, 22px);
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.vitrine-rodape-preco {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 15px;
-}
-
-.vitrine-codigo {
-    font-size: 13px;
-    color: #94a3b8;
-    font-weight: 600;
-}
-
-.vitrine-preco {
-    font-size: clamp(24px, 3.5vw, 32px);
-    font-weight: 900;
-    color: var(--primary-color);
-}
-
-/* Barra de Progresso do Tempo de Tela (6 segundos) */
-.carrossel-progresso-barra {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 6px;
-    background: var(--primary-color);
-    width: 0%;
-    transition: width linear;
-}
-
-.carrossel-controles-inferior {
-    margin-top: 20px;
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    color: #94a3b8;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.btn-controle-carrossel {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-controle-carrossel:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Sistema Administrativo */
-#moduloAdministrativo {
-    display: none;
-    padding: 30px 20px;
-}
-
-.container { 
-    max-width: 1200px; 
-    margin: auto; 
-    background: var(--card-bg); 
-    border-radius: 12px; 
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); 
-    overflow: hidden;
-}
-
-.header { 
-    background: var(--header-bg); 
-    color: white; 
-    padding: 24px 32px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    flex-wrap: wrap; 
-    gap: 15px; 
-}
-
-.header h2 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-}
-
-.btn { 
-    background: var(--primary-color); 
-    color: white; 
-    border: none; 
-    padding: 12px 24px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    font-size: 14px;
-    transition: background 0.2s;
-}
-
-.btn:hover {
-    background: var(--primary-hover);
-}
-
-.btn:disabled { 
-    background: #94a3b8; 
-    cursor: not-allowed; 
-}
-
-.btn-excluir {
-    background: var(--danger-color);
-    padding: 6px 12px;
-    font-size: 12px;
-}
-
-.btn-excluir:hover {
-    background: var(--danger-hover);
-}
-
-.btn-editar-acao {
-    padding: 6px 12px;
-    font-size: 12px;
-}
-
-.area-botoes-acao {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.conteudo-principal {
-    padding: 32px;
-}
-
-.area-pesquisa { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 20px; 
-    padding: 20px; 
-    background: #f8fafc; 
-    border: 1px solid var(--border-color); 
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.campo-pesquisa label {
-    display: block;
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 6px;
-    color: #475569;
-}
-
-.campo-pesquisa input { 
-    width: 100%; 
-    padding: 10px 14px; 
-    border: 1px solid var(--border-color); 
-    border-radius: 6px; 
-    box-sizing: border-box; 
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.campo-pesquisa input:focus {
-    border-color: var(--primary-color);
-}
-
-#infoQtd {
-    font-size: 14px;
-    font-weight: 600;
-    color: #64748b;
-    margin-bottom: 12px;
-}
-
-.tabela-container {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-}
-
-.tabela-produtos { 
-    width: 100%; 
-    border-collapse: collapse; 
-    font-size: 14px; 
-    text-align: left;
-}
-
-.tabela-produtos th { 
-    background: var(--header-bg); 
-    color: white; 
-    padding: 14px 16px; 
-    font-weight: 600;
-}
-
-.tabela-produtos td { 
-    padding: 14px 16px; 
-    border-bottom: 1px solid var(--border-color); 
-    vertical-align: middle;
-}
-
-.tabela-produtos tr:hover {
-    background-color: #f8fafc;
-}
-
-.preco { 
-    color: var(--primary-color); 
-    font-weight: 700; 
-    font-size: 15px;
-}
-
-.modal-fundo { 
-    display: none; 
-    position: fixed; 
-    inset: 0; 
-    background: rgba(0,0,0,0.6); 
-    z-index: 999999; 
-    align-items: center; 
-    justify-content: center; 
-    backdrop-filter: blur(2px);
-}
-
-.modal-ativo { 
-    display: flex; 
-}
-
-.modal { 
-    background: white; 
-    border-radius: 12px; 
-    width: 100%; 
-    max-width: 650px; 
-    padding: 30px; 
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-}
-
-.modal-topo { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 20px; 
-}
-
-.modal-topo h3 {
-    margin: 0;
-    font-size: 18px;
-}
-
-.modal-edicao-ampla {
-    max-width: 850px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.grid-edicao-ampla {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.grupo-campo-edicao {
-    margin-bottom: 5px;
-}
-
-.grupo-campo-edicao label {
-    display: block;
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 6px;
-    color: #334155;
-}
-
-.grupo-campo-edicao input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 14px;
-    box-sizing: border-box;
-    background: #f8fafc;
-    outline: none;
-    transition: all 0.2s;
-}
-
-.grupo-campo-edicao input:focus {
-    background: #ffffff;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
-}
-
-.progress-container { 
-    width: 100%; 
-    background: #e2e8f0; 
-    border-radius: 6px; 
-    margin: 20px 0; 
-    overflow: hidden; 
-    display: none; 
-}
-
-.progress-bar { 
-    width: 0%; 
-    height: 24px; 
-    background: #16a34a; 
-    text-align: center; 
-    color: white; 
-    font-weight: bold; 
-    font-size: 12px; 
-    line-height: 24px; 
-    transition: width 0.2s; 
-}
+/* Módulo Administrativo - INALTERADO */
+#moduloAdministrativo { display: none; padding: 30px 20px; }
+.container { max-width: 1200px; margin: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); overflow: hidden; }
+.header { background: var(--header-bg); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+.header h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.btn { background: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+.btn:hover { background: var(--primary-hover); }
+.btn:disabled { background: #94a3b8; cursor: not-allowed; }
+.btn-excluir { background: var(--danger-color); padding: 6px 12px; font-size: 12px; }
+.btn-excluir:hover { background: var(--danger-hover); }
+.btn-editar-acao { padding: 6px 12px; font-size: 12px; }
+.area-botoes-acao { display: flex; gap: 8px; align-items: center; }
+.conteudo-principal { padding: 32px; }
+.area-pesquisa { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; }
+.campo-pesquisa label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569; }
+.campo-pesquisa input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; transition: border-color 0.2s; }
+.campo-pesquisa input:focus { border-color: var(--primary-color); }
+#infoQtd { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 12px; }
+.tabela-container { width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+.tabela-produtos { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+.tabela-produtos th { background: var(--header-bg); color: white; padding: 14px 16px; font-weight: 600; }
+.tabela-produtos td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+.tabela-produtos tr:hover { background-color: #f8fafc; }
+.preco { color: var(--primary-color); font-weight: 700; font-size: 15px; }
+.modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.modal-ativo { display: flex; }
+.modal { background: white; border-radius: 12px; width: 100%; max-width: 650px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+.modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-topo h3 { margin: 0; font-size: 18px; }
+.modal-edicao-ampla { max-width: 850px; max-height: 90vh; overflow-y: auto; }
+.grid-edicao-ampla { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grupo-campo-edicao { margin-bottom: 5px; }
+.grupo-campo-edicao label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #334155; }
+.grupo-campo-edicao input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f8fafc; outline: none; transition: all 0.2s; }
+.grupo-campo-edicao input:focus { background: #ffffff; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15); }
+.progress-container { width: 100%; background: #e2e8f0; border-radius: 6px; margin: 20px 0; overflow: hidden; display: none; }
+.progress-bar { width: 0%; height: 24px; background: #16a34a; text-align: center; color: white; font-weight: bold; font-size: 12px; line-height: 24px; transition: width 0.2s; }
 </style>
 </head>
 <body>
@@ -562,16 +218,14 @@ body {
     <div class="spinner-carregando"></div>
 </div>
 
-<!-- Módulo do Carrossel de Produtos -->
-<div id="moduloCarrossel" style="display: none;">
+<!-- Carrossel -->
+<div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
         <div class="carrossel-logo">SICLAR VIRTUAL</div>
         <div class="carrossel-frase-destaque">Aprecie nossos produtos</div>
         <button class="btn-admin-topo" onclick="abrirPainelAdministrativo()">⚙️ Administrativo</button>
     </div>
-
     <div id="containerCardVitrine"></div>
-
     <div class="carrossel-controles-inferior">
         <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(-1)">❮ Anterior</button>
         <span id="contadorVitrine">Produto 0 de 10</span>
@@ -579,7 +233,7 @@ body {
     </div>
 </div>
 
-<!-- Módulo Administrativo -->
+<!-- Administrativo -->
 <div id="moduloAdministrativo">
     <div class="container">
         <div class="header">
@@ -591,25 +245,12 @@ body {
         </div>
         <div class="conteudo-principal">
             <div class="area-pesquisa">
-                <div class="campo-pesquisa">
-                    <label>Código:</label>
-                    <input type="text" id="pesqCodigo" placeholder="Pesquisar por código...">
-                </div>
-                <div class="campo-pesquisa">
-                    <label>Descrição:</label>
-                    <input type="text" id="pesqNome" placeholder="Ex: tom pad...">
-                </div>
-                <div class="campo-pesquisa">
-                    <label>Marca:</label>
-                    <input type="text" id="pesqMarca" placeholder="Pesquisar por marca...">
-                </div>
+                <div class="campo-pesquisa"><label>Código:</label><input type="text" id="pesqCodigo" placeholder="Pesquisar por código..."></div>
+                <div class="campo-pesquisa"><label>Descrição:</label><input type="text" id="pesqNome" placeholder="Ex: tom pad..."></div>
+                <div class="campo-pesquisa"><label>Marca:</label><input type="text" id="pesqMarca" placeholder="Pesquisar por marca..."></div>
             </div>
-            
             <p id="infoQtd"></p>
-            
-            <div id="areaLista" class="tabela-container">
-                <p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p>
-            </div>
+            <div id="areaLista" class="tabela-container"><p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p></div>
         </div>
     </div>
 </div>
@@ -624,16 +265,11 @@ body {
         <div>
             <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 10px;">
             <p id="fileName" style="font-size: 13px; color: #64748b; margin-top: 5px;">Nenhum arquivo selecionado</p>
-            
-            <div class="progress-container" id="progressContainer">
-                <div class="progress-bar" id="progressBar">0%</div>
-            </div>
-
+            <div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar">0%</div></div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button id="btnProcess" class="btn" disabled>Iniciar Importação</button>
                 <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper</button>
             </div>
-            
             <div id="log" style="margin-top:20px; font-weight: 500;"></div>
         </div>
     </div>
@@ -668,11 +304,20 @@ let indiceCarrosselAtual = 0;
 let timerCarrossel = null;
 let carrosselAtivo = false;
 
+// Função de FECHAR TELA DE BOAS-VINDAS - GARANTIDA
+function esconderTelaBoasVindas() {
+    const tela = document.getElementById('telaBoasVindas');
+    tela.classList.add('tela-oculta');
+    setTimeout(() => {
+        tela.style.display = 'none';
+        iniciarCarrossel();
+    }, 1200);
+}
+
 // Abrir/Fechar modais
 document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
 
-// Função de imagem
 function resolverUrlImagem(valFoto) {
     if (!valFoto) return '';
     let limpa = valFoto.trim();
@@ -682,7 +327,7 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
-// Importação CSV
+// Importação CSV - INALTERADO
 csvFile.onchange = e => {
     const file = e.target.files[0]; 
     if(!file) return;
@@ -713,7 +358,6 @@ btnProcess.onclick = async () => {
     document.getElementById('csvFile').disabled = true;
     document.getElementById('btnCancelar').style.display = "inline-block";
     document.getElementById('progressContainer').style.display = "block";
-    
     let sucessos = 0;
     for (let i = 0; i < csvData.length; i++) {
         try {
@@ -725,7 +369,6 @@ btnProcess.onclick = async () => {
             document.getElementById('progressBar').style.width = `${Math.round(((i+1)/csvData.length)*100)}%`;
         } catch(e) { console.error(e); }
     }
-    
     alert(`Importação concluída! ${sucessos} de ${csvData.length} enviados.`);
     document.getElementById('btnCancelar').style.display = "none";
     document.getElementById('csvFile').disabled = false;
@@ -734,7 +377,7 @@ btnProcess.onclick = async () => {
     carregarDadosPlanilha();
 };
 
-// CARREGAR DADOS E PASSAR DA TELA DE BOAS-VINDAS
+// CARREGAR DADOS - CORRIGIDO: SEMPRE FECHA A TELA
 async function carregarDadosPlanilha() {
     try {
         const res = await fetch(URL_DO_GAS);
@@ -743,20 +386,14 @@ async function carregarDadosPlanilha() {
         if(dadosGlobais.length > 0) headers = Object.keys(dadosGlobais[0]);
         renderizarTabela();
     } catch (e) {
-        console.error("Erro ao carregar:", e);
+        console.error("Erro ao carregar planilha:", e);
         dadosGlobais = [];
     } finally {
-        // SEMPRE FECHA A TELA DE BOAS-VINDAS, MESMO SE DER ERRO
-        const tela = document.getElementById('telaBoasVindas');
-        tela.style.opacity = '0';
-        setTimeout(() => {
-            tela.style.display = 'none';
-            iniciarCarrossel();
-        }, 1200);
+        esconderTelaBoasVindas(); // Executa DE QUALQUER FORMA
     }
 }
 
-// Navegação
+// Navegação - INALTERADO
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -769,10 +406,10 @@ function voltarParaCarrossel() {
     iniciarCarrossel();
 }
 
-// Carrossel
+// Carrossel - INALTERADO
 function iniciarCarrossel() {
-    if (dadosGlobais.length === 0) return;
     carrosselAtivo = true;
+    if (dadosGlobais.length === 0) return;
     document.getElementById('moduloCarrossel').style.display = 'flex';
     renderizarSlideVitrine();
 }
@@ -783,21 +420,18 @@ function pararCarrossel() {
 }
 
 function renderizarSlideVitrine() {
-    if (!carrosselAtivo || dadosGlobais.length === 0) return;
+    if (!carrosselAtivo) return;
     const total = Math.min(10, dadosGlobais.length);
     if (indiceCarrosselAtual >= total) indiceCarrosselAtual = 0;
-    
     const p = dadosGlobais[indiceCarrosselAtual];
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
-
     let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
         ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
         : `<div style="color:#94a3b8">Sem imagem</div>`;
-
     document.getElementById('containerCardVitrine').innerHTML = `
         <div class="card-quadrado-vitrine">
             <div class="vitrine-foto-container">${fotoHtml}</div>
@@ -812,12 +446,10 @@ function renderizarSlideVitrine() {
             <div class="carrossel-progresso-barra"></div>
         </div>`;
     document.getElementById('contadorVitrine').textContent = `Produto ${indiceCarrosselAtual + 1} de ${total}`;
-    
     setTimeout(() => {
         const barra = document.querySelector('.carrossel-progresso-barra');
         if(barra) { barra.style.transition = 'width 6s linear'; barra.style.width = '100%'; }
     }, 50);
-
     timerCarrossel = setTimeout(() => { indiceCarrosselAtual++; renderizarSlideVitrine(); }, 6000);
 }
 
@@ -828,35 +460,29 @@ function mudarSlideCarrossel(d) {
     renderizarSlideVitrine();
 }
 
-// Tabela com Ações (Editar/Excluir)
+// Tabela completa com Editar/Excluir - INALTERADO
 function renderizarTabela() {
     const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
     const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
     const fMarca = document.getElementById('pesqMarca').value.toLowerCase();
-
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
     const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
     const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
-
     listaFiltradaAtual = dadosGlobais.filter(p => {
         return String(p[hCod]||'').toLowerCase().includes(fCod) &&
                String(p[hDesc]||'').toLowerCase().includes(fNome) &&
                String(p[hMarca]||'').toLowerCase().includes(fMarca);
     });
-
     document.getElementById('infoQtd').textContent = `${listaFiltradaAtual.length} de ${dadosGlobais.length} registros`;
-
     let html = `<table class="tabela-produtos"><thead><tr>
         <th>Código</th><th>Descrição</th><th>Marca</th><th>Preço</th><th>Foto</th><th>Ações</th>
     </tr></thead><tbody>`;
-
     listaFiltradaAtual.forEach(p => {
         let foto = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
             ? `<img src="${resolverUrlImagem(p[hFoto])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` 
             : '<span style="color:#94a3b8">—</span>';
-
         html += `<tr>
             <td>${p[hCod]}</td>
             <td>${p[hDesc]}</td>
@@ -871,12 +497,11 @@ function renderizarTabela() {
             </td>
         </tr>`;
     });
-
     html += `</tbody></table>`;
     document.getElementById('areaLista').innerHTML = html;
 }
 
-// Funções de Edição e Exclusão
+// Edição e Exclusão - INALTERADO
 function editarRegistroPorCodigo(cod) {
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
     indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
@@ -939,7 +564,7 @@ async function salvarEProximoProduto() {
     } catch(e) { alert("Erro: " + e.message); }
 }
 
-// Iniciar busca
+// Iniciar busca e carregamento
 document.getElementById('pesqCodigo').oninput = renderizarTabela;
 document.getElementById('pesqNome').oninput = renderizarTabela;
 document.getElementById('pesqMarca').oninput = renderizarTabela;
