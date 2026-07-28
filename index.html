@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gestão de Produtos - Direto no Google Sheets</title>
+<style>
+:root { 
+    --primary-color: #ea580c; 
+    --primary-hover: #c2410c;
+    --header-bg: #3d2f24; 
+    --bg-color: #f1f5f9; 
+    --card-bg: #ffffff; 
+    --text-color: #1e293b; 
+    --border-color: #cbd5e1; 
+}
+
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: var(--bg-color); 
+    color: var(--text-color); 
+    margin: 0; 
+    padding: 30px 20px; 
+}
+
+.container { 
+    max-width: 1200px; 
+    margin: auto; 
+    background: var(--card-bg); 
+    border-radius: 12px; 
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); 
+    overflow: hidden;
+}
+
+.header { 
+    background: var(--header-bg); 
+    color: white; 
+    padding: 24px 32px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 15px; 
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.btn { 
+    background: var(--primary-color); 
+    color: white; 
+    border: none; 
+    padding: 12px 24px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background: var(--primary-hover);
+}
+
+.btn:disabled { 
+    background: #94a3b8; 
+    cursor: not-allowed; 
+}
+
+.conteudo-principal {
+    padding: 32px;
+}
+
+.area-pesquisa { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 20px; 
+    padding: 20px; 
+    background: #f8fafc; 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.campo-pesquisa label {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #475569;
+}
+
+.campo-pesquisa input { 
+    width: 100%; 
+    padding: 10px 14px; 
+    border: 1px solid var(--border-color); 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.campo-pesquisa input:focus {
+    border-color: var(--primary-color);
+}
+
+#infoQtd {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.tabela-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.tabela-produtos { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 14px; 
+    text-align: left;
+}
+
+.tabela-produtos th { 
+    background: var(--header-bg); 
+    color: white; 
+    padding: 14px 16px; 
+    font-weight: 600;
+}
+
+.tabela-produtos td { 
+    padding: 14px 16px; 
+    border-bottom: 1px solid var(--border-color); 
+    vertical-align: middle;
+}
+
+.tabela-produtos tr:hover {
+    background-color: #f8fafc;
+}
+
+.preco { 
+    color: var(--primary-color); 
+    font-weight: 700; 
+    font-size: 15px;
+}
+
+.modal-fundo { 
+    display: none; 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.6); 
+    z-index: 999; 
+    align-items: center; 
+    justify-content: center; 
+    backdrop-filter: blur(2px);
+}
+
+.modal-ativo { 
+    display: flex; 
+}
+
+.modal { 
+    background: white; 
+    border-radius: 12px; 
+    width: 100%; 
+    max-width: 650px; 
+    padding: 30px; 
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+}
+
+.modal-topo { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px; 
+}
+
+.modal-topo h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-edicao-ampla {
+    max-width: 850px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.grid-edicao-ampla {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.grupo-campo-edicao {
+    margin-bottom: 5px;
+}
+
+.grupo-campo-edicao label {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #334155;
+}
+
+.grupo-campo-edicao input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #f8fafc;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.grupo-campo-edicao input:focus {
+    background: #ffffff;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+}
+
+.progress-container { 
+    width: 100%; 
+    background: #e2e8f0; 
+    border-radius: 6px; 
+    margin: 20px 0; 
+    overflow: hidden; 
+    display: none; 
+}
+
+.progress-bar { 
+    width: 0%; 
+    height: 24px; 
+    background: #16a34a; 
+    text-align: center; 
+    color: white; 
+    font-weight: bold; 
+    font-size: 12px; 
+    line-height: 24px; 
+    transition: width 0.2s; 
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Gestão de Produtos - Direto no Google Sheets</h2>
+        <button class="btn" id="btnAbrir">📥 Importar CSV Direto</button>
+    </div>
+    <div class="conteudo-principal">
+        <div class="area-pesquisa">
+            <div class="campo-pesquisa">
+                <label>Código:</label>
+                <input type="text" id="pesqCodigo" placeholder="Pesquisar por código...">
+            </div>
+            <div class="campo-pesquisa">
+                <label>Descrição:</label>
+                <input type="text" id="pesqNome" placeholder="Ex: tom pad (busca inteligente)...">
+            </div>
+            <div class="campo-pesquisa">
+                <label>Marca:</label>
+                <input type="text" id="pesqMarca" placeholder="Pesquisar por marca...">
+            </div>
+        </div>
+        
+        <p id="infoQtd"></p>
+        
+        <div id="areaLista" class="tabela-container">
+            <p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="janela">
+    <div class="modal">
+        <div class="modal-topo">
+            <h3>Importação Direta para o Google Sheets</h3>
+            <button onclick="fechar()" style="background:transparent;border:none;cursor:pointer;font-size:18px;font-weight:bold;color:#64748b;">✕</button>
+        </div>
+        <div>
+            <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 10px;">
+            <p id="fileName" style="font-size: 13px; color: #64748b; margin-top: 5px;">Nenhum arquivo selecionado</p>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btnProcess" class="btn" disabled>Iniciar Importação</button>
+                <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper Sincronização</button>
+            </div>
+            
+            <div id="log" style="margin-top:20px; font-weight: 500; font-size: 14px; line-height: 1.5;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="modalEdicaoFundo">
+    <div class="modal modal-edicao-ampla">
+        <div class="modal-topo" style="align-items: flex-start;">
+            <div>
+                <h3 style="color: var(--primary-color);">Edição Completa de Produto</h3>
+                <p id="infoProgressoEdicao" style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;"></p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn" id="btnSalvarEProximoTopo" onclick="salvarEProximoProduto()" style="padding: 8px 16px; font-size: 13px;">💾 Salvar e Próximo ➔</button>
+                <button onclick="fecharModalEdicao()" style="background:transparent;border:none;cursor:pointer;font-size:20px;font-weight:bold;color:#64748b;">✕</button>
+            </div>
+        </div>
+        <div>
+            <div id="containerCamposEdicao" class="grid-edicao-ampla"></div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <button class="btn" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
+                <button class="btn" id="btnSalvarEProximo" onclick="salvarEProximoProduto()">💾 Salvar e Próximo ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const URL_DO_GAS = "https://script.google.com/macros/s/AKfycbwx30KYx6kGRD1fpUQSf3WykK6hor8y8FTXcQci0G4ZpHh0p5et-2mal802oi9rWOJQ9w/exec";
+
+let csvData = []; 
+let headers = [];
+let dadosGlobais = [];
+let cancelamentoSolicitado = false;
+let listaFiltradaAtual = [];
+let indiceEdicaoAtual = 0;
+
+document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
+function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
+
+document.getElementById('btnCancelar').onclick = () => {
+    cancelamentoSolicitado = true;
+    document.getElementById('log').innerHTML += "<br>⚠️ Interrupção solicitada... Finalizando lote atual.";
+};
+
+csvFile.onchange = e => {
+    const file = e.target.files[0]; 
+    if(!file) return;
+    fileName.textContent = file.name;
+    
+    const reader = new FileReader(); 
+    reader.readAsText(file, 'ISO-8859-1');
+    reader.onload = ev => {
+        const text = ev.target.result;
+        const lines = text.split(/\r\n|\n/); 
+        if (lines.length === 0) return;
+
+        const sep = lines[0].includes(';') ? ';' : ',';
+        headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
+        
+        csvData = [];
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (!line) continue;
+            
+            const row = line.split(sep).map(val => val.trim().replace(/^"|"$/g, ''));
+            let obj = {}; 
+            headers.forEach((h, index) => {
+                obj[h] = row[index] !== undefined ? row[index] : '';
+            });
+            csvData.push(obj);
+        }
+        
+        btnProcess.disabled = false;
+        document.getElementById('log').textContent = `Arquivo carregado com sucesso! ${csvData.length} linhas prontas para enviar.`;
+    }
+};
+
+btnProcess.onclick = async () => {
+    cancelamentoSolicitado = false;
+    btnProcess.disabled = true;
+    document.getElementById('csvFile').disabled = true;
+    const btnCancelar = document.getElementById('btnCancelar');
+    btnCancelar.style.display = "inline-block";
+    
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    progressContainer.style.display = "block";
+
+    const tamanhoLote = 1000;
+    const totalItens = csvData.length;
+    let lotes = [];
+    
+    for (let i = 0; i < totalItens; i += tamanhoLote) {
+        lotes.push(csvData.slice(i, i + tamanhoLote));
+    }
+
+    let lotesProcessados = 0;
+    let totalNovos = 0;
+    let totalAtualizados = 0;
+    let totalIgnorados = 0;
+
+    for (let i = 0; i < lotes.length; i++) {
+        if (cancelamentoSolicitado) break;
+
+        let payload = {
+            headers: headers,
+            items: lotes[i].map(item => ({ data: item }))
+        };
+
+        try {
+            const resposta = await fetch(URL_DO_GAS, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            });
+            
+            const resultado = await resposta.json();
+            if (resultado && resultado.success) {
+                totalNovos += resultado.novos || 0;
+                totalAtualizados += resultado.atualizados || 0;
+                totalIgnorados += resultado.ignorados || 0;
+            }
+        } catch (erro) {
+            console.error("Erro de conexão:", erro);
+            document.getElementById('log').innerHTML = `<span style="color:red">❌ Erro de conexão: ${erro.message}</span>`;
+            break;
+        }
+
+        lotesProcessados++;
+        let progresso = Math.round((lotesProcessados / lotes.length) * 100);
+        progressBar.style.width = progresso + "%";
+        progressBar.textContent = progresso + "%";
+    }
+
+    btnCancelar.style.display = "none";
+    document.getElementById('csvFile').disabled = false;
+    btnProcess.disabled = false;
+
+    let mensagemResumo = cancelamentoSolicitado ? "⚠️ **Importação Interrompida pelo Usuário!**<br>" : "✅ **Importação Concluída com Sucesso!**<br>";
+    mensagemResumo += `• Total Lidos: ${totalItens}<br>`;
+    mensagemResumo += `• Novos Adicionados: ${totalNovos}<br>`;
+    mensagemResumo += `• Atualizados: ${totalAtualizados}<br>`;
+    mensagemResumo += `• Ignorados (Sem alteração): ${totalIgnorados}`;
+    
+    document.getElementById('log').innerHTML = mensagemResumo;
+    carregarDadosPlanilha();
+};
+
+async function carregarDadosPlanilha() {
+    const areaLista = document.getElementById('areaLista');
+    areaLista.innerHTML = `<p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p>`;
+
+    try {
+        const resposta = await fetch(URL_DO_GAS);
+        const resJson = await resposta.json();
+        
+        if (!resJson || !resJson.success) {
+            throw new Error(resJson.error || "Erro desconhecido ao buscar dados.");
+        }
+        
+        dadosGlobais = resJson.data || [];
+        renderizarTabela();
+    } catch (e) {
+        console.error("Erro:", e);
+        areaLista.innerHTML = `<p style="padding: 20px; text-align: center; color: #dc2626;">Erro ao carregar dados: ${e.message}</p>`;
+    }
+}
+
+function atendeTermosBusca(textoAlvo, termoBusca) {
+    if (!termoBusca) return true;
+    const palavras = termoBusca.split(/\s+/).filter(Boolean);
+    const alvo = String(textoAlvo || '').toLowerCase();
+    return palavras.every(palavra => alvo.includes(palavra));
+}
+
+function renderizarTabela() {
+    const fCod = document.getElementById('pesqCodigo').value.toLowerCase().trim(); 
+    const fNome = document.getElementById('pesqNome').value.toLowerCase().trim(); 
+    const fMarca = document.getElementById('pesqMarca').value.toLowerCase().trim();
+
+    if(headers.length === 0 && dadosGlobais.length > 0) {
+        headers = Object.keys(dadosGlobais[0]);
+    }
+
+    listaFiltradaAtual = dadosGlobais.filter(p => {
+        let chaves = Object.keys(p);
+        let chaveCod = headers[0] || chaves[0];
+        let chaveDesc = headers.find(h => h.toLowerCase().includes('desc') || h.toLowerCase().includes('nome')) || chaves[1];
+        let chaveMarca = headers.find(h => h.toLowerCase().includes('marca')) || chaves[2];
+
+        let valCodStr = String(p[chaveCod] || '').toLowerCase();
+        let valDescStr = String(p[chaveDesc] || '').toLowerCase();
+        let valMarcaStr = String(p[chaveMarca] || '').toLowerCase();
+
+        return valCodStr.includes(fCod) && 
+               atendeTermosBusca(valDescStr, fNome) && 
+               valMarcaStr.includes(fMarca);
+    });
+
+    document.getElementById('infoQtd').textContent = `Exibindo ${listaFiltradaAtual.length} de ${dadosGlobais.length} registros na planilha`;
+    
+    if (dadosGlobais.length === 0) {
+        document.getElementById('areaLista').innerHTML = `<p style="padding: 20px; text-align: center; color: #64748b;">Nenhum dado encontrado na planilha.</p>`;
+        return;
+    }
+
+    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
+    const hDesc = headers.find(h => h.toLowerCase().includes('desc') || h.toLowerCase().includes('nome')) || headers[1];
+    const hMarca = headers.find(h => h.toLowerCase().includes('marca')) || headers[2];
+    const hPreco = headers.find(h => h.toLowerCase().includes('preço') || h.toLowerCase().includes('valor') || h.toLowerCase().includes('venda')) || headers[3];
+    const hFoto = headers.find(h => h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url')) || '';
+
+    let html = '<table class="tabela-produtos"><thead><tr>';
+    html += `<th>Código</th>`;
+    html += `<th>Descrição</th>`;
+    html += `<th>Marca</th>`;
+    html += `<th>Preço</th>`;
+    html += `<th>Foto</th>`;
+    html += `<th>Editar</th>`;
+    html += '</tr></thead><tbody>';
+
+    listaFiltradaAtual.slice(0, 100).forEach(p => {
+        let valCod = p[hCod] || '';
+        let valDesc = p[hDesc] || '';
+        let valMarca = p[hMarca] || '';
+        let valPreco = hPreco ? (p[hPreco] || '') : '';
+        let valFoto = hFoto ? (p[hFoto] || '') : '';
+
+        let renderFoto = '';
+        if (valFoto) {
+            let urlFoto = valFoto.trim();
+            if (urlFoto.toUpperCase() === 'NÃO' || urlFoto.toUpperCase() === 'NAO') {
+                renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
+            } else if (urlFoto.startsWith('http://') || urlFoto.startsWith('https://')) {
+                // Conversão robusta para link direto do Imgur
+                if (urlFoto.includes('imgur.com')) {
+                    urlFoto = urlFoto.split('?')[0];
+                    if (!urlFoto.endsWith('.jpg') && !urlFoto.endsWith('.png') && !urlFoto.endsWith('.gif') && !urlFoto.endsWith('.webp') && !urlFoto.endsWith('.jpeg')) {
+                        const partes = urlFoto.split('/');
+                        const idImg = partes[partes.length - 1];
+                        if (idImg) {
+                            urlFoto = `https://i.imgur.com/${idImg}.jpg`;
+                        }
+                    } else {
+                        urlFoto = urlFoto.replace('imgur.com', 'i.imgur.com').replace('_d.', '.');
+                    }
+                }
+                // Usando proxy de imagem público para evitar o bloqueio CORS do Imgur em tags HTML
+                let urlExibicao = `https://images.weserv.nl/?url=${encodeURIComponent(urlFoto.replace(/^https?:\/\//, ''))}&w=80&h=80&fit=cover`;
+                
+                renderFoto = `<a href="${urlFoto}" target="_blank" title="Abrir imagem original"><img src="${urlExibicao}" alt="Foto" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;" onerror="this.onerror=null; this.src='https://via.placeholder.com/48?text=Erro';"></a>`;
+            } else {
+                renderFoto = urlFoto;
+            }
+        } else {
+            renderFoto = '<span style="color: #94a3b8; font-size: 12px;">Sem foto</span>';
+        }
+
+        html += '<tr>';
+        html += `<td>${valCod}</td>`;
+        html += `<td>${valDesc}</td>`;
+        html += `<td>${valMarca}</td>`;
+        html += `<td class="preco">${valPreco}</td>`;
+        html += `<td>${renderFoto}</td>`;
+        html += `<td><button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="editarRegistroPorCodigo('${valCod}')">Editar</button></td>`;
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('areaLista').innerHTML = html;
+}
+
+function editarRegistroPorCodigo(codigo) {
+    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
+    indiceEdicaoAtual = listaFiltradaAtual.findIndex(item => String(item[hCod]) === String(codigo));
+    
+    if (indiceEdicaoAtual !== -1) {
+        preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
+        document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
+    }
+}
+
+function preencherFormularioEdicao(produtoObj) {
+    const container = document.getElementById('containerCamposEdicao');
+    const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
+    
+    document.getElementById('infoProgressoEdicao').textContent = `Editando item ${indiceEdicaoAtual + 1} de ${listaFiltradaAtual.length} com o filtro ativo.`;
+
+    let html = '';
+    headers.forEach(h => {
+        let valorAtual = produtoObj[h] !== undefined ? produtoObj[h] : '';
+        let ehCodigo = (h === hCod);
+        let ehFoto = h.toLowerCase().includes('foto') || h.toLowerCase().includes('imagem') || h.toLowerCase().includes('url');
+        
+        let placeholderTxt = ehFoto ? "Cole aqui o link da imagem (ex: link do Imgur)" : `Digite ${h}...`;
+
+        html += `<div class="grupo-campo-edicao">`;
+        html += `<label>${h}${ehCodigo ? ' (Código fixo)' : ''}</label>`;
+        html += `<input type="text" id="input_edit_${h}" value="${valorAtual}" ${ehCodigo ? 'readonly style="background:#e2e8f0; color:#64748b; cursor:not-allowed;"' : ''} placeholder="${placeholderTxt}">`;
+        html += `</div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function fecharModalEdicao() {
+    document.getElementById('modalEdicaoFundo').classList.remove('modal-ativo');
+}
+
+async function salvarEProximoProduto() {
+    let produtoModificado = {};
+    headers.forEach(h => {
+        const campoInput = document.getElementById(`input_edit_${h}`);
+        if(campoInput) {
+            produtoModificado[h] = campoInput.value;
+        }
+    });
+
+    const btnSalvar = document.getElementById('btnSalvarEProximo');
+    const btnSalvarTopo = document.getElementById('btnSalvarEProximoTopo');
+    
+    [btnSalvar, btnSalvarTopo].forEach(b => {
+        if(b) {
+            b.disabled = true;
+            b.textContent = "Salvando...";
+        }
+    });
+
+    let payload = {
+        headers: headers,
+        items: [{ data: produtoModificado }]
+    };
+
+    try {
+        const resposta = await fetch(URL_DO_GAS, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        
+        const resultado = await resposta.json();
+        if (resultado && resultado.success) {
+            const hCod = headers.find(h => h.toLowerCase().includes('cód') || h.toLowerCase().includes('codigo')) || headers[0];
+            const idxGlobal = dadosGlobais.findIndex(item => String(item[hCod]) === String(produtoModificado[hCod]));
+            if(idxGlobal !== -1) {
+                dadosGlobais[idxGlobal] = produtoModificado;
+            }
+
+            renderizarTabela();
+
+            indiceEdicaoAtual++;
+            if (indiceEdicaoAtual < listaFiltradaAtual.length) {
+                preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
+                [btnSalvar, btnSalvarTopo].forEach(b => {
+                    if(b) {
+                        b.disabled = false;
+                        b.textContent = "💾 Salvar e Próximo ➔";
+                    }
+                });
+            } else {
+                fecharModalEdicao();
+                alert("Parabéns! Todos os produtos deste filtro foram revisados e alterados com sucesso.");
+                [btnSalvar, btnSalvarTopo].forEach(b => {
+                    if(b) {
+                        b.disabled = false;
+                        b.textContent = "💾 Salvar e Próximo ➔";
+                    }
+                });
+            }
+        } else {
+            throw new Error("Erro ao salvar no Google Sheets.");
+        }
+    } catch (e) {
+        console.error("Erro:", e);
+        alert("Erro ao salvar: " + e.message);
+        [btnSalvar, btnSalvarTopo].forEach(b => {
+            if(b) {
+                b.disabled = false;
+                b.textContent = "💾 Salvar e Próximo ➔";
+            }
+        });
+    }
+}
+
+document.getElementById('pesqCodigo').oninput = renderizarTabela;
+document.getElementById('pesqNome').oninput = renderizarTabela;
+document.getElementById('pesqMarca').oninput = renderizarTabela;
+
+window.onload = () => {
+    carregarDadosPlanilha();
+};
+</script>
+</body>
+</html>
