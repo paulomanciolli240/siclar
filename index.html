@@ -575,9 +575,14 @@ function pararCarrossel() {
     if (timerCarrossel) clearTimeout(timerCarrossel);
 }
 
+// ✅ FUNÇÃO CORRIGIDA: PARA O CARROSSEL NO HOVER
 function renderizarPaginaCarrossel() {
+    // Sempre limpa o temporizador primeiro
+    if (timerCarrossel) clearTimeout(timerCarrossel);
+
+    // Se estiver pausado, pesquisando ou carrossel parado: não continua
     if (!carrosselAtivo || pausaPorHover || termoPesquisaCarrossel.length > 0) {
-        if (timerCarrossel) clearTimeout(timerCarrossel);
+        return;
     }
 
     const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
@@ -631,6 +636,7 @@ function renderizarPaginaCarrossel() {
     document.getElementById('contadorVitrine').textContent = 
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
+    // Só agenda próxima troca se NÃO estiver pausado
     if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
         timerCarrossel = setTimeout(() => {
             indicePaginaCarrossel++;
