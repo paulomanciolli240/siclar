@@ -26,15 +26,20 @@ function pararCarrossel() {
 }
 
 function obterProdutosFiltradosCarrossel() {
+    const hCod = headers.find(h => h.includes('Cód') || h.toLowerCase().includes('codigo')) || headers[0];
     const hDesc = headers.find(h => h.includes('Desc') || h.toLowerCase().includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.includes('Marca') || h.toLowerCase().includes('marca')) || headers[2];
 
-    return dadosGlobais.filter(p => {
+    return dadosGlobais.filter(produto => {
         if (!termoPesquisaCarrossel) return true;
-        const desc = String(p[hDesc] || '');
-        const marca = String(p[hMarca] || '');
-        return buscaInteligente(termoPesquisaCarrossel, desc) ||
-               buscaInteligente(termoPesquisaCarrossel, marca);
+
+        const textoProduto = [
+            produto[hCod],
+            produto[hDesc],
+            produto[hMarca]
+        ].filter(Boolean).join(' ');
+
+        return buscaInteligente(termoPesquisaCarrossel, textoProduto);
     });
 }
 
@@ -69,9 +74,21 @@ function renderizarPaginaCarrossel() {
                 ? 'Nenhum produto encontrado para esta pesquisa.'
                 : 'Nenhum produto foi encontrado na aba produto.';
 
-        html = `<div style="grid-column:1 / -1;text-align:center;padding:35px;color:#cbd5e1;">
-            <p style="font-size:16px;font-weight:700;margin:0 0 10px;">${mensagem}</p>
-            <button class="btn-controle-carrossel" onclick="recarregarProdutos()">Tentar novamente</button>
+        const complementoPesquisa = termoPesquisaCarrossel
+            ? `<p class="carrossel-sem-resultado-dica">
+                   Confira a escrita ou tente outra combinação de palavras.<br>
+                   Ex.: <strong>cimento votoran</strong>, <strong>piso branco</strong> ou o código do produto.
+               </p>
+               <button class="btn-controle-carrossel" type="button"
+                   onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; indicePaginaCarrossel=0; renderizarPaginaCarrossel();">
+                   Limpar pesquisa
+               </button>`
+            : `<button class="btn-controle-carrossel" onclick="recarregarProdutos()">Tentar novamente</button>`;
+
+        html = `<div class="carrossel-sem-resultado">
+            <div class="carrossel-sem-resultado-icone">${termoPesquisaCarrossel ? '😕' : '📦'}</div>
+            <p>${mensagem}</p>
+            ${complementoPesquisa}
         </div>`;
     } else {
         produtosPagina.forEach(p => {
@@ -91,7 +108,16 @@ function renderizarPaginaCarrossel() {
                 </div>
                 <div class="vitrine-rodape-preco">
                     <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
-                    <span class="vitrine-preco">${p[hPreco] || ''}</span>
+                    <div class="vitrine-precos">
+                        <div class="vitrine-preco-prazo">
+                            <small>Preço a prazo</small>
+                            <strong>${formatarMoeda(moedaParaNumero(p[hPreco]))}</strong>
+                        </div>
+                        <div class="vitrine-preco-vista">
+                            <small>À vista (4,9% de desconto)</small>
+                            <strong>${formatarMoeda(calcularPrecoAVista(p[hPreco]))}</strong>
+                        </div>
+                    </div>
                 </div>
             </div>`;
         });

@@ -42,3 +42,29 @@ let ultimoPedidoPdfVisualizado = null;
 
 
 let adminUsuario = null;
+
+const DESCONTO_PRECO_A_VISTA = 0.049;
+const FATOR_PRECO_A_VISTA = 1 - DESCONTO_PRECO_A_VISTA;
+let formaPagamentoPedido = "A VISTA";
+
+function normalizarFormaPagamento(valor) {
+    const forma = String(valor || "").trim().toUpperCase();
+    return forma === "A PRAZO" ? "A PRAZO" : "A VISTA";
+}
+
+function calcularPrecoAVista(precoPrazo) {
+    const valor = moedaParaNumero(precoPrazo);
+    return Math.round((valor * FATOR_PRECO_A_VISTA + Number.EPSILON) * 100) / 100;
+}
+
+function obterPrecoPorForma(precoPrazo, forma = formaPagamentoPedido) {
+    return normalizarFormaPagamento(forma) === "A PRAZO"
+        ? moedaParaNumero(precoPrazo)
+        : calcularPrecoAVista(precoPrazo);
+}
+
+function rotuloFormaPagamento(forma = formaPagamentoPedido) {
+    return normalizarFormaPagamento(forma) === "A PRAZO"
+        ? "A prazo"
+        : "À vista";
+}

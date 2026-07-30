@@ -83,10 +83,7 @@ function prepararFormularioCliente(cliente = null) {
     document.getElementById('clienteObservacoes').value =
         obterValorCliente(cliente, 'OBSERVAÇÕES');
 
-    document.getElementById('clienteEndereco').readOnly = true;
-    document.getElementById('clienteBairro').readOnly = true;
-    document.getElementById('clienteCidade').readOnly = true;
-    document.getElementById('clienteUf').readOnly = true;
+    liberarEnderecoManualCliente();
 }
 
 function abrirAlteracaoCliente() {
@@ -157,13 +154,45 @@ async function consultarCpfCliente() {
     }
 }
 
+function liberarEnderecoManualCliente() {
+    ['clienteEndereco', 'clienteBairro', 'clienteCidade', 'clienteUf'].forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) campo.readOnly = false;
+    });
+}
+
+function limparEnderecoCliente() {
+    ['clienteEndereco', 'clienteBairro', 'clienteCidade', 'clienteUf'].forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = '';
+    });
+}
+
 async function consultarCepCliente() {
     const campoCep = document.getElementById('clienteCep');
     const cep = somenteNumeros(campoCep.value);
 
     definirMensagemCliente('mensagemCadastroCliente', '');
+    liberarEnderecoManualCliente();
 
-    if (cep.length !== 8) return;
+    if (!cep) {
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'Sem CEP? Preencha o endereço, bairro, cidade e UF manualmente.',
+            'sucesso'
+        );
+        document.getElementById('clienteEndereco').focus();
+        return;
+    }
+
+    if (cep.length !== 8) {
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'O CEP está incompleto. Você pode corrigi-lo ou deixá-lo em branco e preencher o endereço manualmente.',
+            'erro'
+        );
+        return;
+    }
 
     campoCep.disabled = true;
 
@@ -172,29 +201,38 @@ async function consultarCepCliente() {
         const dados = await resposta.json();
 
         if (!resposta.ok || dados.erro) {
-            throw new Error('CEP não encontrado.');
+            throw new Error(
+                'CEP não encontrado. Você pode deixar o CEP em branco e preencher o endereço manualmente.'
+            );
         }
 
-        document.getElementById('clienteEndereco').value = String(dados.logradouro || '').toUpperCase();
-        document.getElementById('clienteBairro').value = String(dados.bairro || '').toUpperCase();
-        document.getElementById('clienteCidade').value = String(dados.localidade || '').toUpperCase();
-        document.getElementById('clienteUf').value = String(dados.uf || '').toUpperCase();
+        document.getElementById('clienteEndereco').value =
+            String(dados.logradouro || '').toUpperCase();
+        document.getElementById('clienteBairro').value =
+            String(dados.bairro || '').toUpperCase();
+        document.getElementById('clienteCidade').value =
+            String(dados.localidade || '').toUpperCase();
+        document.getElementById('clienteUf').value =
+            String(dados.uf || '').toUpperCase();
 
-        if (!dados.logradouro) {
-            document.getElementById('clienteEndereco').readOnly = false;
+        liberarEnderecoManualCliente();
+
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'Endereço localizado. Confira os dados e altere o que for necessário.',
+            'sucesso'
+        );
+
+        if (dados.logradouro) {
+            document.getElementById('clienteNumero').focus();
+        } else {
+            document.getElementById('clienteEndereco').focus();
         }
-
-        if (!dados.bairro) {
-            document.getElementById('clienteBairro').readOnly = false;
-        }
-
-        document.getElementById('clienteNumero').focus();
     } catch (e) {
-        document.getElementById('clienteEndereco').value = '';
-        document.getElementById('clienteBairro').value = '';
-        document.getElementById('clienteCidade').value = '';
-        document.getElementById('clienteUf').value = '';
+        limparEnderecoCliente();
+        liberarEnderecoManualCliente();
         definirMensagemCliente('mensagemCadastroCliente', e.message, 'erro');
+        document.getElementById('clienteEndereco').focus();
     } finally {
         campoCep.disabled = false;
     }
@@ -228,8 +266,32 @@ async function salvarCadastroCliente(evento) {
         return;
     }
 
-    if (cep.length !== 8) {
-        definirMensagemCliente('mensagemCadastroCliente', 'CEP inválido.', 'erro');
+    if (cep && cep.length !== 8) {
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'Corrija o CEP ou deixe-o em branco para informar o endereço manualmente.',
+            'erro'
+        );
+        document.getElementById('clienteCep').focus();
+        return;
+    }
+
+    if (!dadosCliente.ENDERECO || !dadosCliente.BAIRRO || !dadosCliente.CIDADE || !dadosCliente.UF) {
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'Informe endereço, bairro, cidade e UF. O CEP é opcional.',
+            'erro'
+        );
+        return;
+    }
+
+    if (dadosCliente.UF.length !== 2) {
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'Informe a UF com duas letras. Exemplo: MT.',
+            'erro'
+        );
+        document.getElementById('clienteUf').focus();
         return;
     }
 
@@ -274,7 +336,7 @@ async function salvarCadastroCliente(evento) {
             '#etapaCadastroConcluido .mensagem-cliente'
         );
         mensagemConclusao.textContent =
-            'Cadastro realizado com sucesso. Seja bem-vindo à SICLAR!';
+            '🎉 Cadastro realizado com sucesso! Agora você já pode montar seu pedido.';
         mostrarEtapaCliente('etapaCadastroConcluido');
     } catch (e) {
         definirMensagemCliente('mensagemCadastroCliente', e.message, 'erro');

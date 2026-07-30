@@ -60,6 +60,9 @@ function criarDadosDocumentoPedido(pedido, itens, cliente) {
         quantidadeTotal: Number(pedido.quantidadeTotal ?? pedido.QUANTIDADE_ITENS ?? quantidade),
         vendedor: String(pedido.vendedor ?? pedido.VENDEDOR ?? ""),
         whatsappVendedor: String(pedido.whatsappVendedor ?? pedido.WHATSAPP_VENDEDOR ?? ""),
+        formaPagamento: normalizarFormaPagamento(
+            pedido.formaPagamento ?? pedido.FORMA_PAGAMENTO ?? "A VISTA"
+        ),
         cliente: cliente || {},
         itens: itensNormalizados
     };
@@ -123,7 +126,7 @@ function gerarPdfPedido(dados) {
     y += 10;
 
     doc.setFillColor(245, 247, 250);
-    doc.roundedRect(margem, y, larguraUtil, 24, 2, 2, "F");
+    doc.roundedRect(margem, y, larguraUtil, 29, 2, 2, "F");
     doc.setFontSize(14);
     doc.text("PEDIDO DE COMPRA", margem + 5, y + 8);
     doc.setFontSize(10);
@@ -135,7 +138,14 @@ function gerarPdfPedido(dados) {
     if (dados.vendedor) {
         doc.text(`Vendedor: ${dados.vendedor}`, largura - margem - 5, y + 20, { align: "right" });
     }
-    y += 32;
+    doc.setFont("helvetica", "bold");
+    doc.text(
+        `Pagamento: ${dados.formaPagamento || "A VISTA"}`,
+        largura - margem - 5,
+        y + 25,
+        { align: "right" }
+    );
+    y += 37;
 
     const cliente = dados.cliente || {};
     doc.setFontSize(11);
@@ -263,6 +273,7 @@ function montarMensagemWhatsApp(dados) {
         `Acabei de realizar o pedido *${dados.numeroPedido}* pelo SICLAR.`,
         `Status: *${dados.status}*`,
         dados.vendedor ? `Vendedor escolhido: *${dados.vendedor}*` : "",
+        `Forma de pagamento: *${dados.formaPagamento || "A VISTA"}*`,
         "",
         "*Itens do pedido:*",
         ...linhasItens,

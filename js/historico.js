@@ -45,8 +45,9 @@ function renderizarListaPedidosCliente() {
         const aberto = statusPermiteComplemento(pedido.STATUS);
         return `<div class="pedido-historico-card" data-numero="${pedido.NUMERO_PEDIDO}" onclick='abrirDetalhePedido(${JSON.stringify(pedido.NUMERO_PEDIDO)})'>
             <div class="pedido-historico-numero">${pedido.NUMERO_PEDIDO}</div>
-            <div class="pedido-historico-meta"><span>${pedido.DATA_PEDIDO || ''} • ${pedido.VENDEDOR || "VENDEDOR NÃO INFORMADO"}</span><span class="status-pedido ${aberto?'status-aberto':'status-bloqueado'}">${pedido.STATUS || ''}</span></div>
+            <div class="pedido-historico-meta"><span>${pedido.DATA_PEDIDO || ''}</span><span class="status-pedido ${aberto?'status-aberto':'status-bloqueado'}">${pedido.STATUS || ''}</span></div>
             <div class="pedido-historico-meta"><span>${pedido.QUANTIDADE_ITENS || 0} unidade(s)</span><strong>${formatarMoeda(moedaParaNumero(pedido.VALOR_TOTAL))}</strong></div>
+            <div class="pedido-historico-meta"><span>Pagamento</span><strong>${normalizarFormaPagamento(pedido.FORMA_PAGAMENTO || "A VISTA")}</strong></div>
         </div>`;
     }).join('');
 }
@@ -85,10 +86,11 @@ function renderizarDetalhePedido(pedido, itens) {
     }).join('');
 
     document.getElementById('detalhePedidoCliente').innerHTML = `
-        <div class="detalhe-pedido-cabecalho"><div><h3>${pedido.NUMERO_PEDIDO}</h3><div style="color:#64748b;font-size:13px;">Criado em ${pedido.DATA_PEDIDO || ''} • Vendedor ${pedido.VENDEDOR || "NÃO INFORMADO"}</div></div><span class="status-pedido ${permite?'status-aberto':'status-bloqueado'}">${pedido.STATUS || ''}</span></div>
+        <div class="detalhe-pedido-cabecalho"><div><h3>${pedido.NUMERO_PEDIDO}</h3><div style="color:#64748b;font-size:13px;">Criado em ${pedido.DATA_PEDIDO || ''}</div></div><span class="status-pedido ${permite?'status-aberto':'status-bloqueado'}">${pedido.STATUS || ''}</span></div>
         <div class="detalhe-pedido-resumo">
             <div class="resumo-pedido-bloco"><span>Quantidade total</span><strong>${pedido.QUANTIDADE_ITENS || 0}</strong></div>
             <div class="resumo-pedido-bloco"><span>Valor total atualizado</span><strong>${formatarMoeda(moedaParaNumero(pedido.VALOR_TOTAL))}</strong></div>
+            <div class="resumo-pedido-bloco"><span>Forma de pagamento</span><strong>${normalizarFormaPagamento(pedido.FORMA_PAGAMENTO || "A VISTA")}</strong></div>
             <div class="resumo-pedido-bloco"><span>Observação</span><strong style="font-size:12px;">${pedido.OBSERVACAO || 'SEM OBSERVAÇÃO'}</strong></div>
         </div>
         <div style="overflow-x:auto;"><table class="tabela-itens-pedido"><thead><tr><th>Tipo</th><th>Código</th><th>Descrição</th><th>Qtd.</th><th>Unitário</th><th>Subtotal</th><th>Inclusão</th></tr></thead><tbody>${linhas || '<tr><td colspan="7">Nenhum item encontrado.</td></tr>'}</tbody></table></div>

@@ -1243,3 +1243,251 @@ body {
         align-items: flex-start;
     }
 }
+
+
+/* === PREÇOS À VISTA E A PRAZO === */
+.vitrine-precos {
+    display: grid;
+    gap: 5px;
+}
+
+.vitrine-preco-prazo,
+.vitrine-preco-vista {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+}
+
+.vitrine-preco-prazo small,
+.vitrine-preco-vista small {
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .35px;
+}
+
+.vitrine-preco-prazo small {
+    color: #64748b;
+}
+
+.vitrine-preco-prazo strong {
+    color: #334155;
+    font-size: 13px;
+}
+
+.vitrine-preco-vista small {
+    color: #15803d;
+}
+
+.vitrine-preco-vista strong {
+    color: #16a34a;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.pedido-card-precos {
+    display: grid;
+    gap: 3px;
+}
+
+.pedido-card-preco-secundario {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.pedido-card-preco-principal {
+    color: var(--primary-color);
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.pedido-card-forma {
+    display: block;
+    color: #64748b;
+    font-size: 9px;
+    margin-top: 2px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.pedido-forma-pagamento {
+    margin: 0 0 15px;
+    padding: 13px;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    background: #fff7ed;
+}
+
+.pedido-forma-pagamento legend {
+    padding: 0 7px;
+    color: #9a3412;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.opcao-forma-pagamento {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 8px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.opcao-forma-pagamento:hover {
+    background: #ffedd5;
+}
+
+.opcao-forma-pagamento input {
+    margin-top: 3px;
+    accent-color: var(--primary-color);
+}
+
+.opcao-forma-pagamento span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.opcao-forma-pagamento strong {
+    color: #7c2d12;
+    font-size: 13px;
+}
+
+.opcao-forma-pagamento small {
+    color: #9a3412;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.pedido-forma-pagamento.bloqueada {
+    opacity: .72;
+}
+
+.item-carrinho-forma {
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+
+/* === ORIENTAÇÃO PARA INICIAR O PEDIDO === */
+.aviso-iniciar-pedido {
+    width: min(1180px, calc(100% - 32px));
+    margin: 18px auto 4px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border: 3px solid #f97316;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    box-shadow: 0 14px 34px rgba(194, 65, 12, .20);
+    animation: pulsarAvisoPedido 2.5s ease-in-out infinite;
+}
+
+.aviso-iniciar-pedido-icone {
+    flex: 0 0 auto;
+    width: 70px;
+    height: 70px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f97316;
+    color: #fff;
+    font-size: 34px;
+    box-shadow: 0 8px 18px rgba(194, 65, 12, .28);
+}
+
+.aviso-iniciar-pedido-conteudo strong {
+    display: block;
+    color: #9a3412;
+    font-size: clamp(17px, 2.1vw, 25px);
+    line-height: 1.15;
+}
+
+.aviso-iniciar-pedido-conteudo p {
+    margin: 7px 0;
+    color: #7c2d12;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.aviso-iniciar-pedido-conteudo span {
+    display: inline-block;
+    color: #166534;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+@keyframes pulsarAvisoPedido {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.008); }
+}
+
+/* === CADASTRO DE CLIENTE MAIS FLEXÍVEL === */
+.ajuda-campo-cliente {
+    display: block;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+/* === PESQUISA SEM RESULTADO === */
+.carrossel-sem-resultado {
+    grid-column: 1 / -1;
+    width: min(620px, 100%);
+    margin: 22px auto;
+    padding: 30px 24px;
+    text-align: center;
+    color: #334155;
+    border: 2px dashed #fdba74;
+    border-radius: 18px;
+    background: #fff7ed;
+}
+
+.carrossel-sem-resultado-icone {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.carrossel-sem-resultado > p {
+    margin: 0 0 10px;
+    color: #9a3412;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.carrossel-sem-resultado-dica {
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.55;
+}
+
+@media (max-width: 700px) {
+    .aviso-iniciar-pedido {
+        align-items: flex-start;
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .aviso-iniciar-pedido-icone {
+        width: 52px;
+        height: 52px;
+        font-size: 26px;
+    }
+
+    .aviso-iniciar-pedido-conteudo p {
+        font-size: 12px;
+    }
+
+    .aviso-iniciar-pedido-conteudo span {
+        font-size: 12px;
+    }
+}

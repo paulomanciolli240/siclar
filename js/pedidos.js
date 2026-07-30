@@ -5,6 +5,10 @@ function abrirMontagemPedido(numeroPedidoComplemento = null) {
     modoPedidoAtual = numeroPedidoComplemento ? 'COMPLEMENTO' : 'NOVO';
     carrinhoPedido = [];
 
+    formaPagamentoPedido = numeroPedidoComplemento
+        ? normalizarFormaPagamento(pedidoVisualizadoAtual?.FORMA_PAGAMENTO || "A VISTA")
+        : "A VISTA";
+
     const cpfSalvo = localStorage.getItem(CHAVE_CPF_SICLAR) || '';
     const nomeCliente = obterValorCliente(clientePedidoAtual, 'NOME_COMPLETO') || 'CLIENTE SICLAR';
 
@@ -29,8 +33,14 @@ function abrirMontagemPedido(numeroPedidoComplemento = null) {
     const seletorVendedor = document.getElementById('pedidoVendedor');
     if (seletorVendedor) {
         seletorVendedor.disabled = Boolean(numeroPedidoComplemento);
-        if (!numeroPedidoComplemento) seletorVendedor.value = '';
+        if (!numeroPedidoComplemento) {
+            seletorVendedor.value = '';
+        } else if (pedidoVisualizadoAtual?.VENDEDOR) {
+            seletorVendedor.value = String(pedidoVisualizadoAtual.VENDEDOR).toUpperCase();
+        }
     }
+
+    sincronizarSeletorFormaPagamento(Boolean(numeroPedidoComplemento));
     document.querySelector('.pedido-carrinho-topo h3').textContent = numeroPedidoComplemento
         ? 'Complemento do pedido'
         : 'Seu pedido';
@@ -96,7 +106,8 @@ function renderizarProdutosPedido() {
             const codigo = String(produto[cab.codigo] || '');
             const descricao = String(produto[cab.descricao] || '');
             const marca = String(produto[cab.marca] || '');
-            const preco = moedaParaNumero(produto[cab.preco]);
+            const precoPrazo = moedaParaNumero(produto[cab.preco]);
+            const precoSelecionado = obterPrecoPorForma(precoPrazo);
             const foto = cab.foto && produto[cab.foto]
                 ? `<img src="${resolverUrlImagem(String(produto[cab.foto]))}" alt="Produto" onerror="this.style.display='none'">`
                 : '<span style="color:#94a3b8;font-size:11px;">Sem imagem</span>';
@@ -108,7 +119,13 @@ function renderizarProdutosPedido() {
                     <div class="pedido-card-descricao">${descricao}</div>
                     <div class="pedido-card-rodape">
                         <div>
-                            <div class="pedido-card-preco">${formatarMoeda(preco)}</div>
+                            <div class="pedido-card-precos">
+                                <div class="pedido-card-preco-principal">${formatarMoeda(precoSelecionado)}</div>
+                                <span class="pedido-card-forma">${rotuloFormaPagamento()}</span>
+                                <div class="pedido-card-preco-secundario">
+                                    Prazo: ${formatarMoeda(precoPrazo)} • Vista: ${formatarMoeda(calcularPrecoAVista(precoPrazo))}
+                                </div>
+                            </div>
                             <span class="pedido-card-codigo">Cód. ${codigo}</span>
                         </div>
                         <button
@@ -156,7 +173,7 @@ function adicionarAoCarrinhoPedido(produto, mostrarFeedback = true) {
             codigo,
             descricao: String(produto[cab.descricao] || ''),
             marca: String(produto[cab.marca] || ''),
-            precoUnitario: moedaParaNumero(produto[cab.preco]),
+            precoPrazo: moedaParaNumero(produto[cab.preco]),
             quantidade: 1
         });
     }
@@ -168,6 +185,28 @@ function adicionarAoCarrinhoPedido(produto, mostrarFeedback = true) {
         botao.textContent = 'Produto adicionado ✓';
         setTimeout(() => botao.textContent = modoPedidoAtual === 'COMPLEMENTO' ? 'Salvar complemento' : 'Finalizar pedido', 700);
     }
+}
+
+function sincronizarSeletorFormaPagamento(bloquear = false) {
+    const grupo = document.getElementById('pedidoFormaPagamentoGrupo');
+    const radios = document.querySelectorAll('input[name="pedidoFormaPagamento"]');
+
+    radios.forEach(radio => {
+        radio.checked = normalizarFormaPagamento(radio.value) === formaPagamentoPedido;
+        radio.disabled = bloquear;
+    });
+
+    if (grupo) grupo.classList.toggle('bloqueada', bloquear);
+}
+
+function alterarFormaPagamentoPedido(valor) {
+    formaPagamentoPedido = normalizarFormaPagamento(valor);
+    renderizarProdutosPedido();
+    renderizarCarrinhoPedido();
+}
+
+function precoUnitarioAtualItem(item) {
+    return obterPrecoPorForma(item.precoPrazo, formaPagamentoPedido);
 }
 
 function alterarQuantidadePedido(codigo, variacao) {
@@ -203,7 +242,8 @@ function renderizarCarrinhoPedido() {
         container.innerHTML = carrinhoPedido.map(item => `
             <div class="item-carrinho">
                 <div class="item-carrinho-titulo">${item.descricao}</div>
-                <div class="item-carrinho-codigo">Cód. ${item.codigo} • ${formatarMoeda(item.precoUnitario)} cada</div>
+                <div class="item-carrinho-codigo">Cód. ${item.codigo} • ${formatarMoeda(precoUnitarioAtualItem(item))} cada</div>
+                <div class="item-carrinho-forma">${rotuloFormaPagamento()}</div>
 
                 <div class="item-carrinho-linha">
                     <div class="controle-quantidade">
@@ -213,7 +253,7 @@ function renderizarCarrinhoPedido() {
                     </div>
 
                     <div class="item-carrinho-subtotal">
-                        ${formatarMoeda(item.precoUnitario * item.quantidade)}
+                        ${formatarMoeda(precoUnitarioAtualItem(item) * item.quantidade)}
                     </div>
                 </div>
 
@@ -226,7 +266,7 @@ function renderizarCarrinhoPedido() {
 
     const quantidadeTotal = carrinhoPedido.reduce((soma, item) => soma + item.quantidade, 0);
     const valorTotal = carrinhoPedido.reduce(
-        (soma, item) => soma + (item.precoUnitario * item.quantidade),
+        (soma, item) => soma + (precoUnitarioAtualItem(item) * item.quantidade),
         0
     );
 
@@ -246,14 +286,18 @@ async function finalizarPedido() {
 
     const cpf = localStorage.getItem(CHAVE_CPF_SICLAR) || '';
     const botao = document.getElementById('btnFinalizarPedido');
-    const itensEnviados = carrinhoPedido.map(item => ({
-        codigo: item.codigo,
-        descricao: item.descricao,
-        marca: item.marca,
-        quantidade: item.quantidade,
-        precoUnitario: item.precoUnitario,
-        subtotal: item.precoUnitario * item.quantidade
-    }));
+    const itensEnviados = carrinhoPedido.map(item => {
+        const precoUnitario = precoUnitarioAtualItem(item);
+        return {
+            codigo: item.codigo,
+            descricao: item.descricao,
+            marca: item.marca,
+            quantidade: item.quantidade,
+            precoPrazo: item.precoPrazo,
+            precoUnitario,
+            subtotal: precoUnitario * item.quantidade
+        };
+    });
     const observacao = document.getElementById('pedidoObservacao').value.trim().toUpperCase();
     const seletorVendedor = document.getElementById('pedidoVendedor');
     const vendedor = modoPedidoAtual === 'COMPLEMENTO'
@@ -276,6 +320,7 @@ async function finalizarPedido() {
             numeroPedido: pedidoComplementoNumero,
             observacao,
             vendedor,
+            formaPagamento: formaPagamentoPedido,
             itens: itensEnviados
         });
 
@@ -291,7 +336,8 @@ async function finalizarPedido() {
             valorTotal: resultado.valorTotal,
             quantidadeTotal: resultado.quantidadeTotal,
             vendedor: resultado.vendedor || vendedor,
-            whatsappVendedor: resultado.whatsappVendedor || ""
+            whatsappVendedor: resultado.whatsappVendedor || "",
+            formaPagamento: resultado.formaPagamento || formaPagamentoPedido
         }, itensEnviados, obterClienteDoPedido());
 
         document.getElementById('mensagemPedidoSucesso').textContent = modoPedidoAtual === 'COMPLEMENTO'
@@ -302,6 +348,7 @@ async function finalizarPedido() {
             <div><span>Pedido</span><strong>${pedidoConcluidoAtual.numeroPedido}</strong></div>
             <div><span>Status</span><strong>${pedidoConcluidoAtual.status}</strong></div>
             <div><span>Vendedor</span><strong>${pedidoConcluidoAtual.vendedor || ""}</strong></div>
+            <div><span>Pagamento</span><strong>${pedidoConcluidoAtual.formaPagamento || ""}</strong></div>
             <div><span>Quantidade</span><strong>${pedidoConcluidoAtual.quantidadeTotal}</strong></div>
             <div><span>Valor total</span><strong>${formatarMoeda(pedidoConcluidoAtual.valorTotal)}</strong></div>
         `;
