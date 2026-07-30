@@ -1069,3 +1069,177 @@ body {
         padding: 22px;
     }
 }
+
+
+/* Aviso público do catálogo */
+.aviso-site-em-ajustes {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    width: min(1180px, calc(100% - 30px));
+    margin: 18px auto 4px;
+    padding: 16px 18px;
+    border: 1px solid #f4c96b;
+    border-radius: 14px;
+    background: #fff8df;
+    color: #594415;
+    box-shadow: 0 8px 24px rgba(71, 51, 11, 0.08);
+}
+
+.aviso-site-em-ajustes strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.aviso-site-em-ajustes p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.aviso-site-icone {
+    flex: 0 0 auto;
+    font-size: 25px;
+}
+
+/* Pedido concluído e documentos */
+.pedido-sucesso-card {
+    width: min(580px, calc(100% - 28px));
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+.resumo-pedido-concluido {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0;
+    text-align: left;
+}
+
+.resumo-pedido-concluido > div {
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.resumo-pedido-concluido span {
+    display: block;
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.resumo-pedido-concluido strong {
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.acoes-pedido-concluido,
+.acoes-documento-pedido {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.btn-pdf-pedido {
+    background: #b91c1c;
+}
+
+.btn-whatsapp-pedido {
+    background: #168a45;
+}
+
+.nota-pdf-whatsapp {
+    margin: 16px 0 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.acoes-documento-pedido {
+    justify-content: flex-start;
+    padding: 14px 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+    .aviso-site-em-ajustes {
+        width: calc(100% - 20px);
+        padding: 13px;
+    }
+
+    .aviso-site-em-ajustes p {
+        font-size: 12px;
+    }
+
+    .resumo-pedido-concluido {
+        grid-template-columns: 1fr;
+    }
+
+    .acoes-pedido-concluido .btn,
+    .acoes-documento-pedido .btn {
+        width: 100%;
+    }
+}
+
+
+/* SICLAR — usuários, perfis e escolha de vendedor */
+.admin-identificacao {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+
+.admin-identificacao strong {
+    color: #fff;
+    font-size: 14px;
+}
+
+.pedido-vendedor {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 14px 0;
+    padding: 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+}
+
+.pedido-vendedor label {
+    color: #9a3412;
+    font-size: 14px;
+}
+
+.pedido-vendedor select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #fdba74;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+    outline: none;
+}
+
+.pedido-vendedor select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(234,88,12,.15);
+}
+
+.pedido-vendedor small {
+    color: #7c2d12;
+    line-height: 1.35;
+}
+
+@media (max-width: 700px) {
+    .admin-identificacao {
+        align-items: flex-start;
+    }
+}

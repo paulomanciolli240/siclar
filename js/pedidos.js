@@ -26,6 +26,11 @@ function abrirMontagemPedido(numeroPedidoComplemento = null) {
 
     paginaPedidoAtual = 0;
     document.getElementById('pedidoPesquisaProduto').value = '';
+    const seletorVendedor = document.getElementById('pedidoVendedor');
+    if (seletorVendedor) {
+        seletorVendedor.disabled = Boolean(numeroPedidoComplemento);
+        if (!numeroPedidoComplemento) seletorVendedor.value = '';
+    }
     document.querySelector('.pedido-carrinho-topo h3').textContent = numeroPedidoComplemento
         ? 'Complemento do pedido'
         : 'Seu pedido';
@@ -241,6 +246,25 @@ async function finalizarPedido() {
 
     const cpf = localStorage.getItem(CHAVE_CPF_SICLAR) || '';
     const botao = document.getElementById('btnFinalizarPedido');
+    const itensEnviados = carrinhoPedido.map(item => ({
+        codigo: item.codigo,
+        descricao: item.descricao,
+        marca: item.marca,
+        quantidade: item.quantidade,
+        precoUnitario: item.precoUnitario,
+        subtotal: item.precoUnitario * item.quantidade
+    }));
+    const observacao = document.getElementById('pedidoObservacao').value.trim().toUpperCase();
+    const seletorVendedor = document.getElementById('pedidoVendedor');
+    const vendedor = modoPedidoAtual === 'COMPLEMENTO'
+        ? ''
+        : String(seletorVendedor?.value || '').trim().toUpperCase();
+
+    if (modoPedidoAtual !== 'COMPLEMENTO' && !vendedor) {
+        alert('Escolha o vendedor que receberá o pedido.');
+        seletorVendedor?.focus();
+        return;
+    }
 
     botao.disabled = true;
     botao.textContent = 'Registrando pedido...';
@@ -250,20 +274,37 @@ async function finalizarPedido() {
             acao: modoPedidoAtual === 'COMPLEMENTO' ? 'salvarComplemento' : 'salvarPedido',
             cpf,
             numeroPedido: pedidoComplementoNumero,
-            observacao: document.getElementById('pedidoObservacao').value.trim().toUpperCase(),
-            itens: carrinhoPedido.map(item => ({
-                codigo: item.codigo,
-                descricao: item.descricao,
-                marca: item.marca,
-                quantidade: item.quantidade,
-                precoUnitario: item.precoUnitario,
-                subtotal: item.precoUnitario * item.quantidade
-            }))
+            observacao,
+            vendedor,
+            itens: itensEnviados
         });
 
+        const statusPedido = modoPedidoAtual === 'COMPLEMENTO'
+            ? 'AGUARDANDO CONFERÊNCIA'
+            : (resultado.status || 'AGUARDANDO CONFERÊNCIA');
+
+        pedidoConcluidoAtual = criarDadosDocumentoPedido({
+            numeroPedido: resultado.numeroPedido,
+            dataPedido: resultado.dataPedido || new Date().toLocaleString('pt-BR'),
+            status: statusPedido,
+            observacao,
+            valorTotal: resultado.valorTotal,
+            quantidadeTotal: resultado.quantidadeTotal,
+            vendedor: resultado.vendedor || vendedor,
+            whatsappVendedor: resultado.whatsappVendedor || ""
+        }, itensEnviados, obterClienteDoPedido());
+
         document.getElementById('mensagemPedidoSucesso').textContent = modoPedidoAtual === 'COMPLEMENTO'
-            ? `Complemento incluído no pedido ${resultado.numeroPedido}. Novo total: ${formatarMoeda(resultado.valorTotal)}.`
-            : `Pedido ${resultado.numeroPedido} salvo com sucesso no valor de ${formatarMoeda(resultado.valorTotal)}.`;
+            ? `Complemento incluído no pedido ${resultado.numeroPedido}.`
+            : `Pedido ${resultado.numeroPedido} salvo com sucesso.`;
+
+        document.getElementById('resumoPedidoConcluido').innerHTML = `
+            <div><span>Pedido</span><strong>${pedidoConcluidoAtual.numeroPedido}</strong></div>
+            <div><span>Status</span><strong>${pedidoConcluidoAtual.status}</strong></div>
+            <div><span>Vendedor</span><strong>${pedidoConcluidoAtual.vendedor || ""}</strong></div>
+            <div><span>Quantidade</span><strong>${pedidoConcluidoAtual.quantidadeTotal}</strong></div>
+            <div><span>Valor total</span><strong>${formatarMoeda(pedidoConcluidoAtual.valorTotal)}</strong></div>
+        `;
 
         document.getElementById('modalPedidoSucesso').classList.add('ativo');
         carrinhoPedido = [];

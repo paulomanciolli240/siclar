@@ -26,6 +26,20 @@
             <input type="text" id="pesquisaCarrossel" placeholder="🔍 Pesquise por descrição ou marca...">
         </div>
     </div>
+
+    <div class="aviso-site-em-ajustes" role="status">
+        <div class="aviso-site-icone">🚧</div>
+        <div>
+            <strong>Estamos aprimorando sua experiência</strong>
+            <p>
+                O site da Lar Doce Lar Materiais para Construção ainda está em fase de ajustes.
+                Caso encontre alguma divergência de preço, referência ou descrição, fique tranquilo:
+                nossa equipe fará a conferência antes da confirmação do pedido. Estamos trabalhando
+                para oferecer todo o conforto e a segurança que você merece.
+            </p>
+        </div>
+    </div>
+
     <div class="carrossel-grade-container">
         <div id="containerGradeVitrine" class="carrossel-grade"></div>
     </div>
@@ -45,7 +59,10 @@
             <p>Produtos, clientes, pedidos e operação em um só lugar.</p>
         </div>
         <div class="admin-topo-acoes">
-            <span id="adminSessaoStatus" class="admin-sessao">Sessão administrativa ativa</span>
+            <div class="admin-identificacao">
+                <strong id="adminUsuarioNome">Usuário administrativo</strong>
+                <span id="adminSessaoStatus" class="admin-sessao">Sessão administrativa ativa</span>
+            </div>
             <button class="btn" style="background:#475569;" type="button" onclick="sairAdministrativo()">Sair</button>
         </div>
     </header>
@@ -53,13 +70,13 @@
     <div class="admin-layout">
         <aside class="admin-menu">
             <button class="admin-menu-item ativo" data-admin-tab="resumo" onclick="abrirAbaAdmin('resumo')">📊 Resumo</button>
-            <button class="admin-menu-item" data-admin-tab="produtos" onclick="abrirAbaAdmin('produtos')">📦 Produtos</button>
+            <button class="admin-menu-item" data-admin-permissao="admin" data-admin-tab="produtos" onclick="abrirAbaAdmin('produtos')">📦 Produtos</button>
             <button class="admin-menu-item" data-admin-tab="clientes" onclick="abrirAbaAdmin('clientes')">👥 Clientes</button>
             <button class="admin-menu-item" data-admin-tab="pedidos" onclick="abrirAbaAdmin('pedidos')">🧾 Pedidos</button>
         </aside>
 
         <main class="admin-conteudo">
-            <section id="adminAbaResumo" class="admin-aba ativa">
+            <section id="adminAbaResumo" class="admin-aba ativa" data-admin-permissao="admin">
                 <div class="admin-titulo-secao">
                     <div>
                         <h3>Visão geral</h3>
@@ -81,7 +98,7 @@
                 </div>
             </section>
 
-            <section id="adminAbaProdutos" class="admin-aba">
+            <section id="adminAbaProdutos" class="admin-aba" data-admin-permissao="admin">
                 <div class="admin-titulo-secao">
                     <div>
                         <h3>Produtos</h3>
@@ -178,6 +195,7 @@
         <div id="containerCamposEdicao" class="grid-edicao-ampla"></div>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
             <button class="btn" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
+            <button class="btn" id="btnSalvarProduto" onclick="salvarProdutoSemAvancar()">💾 Salvar</button>
             <button class="btn" id="btnSalvarEProximo" onclick="salvarEProximoProduto()">💾 Salvar e Próximo</button>
         </div>
     </div>
@@ -273,6 +291,18 @@
                     <span id="pedidoValorTotal">R$ 0,00</span>
                 </div>
 
+
+                <div class="pedido-vendedor">
+                    <label for="pedidoVendedor"><strong>Enviar o pedido para</strong></label>
+                    <select id="pedidoVendedor">
+                        <option value="">Selecione o vendedor</option>
+                        <option value="PAULO">Paulo</option>
+                        <option value="WALDIR">Waldir</option>
+                        <option value="RONEOMAR">Roneomar</option>
+                    </select>
+                    <small>O WhatsApp será aberto para o vendedor escolhido.</small>
+                </div>
+
                 <div class="pedido-observacao">
                     <label for="pedidoObservacao">Observação do pedido</label>
                     <textarea
@@ -300,7 +330,28 @@
         <div class="pedido-sucesso-icone">✓</div>
         <h3>Pedido registrado!</h3>
         <p id="mensagemPedidoSucesso"></p>
-        <button class="btn" type="button" onclick="fecharPedidoConcluido()">Voltar ao catálogo</button>
+
+        <div id="resumoPedidoConcluido" class="resumo-pedido-concluido"></div>
+
+        <div class="acoes-pedido-concluido">
+            <button class="btn btn-pdf-pedido" type="button" onclick="baixarPdfPedidoConcluido()">
+                📄 Baixar PDF
+            </button>
+            <button class="btn btn-whatsapp-pedido" type="button" onclick="enviarPedidoConcluidoWhatsApp()">
+                💬 Enviar pelo WhatsApp
+            </button>
+            <button class="btn" style="background:#0f766e;" type="button" onclick="abrirMeusPedidosAposConclusao()">
+                📋 Meus pedidos
+            </button>
+            <button class="btn" style="background:#475569;" type="button" onclick="fecharPedidoConcluido()">
+                Voltar ao catálogo
+            </button>
+        </div>
+
+        <p class="nota-pdf-whatsapp">
+            O PDF só será baixado quando você escolher “Baixar PDF”.
+            O WhatsApp abrirá com o resumo do pedido pronto para envio.
+        </p>
     </div>
 </div>
 
@@ -456,9 +507,19 @@
         <div class="modal-topo">
             <div>
                 <h3>Acesso administrativo</h3>
-                <p style="margin:5px 0 0;color:#64748b;font-size:13px;">Digite a senha para continuar.</p>
+                <p style="margin:5px 0 0;color:#64748b;font-size:13px;">Digite seu usuário e sua senha para continuar.</p>
             </div>
             <button type="button" onclick="fecharAcessoAdminMobile()" style="background:transparent;border:none;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+
+        <div class="grupo-campo-edicao">
+            <label for="usuarioAdminMobile">Usuário</label>
+            <input
+                type="text"
+                id="usuarioAdminMobile"
+                autocomplete="username"
+                placeholder="Digite seu usuário"
+            >
         </div>
 
         <div class="grupo-campo-edicao">
@@ -502,7 +563,9 @@
 <script src="js/state.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/api.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/clientes.js"></script>
+<script src="js/pdf-whatsapp.js"></script>
 <script src="js/pedidos.js"></script>
 <script src="js/historico.js"></script>
 <script src="js/carrossel.js"></script>

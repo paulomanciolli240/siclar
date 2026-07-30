@@ -1,6 +1,6 @@
 "use strict";
 
-const SENHA_OCULTA_ADMIN = "mandabala";
+const GATILHO_OCULTO_ADMIN = "administrar";
 
 let toquesAdminMobile = 0;
 let timerToquesAdminMobile = null;
@@ -25,35 +25,40 @@ function registrarToqueAdminMobile() {
 
 function abrirAcessoAdminMobile() {
     const modal = document.getElementById("modalAcessoAdminMobile");
-    const campo = document.getElementById("senhaAdminMobile");
+    const usuario = document.getElementById("usuarioAdminMobile");
+    const senha = document.getElementById("senhaAdminMobile");
     const mensagem = document.getElementById("mensagemAdminMobile");
 
-    campo.value = "";
+    usuario.value = "";
+    senha.value = "";
     mensagem.textContent = "";
     mensagem.className = "mensagem-cliente";
     modal.classList.add("modal-ativo");
 
-    setTimeout(() => campo.focus(), 100);
+    setTimeout(() => usuario.focus(), 100);
 }
 
 function fecharAcessoAdminMobile() {
     document.getElementById("modalAcessoAdminMobile").classList.remove("modal-ativo");
+    document.getElementById("usuarioAdminMobile").value = "";
     document.getElementById("senhaAdminMobile").value = "";
 }
 
 async function confirmarAcessoAdminMobile() {
-    const campo = document.getElementById("senhaAdminMobile");
+    const campoUsuario = document.getElementById("usuarioAdminMobile");
+    const campoSenha = document.getElementById("senhaAdminMobile");
     const botao = document.getElementById("btnEntrarAdminMobile");
     const mensagem = document.getElementById("mensagemAdminMobile");
-    const senha = campo.value.trim();
+    const usuario = campoUsuario.value.trim();
+    const senha = campoSenha.value;
 
     mensagem.textContent = "";
     mensagem.className = "mensagem-cliente";
 
-    if (!senha) {
-        mensagem.textContent = "Digite a senha administrativa.";
+    if (!usuario || !senha) {
+        mensagem.textContent = "Digite o usuário e a senha.";
         mensagem.classList.add("erro");
-        campo.focus();
+        (!usuario ? campoUsuario : campoSenha).focus();
         return;
     }
 
@@ -61,18 +66,45 @@ async function confirmarAcessoAdminMobile() {
     botao.textContent = "Entrando...";
 
     try {
-        await autenticarAdministrador(senha);
+        await autenticarAdministrador(usuario, senha);
         fecharAcessoAdminMobile();
     } catch (erro) {
         mensagem.textContent = erro.message || "Acesso negado.";
         mensagem.classList.add("erro");
-        campo.select();
+        campoSenha.select();
     } finally {
         botao.disabled = false;
         botao.textContent = "Entrar";
     }
 }
 
+
+
+let timerManterSessaoAdmin = null;
+
+function iniciarManutencaoSessaoAdmin() {
+    pararManutencaoSessaoAdmin();
+
+    timerManterSessaoAdmin = setInterval(async () => {
+        if (!adminToken) return;
+
+        try {
+            await enviarParaGAS({
+                acao: "validarAdmin",
+                adminToken
+            });
+        } catch (erro) {
+            console.error("Não foi possível renovar a sessão administrativa:", erro);
+        }
+    }, 2 * 60 * 1000);
+}
+
+function pararManutencaoSessaoAdmin() {
+    if (timerManterSessaoAdmin) {
+        clearInterval(timerManterSessaoAdmin);
+        timerManterSessaoAdmin = null;
+    }
+}
 
 async function tentarAbrirAdminPorDigitacao(evento) {
     if (document.getElementById("moduloAdministrativo").style.display === "block") return;
@@ -92,25 +124,29 @@ async function tentarAbrirAdminPorDigitacao(evento) {
         adminDigitacaoOculta = (adminDigitacaoOculta + evento.key.toLowerCase()).slice(-30);
     }
 
-    if (adminDigitacaoOculta.endsWith(SENHA_OCULTA_ADMIN)) {
+    if (adminDigitacaoOculta.endsWith(GATILHO_OCULTO_ADMIN)) {
         adminDigitacaoOculta = "";
-        await autenticarAdministrador(SENHA_OCULTA_ADMIN);
+        abrirAcessoAdminMobile();
     }
 }
 
-async function autenticarAdministrador(senha) {
+async function autenticarAdministrador(usuario, senha) {
     try {
         const resultado = await enviarParaGAS({
             acao: "autenticarAdmin",
+            usuario,
             senha
         });
 
         adminToken = resultado.adminToken || "";
-        if (!adminToken) {
+        adminUsuario = resultado.usuario || null;
+
+        if (!adminToken || !adminUsuario) {
             throw new Error("Não foi possível iniciar a sessão administrativa.");
         }
 
         sessionStorage.setItem("siclar_admin_token", adminToken);
+        sessionStorage.setItem("siclar_admin_usuario", JSON.stringify(adminUsuario));
         abrirPainelAdministrativo();
         return true;
     } catch (erro) {
@@ -124,12 +160,41 @@ async function validarSessaoAdminSalva() {
     if (!salvo) return false;
 
     try {
-        await enviarParaGAS({ acao: "validarAdmin", adminToken: salvo });
+        const resultado = await enviarParaGAS({
+            acao: "validarAdmin",
+            adminToken: salvo
+        });
         adminToken = salvo;
+        adminUsuario = resultado.usuario || JSON.parse(
+            sessionStorage.getItem("siclar_admin_usuario") || "null"
+        );
+        if (!adminUsuario) throw new Error("Usuário da sessão não encontrado.");
+        sessionStorage.setItem("siclar_admin_usuario", JSON.stringify(adminUsuario));
         return true;
     } catch {
         sessionStorage.removeItem("siclar_admin_token");
+        sessionStorage.removeItem("siclar_admin_usuario");
+        adminUsuario = null;
         return false;
+    }
+}
+
+function usuarioAdminTemAcessoTotal() {
+    return adminUsuario && String(adminUsuario.perfil || "").toUpperCase() === "TOTAL";
+}
+
+function aplicarPermissoesVisuaisAdmin() {
+    const total = usuarioAdminTemAcessoTotal();
+
+    document.querySelectorAll('[data-admin-permissao="admin"]').forEach(elemento => {
+        elemento.style.display = total ? "" : "none";
+    });
+
+    const nome = document.getElementById("adminUsuarioNome");
+    if (nome && adminUsuario) {
+        nome.textContent = `${adminUsuario.nome} — ${
+            total ? "Acesso total" : `Vendedor ${adminUsuario.vendedor}`
+        }`;
     }
 }
 
@@ -146,18 +211,30 @@ async function abrirPainelAdministrativo() {
     });
     document.getElementById("telaCadastroCliente").classList.remove("ativa");
     document.getElementById("moduloAdministrativo").style.display = "block";
-    abrirAbaAdmin("resumo");
+    const statusSessao = document.getElementById("adminSessaoStatus");
+    if (statusSessao) {
+        statusSessao.textContent = "Sessão ativa por até 6 horas e renovada automaticamente";
+    }
+    aplicarPermissoesVisuaisAdmin();
+    iniciarManutencaoSessaoAdmin();
+    abrirAbaAdmin(usuarioAdminTemAcessoTotal() ? "resumo" : "pedidos");
 }
 
 function sairAdministrativo() {
+    pararManutencaoSessaoAdmin();
     adminToken = "";
+    adminUsuario = null;
     sessionStorage.removeItem("siclar_admin_token");
+    sessionStorage.removeItem("siclar_admin_usuario");
     document.getElementById("moduloAdministrativo").style.display = "none";
     document.getElementById("moduloCarrossel").style.display = "flex";
     iniciarCarrossel();
 }
 
 function abrirAbaAdmin(nome) {
+    if (!usuarioAdminTemAcessoTotal() && ["resumo", "produtos"].includes(nome)) {
+        nome = "pedidos";
+    }
     document.querySelectorAll(".admin-aba").forEach(aba => aba.classList.remove("ativa"));
     document.querySelectorAll(".admin-menu-item").forEach(botao => {
         botao.classList.toggle("ativo", botao.dataset.adminTab === nome);
@@ -325,6 +402,7 @@ function montarTabelaPedidosAdmin(pedidos, comAcao = true) {
             <td>${pedido.NUMERO_PEDIDO || ""}</td>
             <td>${pedido.DATA_PEDIDO || ""}</td>
             <td>${pedido.NOME_CLIENTE || ""}</td>
+            <td>${pedido.VENDEDOR || ""}</td>
             <td>${pedido.STATUS || ""}</td>
             <td>${formatarMoeda(moedaParaNumero(pedido.VALOR_TOTAL))}</td>
             ${comAcao ? `<td><button class="admin-btn-pequeno" onclick='abrirPedidoAdmin(${JSON.stringify(pedido.NUMERO_PEDIDO || "")})'>Abrir</button></td>` : ""}
@@ -332,8 +410,8 @@ function montarTabelaPedidosAdmin(pedidos, comAcao = true) {
     `).join("");
 
     return `<table class="admin-tabela">
-        <thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Status</th><th>Total</th>${comAcao ? "<th>Ação</th>" : ""}</tr></thead>
-        <tbody>${linhas || `<tr><td colspan="${comAcao ? 6 : 5}">Nenhum pedido encontrado.</td></tr>`}</tbody>
+        <thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Vendedor</th><th>Status</th><th>Total</th>${comAcao ? "<th>Ação</th>" : ""}</tr></thead>
+        <tbody>${linhas || `<tr><td colspan="${comAcao ? 7 : 6}">Nenhum pedido encontrado.</td></tr>`}</tbody>
     </table>`;
 }
 
@@ -343,7 +421,7 @@ function renderizarPedidosAdmin() {
 
     const filtrados = adminPedidos.filter(pedido => {
         const alvo = [
-            pedido.NUMERO_PEDIDO, pedido.CPF_CLIENTE, pedido.NOME_CLIENTE
+            pedido.NUMERO_PEDIDO, pedido.CPF_CLIENTE, pedido.NOME_CLIENTE, pedido.VENDEDOR
         ].join(" ").toLowerCase();
         return (!termo || termo.split(/\s+/).every(parte => alvo.includes(parte))) &&
                (!status || String(pedido.STATUS || "").toUpperCase() === status);
@@ -394,6 +472,7 @@ function renderizarDetalhePedidoAdmin(pedido, itens) {
                 <h4>${pedido.NUMERO_PEDIDO || ""}</h4>
                 <div class="admin-detalhe-info">${pedido.NOME_CLIENTE || ""} • CPF ${formatarCpf(pedido.CPF_CLIENTE || "")}</div>
                 <div class="admin-detalhe-info">${pedido.DATA_PEDIDO || ""} • ${formatarMoeda(moedaParaNumero(pedido.VALOR_TOTAL))}</div>
+                <div class="admin-detalhe-info"><strong>Vendedor:</strong> ${pedido.VENDEDOR || "NÃO INFORMADO"}</div>
             </div>
         </div>
 
@@ -464,6 +543,18 @@ gatilhoAdminMobile.addEventListener("touchend", event => {
 document.getElementById("senhaAdminMobile").addEventListener("keydown", event => {
     if (event.key === "Enter") {
         event.preventDefault();
+        confirmarAcessoAdminMobile();
+    }
+});
+
+
+document.addEventListener("keydown", evento => {
+    const modal = document.getElementById("modalAcessoAdminMobile");
+    if (
+        evento.key === "Enter" &&
+        modal &&
+        modal.classList.contains("modal-ativo")
+    ) {
         confirmarAcessoAdminMobile();
     }
 });

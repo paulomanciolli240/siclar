@@ -1,5 +1,8 @@
 "use strict";
 
+const CHAVE_RASCUNHO_PRODUTO_ADMIN = "siclar_rascunho_produto_admin";
+
+
 function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
 
 function atualizarContadorSelecionados() {
@@ -115,37 +118,118 @@ function fecharModalEdicao() {
     document.getElementById('modalEdicaoFundo').classList.remove('modal-ativo');
 }
 
-async function salvarEProximoProduto() {
-    let obj = {};
-    headers.forEach(h => obj[h] = document.getElementById(`campo_${h.replace(/\W/g,'_')}`).value);
+function salvarRascunhoProdutoAdmin() {
+    const produto = {};
+    let possuiCampo = false;
+
+    headers.forEach(cabecalho => {
+        const campo = document.getElementById(`campo_${cabecalho.replace(/\W/g, '_')}`);
+        if (!campo) return;
+        produto[cabecalho] = campo.value;
+        possuiCampo = true;
+    });
+
+    if (possuiCampo) {
+        sessionStorage.setItem(CHAVE_RASCUNHO_PRODUTO_ADMIN, JSON.stringify({
+            indice: indiceEdicaoAtual,
+            produto,
+            salvoEm: Date.now()
+        }));
+    }
+}
+
+function limparRascunhoProdutoAdmin() {
+    sessionStorage.removeItem(CHAVE_RASCUNHO_PRODUTO_ADMIN);
+}
+
+function coletarDadosFormularioProduto() {
+    const produto = {};
+
+    headers.forEach(cabecalho => {
+        const campo = document.getElementById(`campo_${cabecalho.replace(/\W/g, '_')}`);
+        produto[cabecalho] = campo ? campo.value : '';
+    });
+
+    return produto;
+}
+
+async function gravarProdutoEditado(produto) {
+    const resultado = await enviarParaGAS({
+        acao: "editar",
+        dadosProduto: produto,
+        adminToken
+    });
+
+    if (resultado.erro) {
+        throw new Error(resultado.erro);
+    }
+
+    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+    const indiceGlobal = dadosGlobais.findIndex(
+        item => String(item[hCod]) === String(produto[hCod])
+    );
+
+    if (indiceGlobal !== -1) {
+        dadosGlobais[indiceGlobal] = produto;
+    }
+
+    const indiceFiltrado = listaFiltradaAtual.findIndex(
+        item => String(item[hCod]) === String(produto[hCod])
+    );
+
+    if (indiceFiltrado !== -1) {
+        listaFiltradaAtual[indiceFiltrado] = produto;
+    }
+
+    renderizarTabela();
+    return resultado;
+}
+
+async function salvarProdutoSemAvancar() {
+    const botao = document.getElementById('btnSalvarProduto');
+    const produto = coletarDadosFormularioProduto();
+
+    botao.disabled = true;
+    botao.textContent = 'Salvando...';
+
     try {
-        const resposta = await fetch(URL_DO_GAS, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                acao: "editar",
-                dadosProduto: obj,
-                adminToken
-            })
-        });
+        await gravarProdutoEditado(produto);
+        limparRascunhoProdutoAdmin();
+        fecharModalEdicao();
+        alert('Produto salvo com sucesso!');
+    } catch (erro) {
+        alert('Erro: ' + erro.message);
+    } finally {
+        botao.disabled = false;
+        botao.textContent = '💾 Salvar';
+    }
+}
 
-        const resultado = await resposta.json();
-        if (!resposta.ok || resultado.erro) {
-            throw new Error(resultado.erro || "Não foi possível salvar a edição.");
-        }
+async function salvarEProximoProduto() {
+    const botao = document.getElementById('btnSalvarEProximo');
+    const produto = coletarDadosFormularioProduto();
 
-        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-        const idx = dadosGlobais.findIndex(i => String(i[hCod]) === String(obj[hCod]));
-        if(idx !== -1) dadosGlobais[idx] = obj;
-        renderizarTabela();
+    botao.disabled = true;
+    botao.textContent = 'Salvando...';
+
+    try {
+        await gravarProdutoEditado(produto);
+        limparRascunhoProdutoAdmin();
+
         indiceEdicaoAtual++;
-        if(indiceEdicaoAtual < listaFiltradaAtual.length) {
+
+        if (indiceEdicaoAtual < listaFiltradaAtual.length) {
             preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
         } else {
             fecharModalEdicao();
-            alert("Todos os itens revisados!");
+            alert('Todos os itens revisados!');
         }
-    } catch(e) { alert("Erro: " + e.message); }
+    } catch (erro) {
+        alert('Erro: ' + erro.message);
+    } finally {
+        botao.disabled = false;
+        botao.textContent = '💾 Salvar e Próximo';
+    }
 }
 
 document.getElementById("btnAbrir").addEventListener("click", () => {
@@ -209,6 +293,9 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     progressBar.textContent = "0%";
 
     let sucessos = 0;
+    let novos = 0;
+    let atualizados = 0;
+    let semAlteracao = 0;
     let erros = 0;
 
     for (let index = 0; index < csvData.length; index++) {
@@ -225,7 +312,12 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
             if (resultado.erro) {
                 throw new Error(resultado.erro);
             }
+
             sucessos++;
+
+            if (resultado.tipo === "NOVO") novos++;
+            else if (resultado.tipo === "ATUALIZADO") atualizados++;
+            else if (resultado.tipo === "SEM_ALTERACAO") semAlteracao++;
         } catch (erro) {
             erros++;
             console.error("Erro na importação:", erro);
@@ -235,7 +327,9 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         progressBar.style.width = `${percentual}%`;
         progressBar.textContent = `${percentual}%`;
         log.textContent =
-            `Processando ${index + 1} de ${csvData.length} — ${sucessos} sucesso(s), ${erros} erro(s).`;
+            `Processando ${index + 1} de ${csvData.length} — ` +
+            `${novos} novo(s), ${atualizados} atualizado(s), ` +
+            `${semAlteracao} sem alteração, ${erros} erro(s).`;
     }
 
     btnCancelar.style.display = "none";
@@ -245,7 +339,13 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         alert(`Importação interrompida. ${sucessos} item(ns) enviados e ${erros} erro(s).`);
         btnProcess.disabled = false;
     } else {
-        alert(`Importação concluída! ${sucessos} de ${csvData.length} enviados. Erros: ${erros}.`);
+        alert(
+            `Importação concluída!\n` +
+            `Novos produtos: ${novos}\n` +
+            `Produtos atualizados: ${atualizados}\n` +
+            `Sem alteração: ${semAlteracao}\n` +
+            `Erros: ${erros}`
+        );
         btnProcess.disabled = true;
         fechar();
     }

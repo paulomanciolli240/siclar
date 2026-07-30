@@ -36,3 +36,9 @@ let adminClientes = [];
 let adminPedidos = [];
 let adminClienteEmEdicao = null;
 let adminPedidoSelecionado = null;
+
+let pedidoConcluidoAtual = null;
+let ultimoPedidoPdfVisualizado = null;
+
+
+let adminUsuario = null;
