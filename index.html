@@ -4,337 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SICLAR - Catálogo e Gestão</title>
-<style>
-:root { 
-    --primary-color: #ea580c; 
-    --primary-hover: #c2410c;
-    --header-bg: #3d2f24; 
-    --bg-color: #f1f5f9; 
-    --card-bg: #ffffff; 
-    --text-color: #1e293b; 
-    --border-color: #cbd5e1;
-    --danger-color: #dc2626;
-    --danger-hover: #b91c1c;
-}
-
-body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background: var(--bg-color); 
-    color: var(--text-color); 
-    margin: 0; 
-    padding: 0; 
-}
-
-/* Tela de Boas-Vindas */
-#telaBoasVindas {
-    position: fixed;
-    inset: 0;
-    background: #1a110c;
-    z-index: 99999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    text-align: center;
-    padding: 20px;
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 1.2s ease, visibility 1.2s ease;
-}
-
-.tela-oculta {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-.conteudo-animado {
-    width: 90vw;
-    max-width: 1200px;
-    animation: crescerSuaveAte90 11s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
-}
-
-@keyframes crescerSuaveAte90 {
-    0% { transform: scale(0.005); opacity: 0; }
-    100% { transform: scale(0.90); opacity: 1; }
-}
-
-.linha-1 {
-    font-size: clamp(45px, 8vw, 100px);
-    font-weight: 900;
-    color: var(--primary-color);
-    letter-spacing: 10px;
-    margin-bottom: 16px;
-    text-shadow: 0 0 35px rgba(234, 88, 12, 0.7);
-}
-
-.linha-2 {
-    font-size: clamp(18px, 3vw, 34px);
-    font-weight: 700;
-    color: #f8fafc;
-    margin-bottom: 14px;
-}
-
-.linha-3 {
-    font-size: clamp(14px, 2.2vw, 24px);
-    color: #cbd5e1;
-    line-height: 1.5;
-    margin-bottom: 24px;
-}
-
-.linha-boas-vindas {
-    font-size: clamp(22px, 3.5vw, 42px);
-    font-weight: 600;
-    color: #fdba74;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-.spinner-carregando {
-    margin-top: 30px;
-    width: 55px;
-    height: 55px;
-    border: 5px solid rgba(255,255,255,0.1);
-    border-top: 5px solid var(--primary-color);
-    border-radius: 50%;
-    opacity: 0;
-    animation: aparecerSpinner 1.5s ease 2s forwards, spin 0.8s linear infinite;
-}
-
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@keyframes aparecerSpinner { to { opacity: 1; } }
-
-/* === CARROSSEL COM PESQUISA === */
-#moduloCarrossel {
-    position: fixed;
-    inset: 0;
-    background: #0f172a;
-    z-index: 9990;
-    display: none;
-    flex-direction: column;
-    padding: 20px;
-    overflow: hidden;
-}
-
-.carrossel-barra-topo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 15px 30px;
-    background: linear-gradient(to bottom, rgba(15,23,42,0.95), transparent);
-    z-index: 10;
-}
-
-.carrossel-logo { color: white; font-weight: 800; font-size: 24px; letter-spacing: 2px; }
-.carrossel-frase-destaque { color: #fdba74; font-size: clamp(16px, 2vw, 22px); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-
-.pesquisa-carrossel {
-    flex: 1;
-    min-width: 250px;
-    max-width: 450px;
-}
-.pesquisa-carrossel input {
-    width: 100%;
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.1);
-    color: white;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s;
-}
-.pesquisa-carrossel input::placeholder { color: #94a3b8; }
-.pesquisa-carrossel input:focus {
-    border-color: var(--primary-color);
-    background: rgba(255,255,255,0.15);
-}
-
-.btn-admin-topo { background: var(--primary-color); color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
-.btn-admin-topo:hover { background: var(--primary-hover); transform: translateY(-2px); }
-
-.carrossel-grade-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 20px;
-}
-
-.carrossel-grade {
-    display: grid;
-    gap: 18px;
-    width: 100%;
-    max-width: 1400px;
-    transition: all 0.3s ease;
-}
-
-@media (min-width: 1025px) {
-    .carrossel-grade {
-        grid-template-columns: repeat(8, 1fr);
-    }
-}
-
-@media (max-width: 1024px) {
-    .carrossel-grade {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-}
-
-.card-quadrado-vitrine {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    padding: 12px;
-    box-sizing: border-box;
-    text-align: center;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    cursor: pointer;
-    position: relative;
-    overflow: visible;
-    z-index: 1;
-}
-
-/* ✅ AO PASSAR O MOUSE: MESMO EFEITO E TAMANHO DO CLIQUE */
-.card-quadrado-vitrine:hover {
-    transform: scale(2) !important;
-    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6) !important;
-    z-index: 9999 !important;
-}
-
-.card-quadrado-vitrine.ativo-clique {
-    transform: scale(2) !important;
-    z-index: 9999 !important;
-    box-shadow: 0 30px 60px -10px rgba(0,0,0,0.6) !important;
-}
-
-.vitrine-foto-container { 
-    width: 100%; 
-    padding-top: 75%; 
-    position: relative;
-    background: #f8fafc; 
-    border-radius: 12px; 
-    overflow: hidden; 
-    border: 1px solid #e2e8f0;
-    margin-bottom: 8px;
-}
-.vitrine-foto-container img { 
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain; 
-}
-.vitrine-info { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 4px;
-    flex: 1;
-}
-.vitrine-marca { 
-    font-size: 11px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    color: #64748b; 
-    letter-spacing: 1px; 
-}
-.vitrine-descricao { 
-    font-size: 13px; 
-    font-weight: 600; 
-    color: #0f172a; 
-    line-height: 1.2; 
-    display: -webkit-box; 
-    -webkit-line-clamp: 2; 
-    -webkit-box-orient: vertical; 
-    overflow: hidden; 
-}
-.vitrine-rodape-preco { 
-    margin-top: auto;
-    padding-top: 8px;
-    border-top: 1px solid #e2e8f0;
-}
-.vitrine-codigo { 
-    font-size: 10px; 
-    color: #94a3b8; 
-    font-weight: 600; 
-    display: block;
-    margin-bottom: 2px;
-}
-.vitrine-preco { 
-    font-size: 16px; 
-    font-weight: 900; 
-    color: var(--primary-color); 
-}
-
-.carrossel-controles-inferior { 
-    margin-top: 15px; 
-    display: flex; 
-    gap: 15px; 
-    align-items: center; 
-    justify-content: center;
-    color: #94a3b8; 
-    font-size: 14px; 
-    font-weight: 600; 
-}
-.btn-controle-carrossel { 
-    background: rgba(255, 255, 255, 0.1); 
-    color: white; 
-    border: 1px solid rgba(255, 255, 255, 0.2); 
-    padding: 8px 16px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    transition: background 0.2s; 
-}
-.btn-controle-carrossel:hover { background: rgba(255, 255, 255, 0.2); }
-
-/* Módulo Administrativo - PRESERVADO TOTALMENTE */
-#moduloAdministrativo { display: none; padding: 30px 20px; }
-.container { max-width: 1200px; margin: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); overflow: hidden; }
-.header { background: var(--header-bg); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-.header h2 { margin: 0; font-size: 22px; font-weight: 600; }
-.btn { background: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; }
-.btn:hover { background: var(--primary-hover); }
-.btn:disabled { background: #94a3b8; cursor: not-allowed; }
-.btn-excluir { background: var(--danger-color); padding: 6px 12px; font-size: 12px; }
-.btn-excluir:hover { background: var(--danger-hover); }
-.btn-excluir-lote { background: var(--danger-color); margin-bottom: 12px; }
-.btn-excluir-lote:hover { background: var(--danger-hover); }
-.btn-editar-acao { padding: 6px 12px; font-size: 12px; }
-.area-botoes-acao { display: flex; gap: 8px; align-items: center; }
-.contador-selecionados { margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--danger-color); }
-.conteudo-principal { padding: 32px; }
-.area-pesquisa { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; }
-.campo-pesquisa label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569; }
-.campo-pesquisa input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; transition: border-color 0.2s; }
-.campo-pesquisa input:focus { border-color: var(--primary-color); }
-#infoQtd { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 12px; }
-.tabela-container { width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
-.tabela-produtos { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
-.tabela-produtos th { background: var(--header-bg); color: white; padding: 14px 16px; font-weight: 600; }
-.tabela-produtos td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-.tabela-produtos tr:hover { background-color: #f8fafc; }
-.preco { color: var(--primary-color); font-weight: 700; font-size: 15px; }
-.modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-.modal-ativo { display: flex; }
-.modal { background: white; border-radius: 12px; width: 100%; max-width: 650px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-.modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.modal-topo h3 { margin: 0; font-size: 18px; }
-.modal-edicao-ampla { max-width: 850px; max-height: 90vh; overflow-y: auto; }
-.grid-edicao-ampla { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.grupo-campo-edicao { margin-bottom: 5px; }
-.grupo-campo-edicao label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #334155; }
-.grupo-campo-edicao input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f8fafc; outline: none; transition: all 0.2s; }
-.grupo-campo-edicao input:focus { background: #ffffff; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15); }
-.progress-container { width: 100%; background: #e2e8f0; border-radius: 6px; margin: 20px 0; overflow: hidden; display: none; }
-.progress-bar { width: 0%; height: 24px; background: #16a34a; text-align: center; color: white; font-weight: bold; font-size: 12px; line-height: 24px; transition: width 0.2s; }
-</style>
+<link rel="stylesheet" href="css/estilo.css">
 </head>
 <body>
 
@@ -350,12 +20,11 @@ body {
 
 <div id="moduloCarrossel">
     <div class="carrossel-barra-topo">
-        <div class="carrossel-logo">SICLAR VIRTUAL</div>
+        <div class="carrossel-logo" id="gatilhoAdminMobile" role="button" aria-label="SICLAR Virtual">SICLAR VIRTUAL</div>
         <div class="carrossel-frase-destaque">Aprecie nossos produtos</div>
         <div class="pesquisa-carrossel">
             <input type="text" id="pesquisaCarrossel" placeholder="🔍 Pesquise por descrição ou marca...">
         </div>
-        <button class="btn-admin-topo" onclick="abrirPainelAdministrativo()">⚙️ Administrativo</button>
     </div>
     <div class="carrossel-grade-container">
         <div id="containerGradeVitrine" class="carrossel-grade"></div>
@@ -367,28 +36,114 @@ body {
     </div>
 </div>
 
-<div id="moduloAdministrativo">
-    <div class="container">
-        <div class="header">
-            <h2>Gestão de Produtos - Direto no Google Sheets</h2>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <button class="btn" style="background: #475569;" onclick="voltarParaCarrossel()">📺 Voltar ao Carrossel</button>
-                <button class="btn" id="btnAbrir">📥 Importar CSV Direto</button>
-            </div>
-        </div>
-        <div class="conteudo-principal">
-            <div class="area-pesquisa">
-                <div class="campo-pesquisa"><label>Código:</label><input type="text" id="pesqCodigo" placeholder="Pesquisar por código..."></div>
-                <div class="campo-pesquisa"><label>Descrição:</label><input type="text" id="pesqNome" placeholder="Ex: tom pad..."></div>
-                <div class="campo-pesquisa"><label>Marca:</label><input type="text" id="pesqMarca" placeholder="Pesquisar por marca..."></div>
-            </div>
-            <p id="infoQtd"></p>
 
-            <button class="btn btn-excluir-lote" id="btnExcluirLote" onclick="excluirSelecionados()" disabled>🗑️ Excluir Selecionados</button>
-            <div class="contador-selecionados" id="contadorSelecionados">Nenhum produto selecionado</div>
-
-            <div id="areaLista" class="tabela-container"><p style="padding: 20px; text-align: center; color: #64748b;">Carregando dados da planilha...</p></div>
+<div id="moduloAdministrativo" class="admin-central">
+    <header class="admin-topo">
+        <div>
+            <div class="admin-marca">SICLAR ADMIN</div>
+            <h2>Central de Administração</h2>
+            <p>Produtos, clientes, pedidos e operação em um só lugar.</p>
         </div>
+        <div class="admin-topo-acoes">
+            <span id="adminSessaoStatus" class="admin-sessao">Sessão administrativa ativa</span>
+            <button class="btn" style="background:#475569;" type="button" onclick="sairAdministrativo()">Sair</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="admin-menu">
+            <button class="admin-menu-item ativo" data-admin-tab="resumo" onclick="abrirAbaAdmin('resumo')">📊 Resumo</button>
+            <button class="admin-menu-item" data-admin-tab="produtos" onclick="abrirAbaAdmin('produtos')">📦 Produtos</button>
+            <button class="admin-menu-item" data-admin-tab="clientes" onclick="abrirAbaAdmin('clientes')">👥 Clientes</button>
+            <button class="admin-menu-item" data-admin-tab="pedidos" onclick="abrirAbaAdmin('pedidos')">🧾 Pedidos</button>
+        </aside>
+
+        <main class="admin-conteudo">
+            <section id="adminAbaResumo" class="admin-aba ativa">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Visão geral</h3>
+                        <p>Acompanhe rapidamente o movimento do SICLAR.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="carregarResumoAdmin()">Atualizar</button>
+                </div>
+                <div id="adminCardsResumo" class="admin-cards-resumo">
+                    <div class="admin-card-metrica"><span>Produtos</span><strong>—</strong></div>
+                    <div class="admin-card-metrica"><span>Clientes</span><strong>—</strong></div>
+                    <div class="admin-card-metrica"><span>Pedidos</span><strong>—</strong></div>
+                    <div class="admin-card-metrica"><span>Pedidos em aberto</span><strong>—</strong></div>
+                </div>
+                <div class="admin-painel">
+                    <h4>Pedidos recentes</h4>
+                    <div id="adminPedidosRecentes" class="admin-tabela-wrap">
+                        <p class="admin-carregando">Carregando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="adminAbaProdutos" class="admin-aba">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Produtos</h3>
+                        <p>Pesquise, edite, exclua e importe produtos.</p>
+                    </div>
+                    <button class="btn" id="btnAbrir">📥 Importar CSV</button>
+                </div>
+
+                <div class="area-pesquisa">
+                    <div class="campo-pesquisa"><label>Código</label><input type="text" id="pesqCodigo" placeholder="Pesquisar por código..."></div>
+                    <div class="campo-pesquisa"><label>Descrição</label><input type="text" id="pesqNome" placeholder="Pesquisar por descrição..."></div>
+                    <div class="campo-pesquisa"><label>Marca</label><input type="text" id="pesqMarca" placeholder="Pesquisar por marca..."></div>
+                </div>
+
+                <p id="infoQtd"></p>
+                <button class="btn btn-excluir-lote" id="btnExcluirLote" onclick="excluirSelecionados()" disabled>🗑️ Excluir selecionados</button>
+                <div class="contador-selecionados" id="contadorSelecionados">Nenhum produto selecionado</div>
+                <div id="areaLista" class="tabela-container"><p class="admin-carregando">Carregando produtos...</p></div>
+            </section>
+
+            <section id="adminAbaClientes" class="admin-aba">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Clientes</h3>
+                        <p>Consulte e atualize os cadastros.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="carregarClientesAdmin()">Atualizar</button>
+                </div>
+                <div class="admin-filtros">
+                    <input type="text" id="adminBuscaCliente" placeholder="Pesquisar por CPF, nome, telefone, cidade...">
+                </div>
+                <div id="adminListaClientes" class="admin-tabela-wrap"><p class="admin-carregando">Carregando clientes...</p></div>
+            </section>
+
+            <section id="adminAbaPedidos" class="admin-aba">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Pedidos</h3>
+                        <p>Visualize pedidos, itens e altere o status operacional.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="carregarPedidosAdmin()">Atualizar</button>
+                </div>
+                <div class="admin-filtros admin-filtros-pedidos">
+                    <input type="text" id="adminBuscaPedido" placeholder="Pesquisar por pedido, CPF ou cliente...">
+                    <select id="adminFiltroStatus">
+                        <option value="">Todos os status</option>
+                        <option>NOVO</option>
+                        <option>ABERTO</option>
+                        <option>EM ABERTO</option>
+                        <option>EM SEPARAÇÃO</option>
+                        <option>PRONTO</option>
+                        <option>EM TRANSPORTE</option>
+                        <option>ENTREGUE</option>
+                        <option>CANCELADO</option>
+                    </select>
+                </div>
+                <div class="admin-pedidos-grid">
+                    <div id="adminListaPedidos" class="admin-tabela-wrap"><p class="admin-carregando">Carregando pedidos...</p></div>
+                    <div id="adminDetalhePedido" class="admin-detalhe-pedido"><div class="admin-vazio">Selecione um pedido.</div></div>
+                </div>
+            </section>
+        </main>
     </div>
 </div>
 
@@ -428,385 +183,331 @@ body {
     </div>
 </div>
 
-<script>
-const URL_DO_GAS = "https://script.google.com/macros/s/AKfycbzXjJ84w2uFpIasekuxkzPmWb7rZzsTJ_xhi59rQ8XfkUSH0-FjA2_5qvnPYF5MwtBl_w/exec";
 
-let csvData = []; 
-let headers = [];
-let dadosGlobais = [];
-let listaFiltradaAtual = [];
-let indiceEdicaoAtual = 0;
-let indicePaginaCarrossel = 0;
-let itensPorPagina = window.innerWidth >= 1025 ? 8 : 4;
-let timerCarrossel = null;
-let carrosselAtivo = false;
-let telaJaFechada = false;
-let pausaPorHover = false;
-let termoPesquisaCarrossel = '';
 
-// ✅ Fecha a tela só quando os dados estiverem prontos — SEM ESPERA MANUAL
-async function esconderTelaBoasVindas() {
-    if (telaJaFechada) return;
-    telaJaFechada = true;
-    
-    await carregarDadosPlanilha();
-    
-    const tela = document.getElementById('telaBoasVindas');
-    tela.classList.add('tela-oculta');
-    setTimeout(() => {
-        tela.style.display = 'none';
-        iniciarCarrossel();
-    }, 1200);
-}
 
-// Inicia automaticamente
-esconderTelaBoasVindas();
+<div id="moduloHistoricoPedidos">
+    <div class="historico-topo">
+        <div>
+            <h2>Meus pedidos</h2>
+            <p>Consulte seus pedidos e acrescente complementos enquanto estiverem em aberto.</p>
+        </div>
+        <button class="btn" style="background:#475569;" onclick="fecharHistoricoPedidos()">← Voltar</button>
+    </div>
+    <div class="historico-conteudo">
+        <div id="listaPedidosCliente" class="historico-lista"></div>
+        <div id="detalhePedidoCliente" class="historico-detalhe">
+            <div class="historico-vazio">Selecione um pedido para visualizar.</div>
+        </div>
+    </div>
+</div>
 
-document.getElementById('btnAbrir').onclick = () => document.getElementById('janela').classList.add('modal-ativo');
-function fechar() { document.getElementById('janela').classList.remove('modal-ativo'); }
-
-function resolverUrlImagem(valFoto) {
-    if (!valFoto) return '';
-    let limpa = valFoto.trim();
-    if (limpa.toUpperCase() === 'NÃO' || limpa.toUpperCase() === 'NAO') return '';
-    if (limpa.startsWith('http')) return limpa;
-    let base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
-}
-
-function buscaInteligente(textoBusca, textoAlvo) {
-    if (!textoBusca) return true;
-    const termos = textoBusca.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
-    const alvo = textoAlvo.toLowerCase();
-    return termos.every(termo => alvo.includes(termo));
-}
-
-document.getElementById('pesquisaCarrossel').addEventListener('input', e => {
-    termoPesquisaCarrossel = e.target.value.trim();
-    indicePaginaCarrossel = 0;
-    renderizarPaginaCarrossel();
-});
-
-csvFile.onchange = e => {
-    const file = e.target.files[0]; 
-    if(!file) return;
-    fileName.textContent = file.name;
-    const reader = new FileReader(); 
-    reader.readAsText(file, 'ISO-8859-1');
-    reader.onload = ev => {
-        const lines = ev.target.result.split(/\r\n|\n/); 
-        if (lines.length === 0) return;
-        const sep = lines[0].includes(';') ? ';' : ',';
-        headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
-        csvData = [];
-        for (let i = 1; i < lines.length; i++) {
-            let line = lines[i].trim();
-            if (!line) continue;
-            const row = line.split(sep).map(v => v.trim().replace(/^"|"$/g, ''));
-            let obj = {}; 
-            headers.forEach((h, idx) => obj[h] = row[idx] || '');
-            csvData.push(obj);
-        }
-        btnProcess.disabled = false;
-        document.getElementById('log').textContent = `${csvData.length} linhas carregadas.`;
-    }
-};
-
-btnProcess.onclick = async () => {
-    btnProcess.disabled = true;
-    document.getElementById('csvFile').disabled = true;
-    document.getElementById('btnCancelar').style.display = "inline-block";
-    document.getElementById('progressContainer').style.display = "block";
-    let sucessos = 0;
-    for (let i = 0; i < csvData.length; i++) {
-        try {
-            await fetch(URL_DO_GAS, {
-                method: "POST",
-                body: JSON.stringify({ headers, items: [{ data: csvData[i] }] })
-            });
-            sucessos++;
-            document.getElementById('progressBar').style.width = `${Math.round(((i+1)/csvData.length)*100)}%`;
-        } catch(e) { console.error(e); }
-    }
-    alert(`Importação concluída! ${sucessos} de ${csvData.length} enviados.`);
-    document.getElementById('btnCancelar').style.display = "none";
-    document.getElementById('csvFile').disabled = false;
-    btnProcess.disabled = true;
-    fechar();
-    carregarDadosPlanilha();
-};
-
-async function carregarDadosPlanilha() {
-    try {
-        const res = await fetch(URL_DO_GAS);
-        const json = await res.json();
-        dadosGlobais = json.data || [];
-        if(dadosGlobais.length > 0) headers = Object.keys(dadosGlobais[0]);
-        renderizarTabela();
-    } catch (e) {
-        console.error("Erro ao carregar planilha:", e);
-        dadosGlobais = [];
-    }
-}
-
-function abrirPainelAdministrativo() {
-    pararCarrossel();
-    document.getElementById('moduloCarrossel').style.display = 'none';
-    document.getElementById('moduloAdministrativo').style.display = 'block';
-}
-
-function voltarParaCarrossel() {
-    document.getElementById('moduloAdministrativo').style.display = 'none';
-    document.getElementById('moduloCarrossel').style.display = 'flex';
-    iniciarCarrossel();
-}
-
-function iniciarCarrossel() {
-    carrosselAtivo = true;
-    if (dadosGlobais.length === 0) return;
-    itensPorPagina = window.innerWidth >= 1025 ? 8 : 4;
-    indicePaginaCarrossel = 0;
-    document.getElementById('moduloCarrossel').style.display = 'flex';
-    renderizarPaginaCarrossel();
-}
-
-function pararCarrossel() {
-    carrosselAtivo = false;
-    if (timerCarrossel) clearTimeout(timerCarrossel);
-}
-
-// ✅ FUNÇÃO CORRIGIDA: PARA O CARROSSEL NO HOVER
-function renderizarPaginaCarrossel() {
-    // Sempre limpa o temporizador primeiro
-    if (timerCarrossel) clearTimeout(timerCarrossel);
-
-    // Se estiver pausado, pesquisando ou carrossel parado: não continua
-    if (!carrosselAtivo || pausaPorHover || termoPesquisaCarrossel.length > 0) {
-        return;
-    }
-
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
-    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
-    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
-
-    let produtosFiltrados = dadosGlobais.filter(p => {
-        if (!termoPesquisaCarrossel) return true;
-        const desc = String(p[hDesc] || '');
-        const marca = String(p[hMarca] || '');
-        return buscaInteligente(termoPesquisaCarrossel, desc) || buscaInteligente(termoPesquisaCarrossel, marca);
-    });
-
-    const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
-    if (indicePaginaCarrossel >= totalPaginas && totalPaginas > 0) indicePaginaCarrossel = 0;
-
-    const inicio = indicePaginaCarrossel * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    const produtosPagina = produtosFiltrados.slice(inicio, fim);
-
-    let html = '';
-    if (produtosPagina.length === 0) {
-        html = `<p style="color:#94a3b8; grid-column: 1 / -1; text-align:center; font-size:15px;">Nenhum produto encontrado para esta pesquisa.</p>`;
-    } else {
-        produtosPagina.forEach(p => {
-            let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
-                ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
-                : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
-
-            html += `
-            <div class="card-quadrado-vitrine" 
-                 onclick="this.classList.toggle('ativo-clique')"
-                 onmouseenter="pausaPorHover=true;" 
-                 onmouseleave="if(!this.classList.contains('ativo-clique')){ pausaPorHover=false; renderizarPaginaCarrossel(); }">
-                <div class="vitrine-foto-container">${fotoHtml}</div>
-                <div class="vitrine-info">
-                    <div class="vitrine-marca">${p[hMarca] || ''}</div>
-                    <div class="vitrine-descricao">${p[hDesc] || ''}</div>
+<div id="moduloPedidos">
+    <div class="pedido-topo">
+        <div class="pedido-topo-linha">
+            <div class="pedido-marca">
+                <div class="pedido-logo">🛒</div>
+                <div>
+                    <h2>Monte seu pedido SICLAR</h2>
+                    <p>Escolha os produtos, ajuste as quantidades e finalize quando estiver pronto.</p>
                 </div>
-                <div class="vitrine-rodape-preco">
-                    <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
-                    <span class="vitrine-preco">${p[hPreco] || ''}</span>
+            </div>
+
+            <div id="pedidoClienteChip" class="pedido-cliente-chip">Cliente identificado</div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn" style="background:#0f766e;" type="button" onclick="abrirHistoricoPedidos()">
+                    📋 Meus pedidos
+                </button>
+                <button class="btn" style="background:#475569;" type="button" onclick="voltarAoCarrosselDoPedido()">
+                    ← Voltar ao catálogo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pedido-layout">
+        <section class="pedido-catalogo">
+            <div class="pedido-cabecalho-secao">
+                <h3>Produtos disponíveis</h3>
+
+                <div class="pedido-busca">
+                    <input
+                        type="text"
+                        id="pedidoPesquisaProduto"
+                        placeholder="🔎 Pesquise por código, descrição ou marca..."
+                    >
                 </div>
-            </div>`;
-        });
-    }
+            </div>
 
-    document.getElementById('containerGradeVitrine').innerHTML = html;
-    document.getElementById('contadorVitrine').textContent = 
-        produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
+            <div id="pedidoGradeProdutos" class="pedido-grade-produtos"></div>
 
-    // Só agenda próxima troca se NÃO estiver pausado
-    if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
-        timerCarrossel = setTimeout(() => {
-            indicePaginaCarrossel++;
-            renderizarPaginaCarrossel();
-        }, 6000);
-    }
-}
+            <div class="pedido-paginacao">
+                <button type="button" onclick="mudarPaginaPedido(-1)">❮ Anterior</button>
+                <span id="pedidoContadorPagina">Página 1 de 1</span>
+                <button type="button" onclick="mudarPaginaPedido(1)">Próxima ❯</button>
+            </div>
+        </section>
 
-function mudarSlideCarrossel(d) {
-    if (!carrosselAtivo) return;
-    clearTimeout(timerCarrossel);
-    pausaPorHover = false;
-    indicePaginaCarrossel += d;
-    renderizarPaginaCarrossel();
-}
+        <aside class="pedido-carrinho">
+            <div class="pedido-carrinho-topo">
+                <h3>Seu pedido</h3>
+                <p id="pedidoQuantidadeResumo">Nenhum item adicionado</p>
+            </div>
 
-window.addEventListener('resize', () => {
-    const novoTamanho = window.innerWidth >= 1025 ? 8 : 4;
-    if (novoTamanho !== itensPorPagina) {
-        itensPorPagina = novoTamanho;
-        indicePaginaCarrossel = 0;
-        renderizarPaginaCarrossel();
-    }
-});
+            <div id="pedidoItens" class="pedido-itens"></div>
 
-function atualizarContadorSelecionados() {
-    const selecionados = document.querySelectorAll('.chk-produto:checked').length;
-    document.getElementById('contadorSelecionados').textContent = `${selecionados} produto(s) selecionado(s)`;
-    document.getElementById('btnExcluirLote').disabled = selecionados === 0;
-}
-
-async function excluirSelecionados() {
-    const codigosParaExcluir = [];
-    document.querySelectorAll('.chk-produto:checked').forEach(chk => {
-        codigosParaExcluir.push(chk.value);
-    });
-
-    if (!confirm(`Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\nEsta ação não pode ser desfeita!`)) return;
-
-    try {
-        for (const cod of codigosParaExcluir) {
-            await fetch(URL_DO_GAS, {
-                method: "POST",
-                body: JSON.stringify({ acao: "excluir", codigo: cod, headers })
-            });
-        }
-        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-        dadosGlobais = dadosGlobais.filter(i => !codigosParaExcluir.includes(String(i[hCod])));
-        renderizarTabela();
-        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) com sucesso!`);
-    } catch(e) {
-        alert("Erro na exclusão em lote: " + e.message);
-    }
-}
-
-function renderizarTabela() {
-    const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
-    const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
-    const fMarca = document.getElementById('pesqMarca').value.toLowerCase();
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
-    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
-    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
-
-    listaFiltradaAtual = dadosGlobais.filter(p => {
-        return String(p[hCod]||'').toLowerCase().includes(fCod) &&
-               String(p[hDesc]||'').toLowerCase().includes(fNome) &&
-               String(p[hMarca]||'').toLowerCase().includes(fMarca);
-    });
-
-    document.getElementById('infoQtd').textContent = `${listaFiltradaAtual.length} de ${dadosGlobais.length} registros`;
-
-    let html = `<table class="tabela-produtos"><thead><tr>
-        <th><input type="checkbox" id="selecionarTodos" onchange="document.querySelectorAll('.chk-produto').forEach(c=>c.checked=this.checked); atualizarContadorSelecionados()"></th>
-        <th>Código</th><th>Descrição</th><th>Marca</th><th>Preço</th><th>Foto</th><th>Ações</th>
-    </tr></thead><tbody>`;
-
-    listaFiltradaAtual.forEach(p => {
-        let foto = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
-            ? `<img src="${resolverUrlImagem(p[hFoto])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` 
-            : '<span style="color:#94a3b8">—</span>';
-
-        html += `<tr>
-            <td><input type="checkbox" class="chk-produto" value="${p[hCod]}" onchange="atualizarContadorSelecionados()"></td>
-            <td>${p[hCod]}</td>
-            <td>${p[hDesc]}</td>
-            <td>${p[hMarca]}</td>
-            <td class="preco">${p[hPreco]}</td>
-            <td>${foto}</td>
-            <td>
-                <div class="area-botoes-acao">
-                    <button class="btn btn-editar-acao" onclick="editarRegistroPorCodigo('${p[hCod]}')">Editar</button>
-                    <button class="btn btn-excluir" onclick="confirmarExclusao('${p[hCod]}', '${(p[hDesc]||'').replace(/'/g, "\\'")}')">Excluir</button>
+            <div class="pedido-resumo">
+                <div class="pedido-resumo-linha">
+                    <span>Quantidade de produtos</span>
+                    <strong id="pedidoQtdTotal">0</strong>
                 </div>
-            </td>
-        </tr>`;
-    });
 
-    html += `</tbody></table>`;
-    document.getElementById('areaLista').innerHTML = html;
-    atualizarContadorSelecionados();
-}
+                <div class="pedido-resumo-linha">
+                    <span>Itens diferentes</span>
+                    <strong id="pedidoItensDiferentes">0</strong>
+                </div>
 
-async function confirmarExclusao(cod, desc) {
-    if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
-    try {
-        await fetch(URL_DO_GAS, {
-            method: "POST",
-            body: JSON.stringify({ acao: "excluir", codigo: cod, headers })
-        });
-        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-        dadosGlobais = dadosGlobais.filter(i => String(i[hCod]) !== String(cod));
-        renderizarTabela();
-        alert("Excluído!");
-    } catch(e) { alert("Erro: " + e.message); }
-}
+                <div class="pedido-resumo-total">
+                    <span>Total</span>
+                    <span id="pedidoValorTotal">R$ 0,00</span>
+                </div>
 
-function editarRegistroPorCodigo(cod) {
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    indiceEdicaoAtual = listaFiltradaAtual.findIndex(i => String(i[hCod]) === String(cod));
-    if (indiceEdicaoAtual !== -1) {
-        preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
-        document.getElementById('modalEdicaoFundo').classList.add('modal-ativo');
-    }
-}
+                <div class="pedido-observacao">
+                    <label for="pedidoObservacao">Observação do pedido</label>
+                    <textarea
+                        id="pedidoObservacao"
+                        placeholder="Ex.: preferência de entrega, cor, modelo ou outra informação..."
+                    ></textarea>
+                </div>
 
-function preencherFormularioEdicao(prod) {
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    document.getElementById('infoProgressoEdicao').textContent = `Item ${indiceEdicaoAtual+1} de ${listaFiltradaAtual.length}`;
-    let html = '';
-    headers.forEach(h => {
-        html += `<div class="grupo-campo-edicao">
-            <label>${h}</label>
-            <input type="text" id="campo_${h.replace(/\W/g,'_')}" value="${prod[h]||''}" ${h===hCod?'readonly style="background:#eee"':''}>
-        </div>`;
-    });
-    document.getElementById('containerCamposEdicao').innerHTML = html;
-}
+                <button
+                    id="btnFinalizarPedido"
+                    class="btn-finalizar-pedido"
+                    type="button"
+                    onclick="finalizarPedido()"
+                    disabled
+                >
+                    Finalizar pedido
+                </button>
+            </div>
+        </aside>
+    </div>
+</div>
 
-function fecharModalEdicao() {
-    document.getElementById('modalEdicaoFundo').classList.remove('modal-ativo');
-}
+<div id="modalPedidoSucesso" class="pedido-sucesso">
+    <div class="pedido-sucesso-card">
+        <div class="pedido-sucesso-icone">✓</div>
+        <h3>Pedido registrado!</h3>
+        <p id="mensagemPedidoSucesso"></p>
+        <button class="btn" type="button" onclick="fecharPedidoConcluido()">Voltar ao catálogo</button>
+    </div>
+</div>
 
-async function salvarEProximoProduto() {
-    let obj = {};
-    headers.forEach(h => obj[h] = document.getElementById(`campo_${h.replace(/\W/g,'_')}`).value);
-    try {
-        await fetch(URL_DO_GAS, {
-            method: "POST",
-            body: JSON.stringify({ headers, items: [{ data: obj }] })
-        });
-        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-        const idx = dadosGlobais.findIndex(i => String(i[hCod]) === String(obj[hCod]));
-        if(idx !== -1) dadosGlobais[idx] = obj;
-        renderizarTabela();
-        indiceEdicaoAtual++;
-        if(indiceEdicaoAtual < listaFiltradaAtual.length) {
-            preencherFormularioEdicao(listaFiltradaAtual[indiceEdicaoAtual]);
-        } else {
-            fecharModalEdicao();
-            alert("Todos os itens revisados!");
-        }
-    } catch(e) { alert("Erro: " + e.message); }
-}
+<div id="telaCadastroCliente" class="tela-cliente">
+    <div class="painel-cliente">
+        <div class="cabecalho-cliente">
+            <div>
+                <h3>Continuar compra na SICLAR</h3>
+                <p>Identificação e cadastro do cliente</p>
+            </div>
+            <button class="fechar-cliente" type="button" onclick="fecharTelaCliente()">✕</button>
+        </div>
 
-document.getElementById('pesqCodigo').oninput = renderizarTabela;
-document.getElementById('pesqNome').oninput = renderizarTabela;
-document.getElementById('pesqMarca').oninput = renderizarTabela;
+        <div class="conteudo-cliente">
+            <div id="produtoSelecionadoCliente" class="produto-selecionado-cliente"></div>
 
-</script>
+            <div id="etapaCpfCliente" class="etapa-cliente ativa">
+                <p class="texto-orientacao-cliente"><strong>Digite seu CPF.</strong></p>
+
+                <div class="campo-cliente">
+                    <label for="clienteCpfConsulta">CPF</label>
+                    <input
+                        type="text"
+                        id="clienteCpfConsulta"
+                        inputmode="numeric"
+                        maxlength="14"
+                        placeholder="000.000.000-00"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div id="mensagemConsultaCliente" class="mensagem-cliente"></div>
+
+                <div class="acoes-cliente">
+                    <button class="btn" style="background:#64748b;" type="button" onclick="fecharTelaCliente()">Cancelar</button>
+                    <button class="btn" id="btnConsultarCpf" type="button" onclick="consultarCpfCliente()">Continuar</button>
+                </div>
+            </div>
+
+            <div id="etapaClienteExistente" class="etapa-cliente">
+                <div class="mensagem-cliente sucesso" style="display:block;">
+                    Você já é nosso cliente. Deseja alterar o cadastro ou continuar comprando?
+                </div>
+
+                <div class="acoes-cliente">
+                    <button class="btn" style="background:#64748b;" type="button" onclick="abrirAlteracaoCliente()">
+                        Alterar cadastro
+                    </button>
+                    <button class="btn" style="background:#0f766e;" type="button" onclick="abrirMeusPedidosCliente()">
+                        Meus pedidos
+                    </button>
+                    <button class="btn" type="button" onclick="continuarComprandoCliente()">
+                        Continuar comprando
+                    </button>
+                </div>
+            </div>
+
+            <div id="etapaCadastroCliente" class="etapa-cliente">
+                <p class="texto-orientacao-cliente">
+                    <strong>Seja bem-vindo à SICLAR.</strong><br>
+                    Preencha seus dados para continuarmos com sua compra.
+                </p>
+
+                <form id="formCadastroCliente" onsubmit="salvarCadastroCliente(event)">
+                    <div class="grid-cliente">
+                        <div class="campo-cliente">
+                            <label for="clienteCpf">CPF</label>
+                            <input type="text" id="clienteCpf" readonly>
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteNome">Nome completo</label>
+                            <input type="text" id="clienteNome" required autocomplete="name">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteTelefone">Telefone</label>
+                            <input type="text" id="clienteTelefone" required inputmode="tel" maxlength="15" autocomplete="tel">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteEmail">E-mail</label>
+                            <input type="email" id="clienteEmail" required autocomplete="email">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteCep">CEP</label>
+                            <input type="text" id="clienteCep" required inputmode="numeric" maxlength="9" autocomplete="postal-code">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteNumero">Número</label>
+                            <input type="text" id="clienteNumero" required autocomplete="address-line2">
+                        </div>
+
+                        <div class="campo-cliente largura-total">
+                            <label for="clienteEndereco">Endereço</label>
+                            <input type="text" id="clienteEndereco" required readonly>
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteBairro">Bairro</label>
+                            <input type="text" id="clienteBairro" required readonly>
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteCidade">Cidade</label>
+                            <input type="text" id="clienteCidade" required readonly>
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteUf">UF</label>
+                            <input type="text" id="clienteUf" required readonly maxlength="2">
+                        </div>
+
+                        <div class="campo-cliente largura-total">
+                            <label for="clientePontoReferencia">Ponto de referência</label>
+                            <input type="text" id="clientePontoReferencia" autocomplete="off">
+                        </div>
+
+                        <div class="campo-cliente largura-total">
+                            <label for="clienteObservacoes">Observações</label>
+                            <textarea id="clienteObservacoes"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="mensagemCadastroCliente" class="mensagem-cliente"></div>
+
+                    <div class="acoes-cliente">
+                        <button class="btn" style="background:#64748b;" type="button" onclick="voltarEtapaCpf()">Voltar</button>
+                        <button class="btn" id="btnSalvarCliente" type="submit">Salvar cadastro</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="etapaCadastroConcluido" class="etapa-cliente">
+                <div class="mensagem-cliente sucesso" style="display:block;">
+                    Cadastro realizado com sucesso. Seja bem-vindo à SICLAR!
+                </div>
+
+                <div class="acoes-cliente">
+                    <button class="btn" type="button" onclick="continuarAposCadastro()">Continuar comprando</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal-fundo" id="modalAcessoAdminMobile">
+    <div class="modal modal-acesso-admin-mobile">
+        <div class="modal-topo">
+            <div>
+                <h3>Acesso administrativo</h3>
+                <p style="margin:5px 0 0;color:#64748b;font-size:13px;">Digite a senha para continuar.</p>
+            </div>
+            <button type="button" onclick="fecharAcessoAdminMobile()" style="background:transparent;border:none;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+
+        <div class="grupo-campo-edicao">
+            <label for="senhaAdminMobile">Senha</label>
+            <input
+                type="password"
+                id="senhaAdminMobile"
+                autocomplete="current-password"
+                placeholder="Digite a senha administrativa"
+            >
+        </div>
+
+        <div id="mensagemAdminMobile" class="mensagem-cliente"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+            <button class="btn" style="background:#64748b;" type="button" onclick="fecharAcessoAdminMobile()">Cancelar</button>
+            <button class="btn" id="btnEntrarAdminMobile" type="button" onclick="confirmarAcessoAdminMobile()">Entrar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="modalAdminCliente">
+    <div class="modal modal-edicao-ampla">
+        <div class="modal-topo">
+            <div>
+                <h3 style="color:var(--primary-color);">Editar cliente</h3>
+                <p id="adminClienteCpfInfo" style="font-size:12px;color:#64748b;"></p>
+            </div>
+            <button type="button" onclick="fecharModalAdminCliente()" style="background:transparent;border:none;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+        <div id="adminCamposCliente" class="grid-edicao-ampla"></div>
+        <div id="adminMensagemCliente" class="mensagem-cliente"></div>
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+            <button class="btn" style="background:#64748b;" type="button" onclick="fecharModalAdminCliente()">Cancelar</button>
+            <button class="btn" id="btnSalvarAdminCliente" type="button" onclick="salvarClienteAdmin()">Salvar alterações</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/clientes.js"></script>
+<script src="js/pedidos.js"></script>
+<script src="js/historico.js"></script>
+<script src="js/carrossel.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/admin-dashboard.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
