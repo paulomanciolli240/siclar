@@ -1491,3 +1491,303 @@ body {
         font-size: 12px;
     }
 }
+
+/* === CARROSSEL LIMPO COM TELA SEPARADA DE INSTRUÇÕES === */
+.tela-carrossel {
+    display: none;
+}
+
+.tela-carrossel.ativa {
+    display: block;
+}
+
+.carrossel-frase-destaque {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.carrossel-frase-destaque small {
+    color: #e2e8f0;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.carrossel-topo-acoes {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.carrossel-topo-acoes .pesquisa-carrossel {
+    flex: 1 1 430px;
+    min-width: 240px;
+}
+
+.btn-instrucoes-carrossel {
+    flex: 0 0 auto;
+    padding: 11px 17px;
+    border: 1px solid #f97316;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, .72);
+    color: #fb923c;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(249, 115, 22, .15);
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+}
+
+.btn-instrucoes-carrossel:hover {
+    transform: translateY(-2px);
+    background: #f97316;
+    color: #ffffff;
+}
+
+.tela-instrucoes-carrossel {
+    min-height: 100vh;
+    padding: 26px 34px 40px;
+    background:
+        radial-gradient(circle at top right, rgba(249, 115, 22, .08), transparent 34%),
+        #0f172a;
+}
+
+.instrucoes-cabecalho {
+    width: min(1180px, 100%);
+    margin: 0 auto 22px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+}
+
+.instrucoes-cabecalho h2 {
+    margin: 0;
+    color: #fb923c;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+.instrucoes-painel {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding: 28px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 28px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 22px 55px rgba(0, 0, 0, .28);
+}
+
+.instrucao-item {
+    min-height: 128px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.instrucao-icone {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #fdba74;
+    border-radius: 50%;
+    background: #fff7ed;
+    font-size: 22px;
+}
+
+.instrucao-item h3 {
+    margin: 2px 0 7px;
+    color: #7c2d12;
+    font-size: 15px;
+    text-transform: uppercase;
+}
+
+.instrucao-item p {
+    margin: 0;
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.instrucao-importante {
+    border-color: #fdba74;
+    background: #fffaf5;
+}
+
+.btn-voltar-produtos {
+    margin: 24px auto 0;
+    padding: 13px 25px;
+    display: block;
+    border: none;
+    border-radius: 10px;
+    background: #f97316;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(249, 115, 22, .28);
+    transition: transform .2s ease, background .2s ease;
+}
+
+.btn-voltar-produtos:hover {
+    transform: translateY(-2px);
+    background: #ea580c;
+}
+
+/* Os avisos antigos continuam no CSS apenas por compatibilidade,
+   porém não aparecem mais na tela principal do carrossel. */
+
+@media (max-width: 950px) {
+    .carrossel-barra-topo {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .carrossel-topo-acoes {
+        width: 100%;
+    }
+
+    .carrossel-topo-acoes .pesquisa-carrossel {
+        min-width: 0;
+    }
+
+    .instrucoes-painel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+    .carrossel-topo-acoes {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .btn-instrucoes-carrossel {
+        width: 100%;
+    }
+
+    .tela-instrucoes-carrossel {
+        padding: 18px 14px 30px;
+    }
+
+    .instrucoes-cabecalho {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .instrucoes-cabecalho h2 {
+        font-size: 17px;
+    }
+
+    .instrucoes-painel {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .instrucao-item {
+        min-height: 0;
+        padding: 13px;
+    }
+}
+
+
+/* === CORREÇÃO: TELA DE INSTRUÇÕES COM ROLAGEM E SAÍDA SEMPRE ACESSÍVEL === */
+#telaProdutosCarrossel,
+#telaInstrucoesCarrossel {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+#telaProdutosCarrossel.ativa {
+    display: flex;
+    flex-direction: column;
+}
+
+#telaInstrucoesCarrossel.ativa {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+}
+
+.tela-instrucoes-carrossel {
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%;
+    padding-bottom: 90px;
+    scrollbar-width: thin;
+    scrollbar-color: #f97316 #172033;
+}
+
+.tela-instrucoes-carrossel::-webkit-scrollbar {
+    width: 10px;
+}
+
+.tela-instrucoes-carrossel::-webkit-scrollbar-track {
+    background: #172033;
+}
+
+.tela-instrucoes-carrossel::-webkit-scrollbar-thumb {
+    border: 2px solid #172033;
+    border-radius: 10px;
+    background: #f97316;
+}
+
+.btn-voltar-produtos {
+    position: sticky;
+    bottom: 16px;
+    z-index: 20;
+    flex: 0 0 auto;
+}
+
+.btn-fechar-instrucoes-topo {
+    justify-self: end;
+    padding: 9px 14px;
+    border: 1px solid #f97316;
+    border-radius: 9px;
+    background: transparent;
+    color: #fb923c;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.btn-fechar-instrucoes-topo:hover {
+    background: #f97316;
+    color: #ffffff;
+}
+
+@media (max-width: 650px) {
+    .tela-instrucoes-carrossel {
+        padding-bottom: 78px;
+    }
+
+    .btn-voltar-produtos {
+        bottom: 10px;
+        width: min(100%, 340px);
+    }
+
+    .btn-fechar-instrucoes-topo {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+}

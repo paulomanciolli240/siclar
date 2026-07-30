@@ -180,3 +180,48 @@ function mudarSlideCarrossel(d) {
     indicePaginaCarrossel = (indicePaginaCarrossel + d + totalPaginas) % totalPaginas;
     renderizarPaginaCarrossel();
 }
+
+function abrirInstrucoesCarrossel() {
+    const telaProdutos = document.getElementById('telaProdutosCarrossel');
+    const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
+
+    if (!telaProdutos || !telaInstrucoes) return;
+
+    telaProdutos.classList.remove('ativa');
+    telaProdutos.setAttribute('aria-hidden', 'true');
+
+    telaInstrucoes.classList.add('ativa');
+    telaInstrucoes.setAttribute('aria-hidden', 'false');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function voltarAosProdutosCarrossel() {
+    const telaProdutos = document.getElementById('telaProdutosCarrossel');
+    const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
+
+    if (!telaProdutos || !telaInstrucoes) return;
+
+    telaInstrucoes.classList.remove('ativa');
+    telaInstrucoes.setAttribute('aria-hidden', 'true');
+
+    telaProdutos.classList.add('ativa');
+    telaProdutos.setAttribute('aria-hidden', 'false');
+
+    renderizarPaginaCarrossel();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    setTimeout(() => {
+        const campoPesquisa = document.getElementById('pesquisaCarrossel');
+        if (campoPesquisa) campoPesquisa.focus();
+    }, 350);
+}
+
+document.addEventListener('keydown', function(evento) {
+    if (evento.key !== 'Escape') return;
+
+    const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
+    if (telaInstrucoes && telaInstrucoes.classList.contains('ativa')) {
+        voltarAosProdutosCarrossel();
+    }
+});

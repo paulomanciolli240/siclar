@@ -19,47 +19,137 @@
 </div>
 
 <div id="moduloCarrossel">
-    <div class="carrossel-barra-topo">
-        <div class="carrossel-logo" id="gatilhoAdminMobile" role="button" aria-label="SICLAR Virtual">SICLAR VIRTUAL</div>
-        <div class="carrossel-frase-destaque">Aprecie nossos produtos</div>
-        <div class="pesquisa-carrossel">
-            <input type="text" id="pesquisaCarrossel" placeholder="🔍 Digite o nome, parte do nome ou combine palavras. Ex.: cimento votoran, piso branco...">
-        </div>
-    </div>
+    <section id="telaProdutosCarrossel" class="tela-carrossel ativa">
+        <div class="carrossel-barra-topo">
+            <div class="carrossel-logo" id="gatilhoAdminMobile" role="button" aria-label="SICLAR Virtual">
+                SICLAR VIRTUAL
+            </div>
 
-    <section class="aviso-iniciar-pedido" aria-label="Como iniciar seu pedido">
-        <div class="aviso-iniciar-pedido-icone">🛒</div>
-        <div class="aviso-iniciar-pedido-conteudo">
-            <strong>ESCOLHA UM PRODUTO PARA COMEÇAR A MONTAR SEU PEDIDO</strong>
-            <p>
-                Clique em qualquer produto abaixo. Depois você poderá adicionar outros produtos,
-                alterar quantidades, remover itens e escolher a forma de pagamento antes de finalizar.
-            </p>
-            <span>👇 Clique em um produto para começar.</span>
+            <div class="carrossel-frase-destaque">
+                Aprecie nossos produtos
+                <small>Clique em qualquer produto para iniciar seu pedido</small>
+            </div>
+
+            <div class="carrossel-topo-acoes">
+                <div class="pesquisa-carrossel">
+                    <input
+                        type="text"
+                        id="pesquisaCarrossel"
+                        placeholder="🔍 Digite o nome, parte do nome ou combine palavras. Ex.: cimento votoran"
+                    >
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-instrucoes-carrossel"
+                    onclick="abrirInstrucoesCarrossel()"
+                    aria-label="Abrir instruções de compra"
+                >
+                    ℹ️ Instruções
+                </button>
+            </div>
+        </div>
+
+        <div class="carrossel-grade-container">
+            <div id="containerGradeVitrine" class="carrossel-grade"></div>
+        </div>
+
+        <div class="carrossel-controles-inferior">
+            <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(-1)">❮ Anterior</button>
+            <span id="contadorVitrine">Página 1 de 1</span>
+            <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(1)">Próxima ❯</button>
         </div>
     </section>
 
-    <div class="aviso-site-em-ajustes" role="status">
-        <div class="aviso-site-icone">🚧</div>
-        <div>
-            <strong>Estamos aprimorando sua experiência</strong>
-            <p>
-                O site da Lar Doce Lar Materiais para Construção ainda está em fase de ajustes.
-                Caso encontre alguma divergência de preço, referência ou descrição, fique tranquilo:
-                nossa equipe fará a conferência antes da confirmação do pedido. Estamos trabalhando
-                para oferecer todo o conforto e a segurança que você merece.
-            </p>
+    <section id="telaInstrucoesCarrossel" class="tela-carrossel tela-instrucoes-carrossel" aria-hidden="true">
+        <div class="instrucoes-cabecalho">
+            <div class="carrossel-logo">SICLAR VIRTUAL</div>
+            <h2>Instruções</h2>
+            <button
+                type="button"
+                class="btn-fechar-instrucoes-topo"
+                onclick="voltarAosProdutosCarrossel()"
+                aria-label="Fechar instruções e voltar aos produtos"
+            >
+                ✕ Produtos
+            </button>
         </div>
-    </div>
 
-    <div class="carrossel-grade-container">
-        <div id="containerGradeVitrine" class="carrossel-grade"></div>
-    </div>
-    <div class="carrossel-controles-inferior">
-        <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(-1)">❮ Anterior</button>
-        <span id="contadorVitrine">Página 1 de 1</span>
-        <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(1)">Próxima ❯</button>
-    </div>
+        <div class="instrucoes-painel">
+            <article class="instrucao-item">
+                <div class="instrucao-icone">🛒</div>
+                <div>
+                    <h3>Como começar</h3>
+                    <p>
+                        Clique em qualquer produto do carrossel para iniciar seu pedido.
+                        Depois de selecionar o primeiro produto, você poderá adicionar outros itens.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">➕</div>
+                <div>
+                    <h3>Monte seu pedido</h3>
+                    <p>
+                        Adicione quantos produtos desejar, altere as quantidades,
+                        remova itens e revise o carrinho antes de finalizar.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">💳</div>
+                <div>
+                    <h3>Escolha o pagamento</h3>
+                    <p>
+                        Na finalização, escolha pagamento à vista, com 4,9% de desconto,
+                        ou pagamento a prazo pelo preço cadastrado.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">✅</div>
+                <div>
+                    <h3>Confirmação</h3>
+                    <p>
+                        Antes da confirmação, nossa equipe conferirá preços,
+                        referências e disponibilidade dos produtos.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">❓</div>
+                <div>
+                    <h3>Dúvidas</h3>
+                    <p>
+                        Em caso de dúvidas durante a compra, fale com um dos nossos vendedores.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item instrucao-importante">
+                <div class="instrucao-icone">🛡️</div>
+                <div>
+                    <h3>Importante</h3>
+                    <p>
+                        O site ainda está em fase de aprimoramento. Caso exista alguma divergência
+                        de preço, referência ou descrição, a equipe fará a conferência antes de confirmar o pedido.
+                    </p>
+                </div>
+            </article>
+        </div>
+
+        <button
+            type="button"
+            class="btn-voltar-produtos"
+            onclick="voltarAosProdutosCarrossel()"
+        >
+            ← Voltar aos produtos
+        </button>
+    </section>
 </div>
 
 
