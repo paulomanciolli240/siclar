@@ -52,7 +52,7 @@ function mostrarEstadoCarrossel(titulo, detalhe = "", mostrarBotao = false) {
 
 async function carregarDadosPlanilha() {
     erroCarregamentoPlanilha = "";
-    mostrarEstadoCarrossel("Carregando produtos...", "Aguarde a conexão com o Google Sheets.");
+    mostrarEstadoCarrossel("Etapa 1/3 — conectando...", "Aguarde a resposta do Google Sheets.");
 
     let ultimoErro = null;
 
@@ -89,6 +89,10 @@ async function carregarDadosPlanilha() {
             }
 
             dadosGlobais = Array.isArray(json.data) ? json.data : [];
+            mostrarEstadoCarrossel(
+                "Etapa 2/3 — dados recebidos",
+                `${dadosGlobais.length} produto(s) recebidos. Preparando a vitrine...`
+            );
 
             if (Array.isArray(json.headers) && json.headers.length > 0) {
                 headers = json.headers;

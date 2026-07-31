@@ -1991,3 +1991,19 @@ body {
         align-items: flex-start;
     }
 }
+
+
+.versao-catalogo-mobile {
+    display: block;
+    margin-top: 2px;
+    color: #86efac;
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: .4px;
+}
+
+@media (min-width: 700px) {
+    .versao-catalogo-mobile {
+        display: none;
+    }
+}

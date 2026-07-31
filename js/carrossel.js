@@ -53,8 +53,9 @@ function obterProdutosFiltradosCarrossel() {
 }
 
 function renderizarPaginaCarrossel() {
-    // Sempre limpa o temporizador primeiro
-    if (timerCarrossel) clearTimeout(timerCarrossel);
+    try {
+        // Sempre limpa o temporizador primeiro
+        if (timerCarrossel) clearTimeout(timerCarrossel);
 
     // O conteúdo continua sendo renderizado durante pesquisa e hover.
     // Apenas a troca automática de página fica pausada.
@@ -137,11 +138,22 @@ function renderizarPaginaCarrossel() {
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
     // Só agenda próxima troca se NÃO estiver pausado
-    if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
-        timerCarrossel = setTimeout(() => {
-            indicePaginaCarrossel++;
-            renderizarPaginaCarrossel();
-        }, 6000);
+        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
+            timerCarrossel = setTimeout(() => {
+                indicePaginaCarrossel++;
+                renderizarPaginaCarrossel();
+            }, 6000);
+        }
+    } catch (erro) {
+        console.error("Erro ao montar a vitrine:", erro);
+
+        if (typeof mostrarEstadoCarrossel === "function") {
+            mostrarEstadoCarrossel(
+                "Etapa 3/3 falhou — erro ao montar os produtos",
+                erro && erro.message ? erro.message : "Erro desconhecido ao renderizar a vitrine.",
+                true
+            );
+        }
     }
 }
 

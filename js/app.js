@@ -92,7 +92,49 @@ async function esconderTelaBoasVindas() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    registrarEventosSiclar();
-    esconderTelaBoasVindas();
-});
+function iniciarAplicacaoSiclar() {
+    try {
+        registrarEventosSiclar();
+        esconderTelaBoasVindas();
+    } catch (erro) {
+        console.error("Falha ao iniciar o SICLAR:", erro);
+
+        const tela = document.getElementById("telaBoasVindas");
+        if (tela) tela.style.display = "none";
+
+        const modulo = document.getElementById("moduloCarrossel");
+        if (modulo) modulo.style.display = "flex";
+
+        if (typeof mostrarEstadoCarrossel === "function") {
+            mostrarEstadoCarrossel(
+                "Falha ao iniciar o catálogo",
+                erro && erro.message ? erro.message : "Erro desconhecido no JavaScript.",
+                true
+            );
+        }
+    }
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciarAplicacaoSiclar, { once: true });
+} else {
+    iniciarAplicacaoSiclar();
+}
+
+/* Diagnóstico visível: nunca deixa a área preta silenciosamente. */
+setTimeout(() => {
+    const grade = document.getElementById("containerGradeVitrine");
+    const modulo = document.getElementById("moduloCarrossel");
+
+    if (!grade || !modulo || modulo.style.display === "none") return;
+
+    const possuiConteudo = grade.children.length > 0 || grade.textContent.trim().length > 0;
+
+    if (!possuiConteudo && typeof mostrarEstadoCarrossel === "function") {
+        mostrarEstadoCarrossel(
+            "O catálogo não terminou de iniciar",
+            "Atualize a página. Se esta mensagem continuar, envie uma foto dela para identificarmos a etapa exata.",
+            true
+        );
+    }
+}, 10000);
