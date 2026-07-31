@@ -1,5 +1,14 @@
 "use strict";
 
+function calcularItensPorPaginaCarrossel() {
+    const largura = window.innerWidth || document.documentElement.clientWidth || 360;
+
+    if (largura >= 1200) return 8;
+    if (largura >= 760) return 4;
+    if (largura >= 520) return 2;
+    return 1;
+}
+
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -14,7 +23,7 @@ function voltarParaCarrossel() {
 
 function iniciarCarrossel() {
     carrosselAtivo = true;
-    itensPorPagina = window.innerWidth >= 1025 ? 8 : 4;
+    itensPorPagina = calcularItensPorPaginaCarrossel();
     indicePaginaCarrossel = 0;
     document.getElementById('moduloCarrossel').style.display = 'flex';
     renderizarPaginaCarrossel();
@@ -159,14 +168,23 @@ function alternarDestaqueCard(card) {
 }
 
 async function recarregarProdutos() {
-    const botao = event && event.target ? event.target : null;
-    if (botao) {
+    const botoes = document.querySelectorAll(
+        '.carrossel-estado-carregamento button, .carrossel-sem-resultado button'
+    );
+
+    botoes.forEach(botao => {
         botao.disabled = true;
         botao.textContent = 'Carregando...';
-    }
+    });
 
-    await carregarDadosPlanilha();
-    renderizarPaginaCarrossel();
+    carrosselAtivo = true;
+    const carregou = await carregarDadosPlanilha();
+
+    if (carregou) {
+        indicePaginaCarrossel = 0;
+        pausaPorHover = false;
+        renderizarPaginaCarrossel();
+    }
 }
 
 function mudarSlideCarrossel(d) {

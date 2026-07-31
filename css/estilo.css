@@ -1791,3 +1791,203 @@ body {
         font-size: 11px;
     }
 }
+
+
+/* === CORREÇÃO DEFINITIVA DO CATÁLOGO NO CELULAR === */
+.carrossel-estado-carregamento {
+    grid-column: 1 / -1;
+    width: min(520px, 100%);
+    box-sizing: border-box;
+    margin: auto;
+    padding: 24px 18px;
+    text-align: center;
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 16px;
+    background: rgba(30, 41, 59, .75);
+}
+
+.carrossel-estado-carregamento strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: 17px;
+}
+
+.carrossel-estado-carregamento p {
+    margin: 0 0 16px;
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.carrossel-estado-icone {
+    margin-bottom: 9px;
+    font-size: 30px;
+}
+
+@media (hover: none), (pointer: coarse) {
+    .card-quadrado-vitrine:hover,
+    .card-quadrado-vitrine.ativo-clique {
+        transform: none !important;
+        z-index: 1 !important;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,.3) !important;
+    }
+}
+
+@media (max-width: 519px) {
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    #moduloCarrossel {
+        padding: 6px;
+        overflow: hidden;
+    }
+
+    #telaProdutosCarrossel.ativa {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .carrossel-barra-topo {
+        flex: 0 0 auto;
+        padding: 7px 12px 5px;
+        gap: 5px;
+    }
+
+    .carrossel-logo {
+        width: 100%;
+        font-size: 14px;
+        letter-spacing: 1.4px;
+    }
+
+    .carrossel-frase-destaque {
+        width: 100%;
+        align-items: flex-start;
+        font-size: 11px;
+        line-height: 1.1;
+    }
+
+    .carrossel-frase-destaque small {
+        font-size: 7px;
+    }
+
+    .carrossel-topo-acoes {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .carrossel-topo-acoes .pesquisa-carrossel {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .pesquisa-carrossel input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .btn-instrucoes-carrossel {
+        position: fixed;
+        left: 50%;
+        bottom: calc(9px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        z-index: 30;
+        width: min(132px, calc(100% - 36px));
+        padding: 7px 9px;
+        font-size: 8px;
+    }
+
+    .btn-instrucoes-carrossel:hover {
+        transform: translateX(-50%);
+    }
+
+    .carrossel-grade-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 7px 8px 48px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .carrossel-grade {
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+        max-width: none;
+        gap: 10px;
+        align-content: start;
+    }
+
+    .card-quadrado-vitrine {
+        width: 100%;
+        min-height: 0;
+        padding: 10px;
+        border-radius: 13px;
+    }
+
+    .vitrine-foto-container {
+        padding-top: 52%;
+        margin-bottom: 7px;
+    }
+
+    .vitrine-descricao {
+        font-size: 12px;
+        -webkit-line-clamp: 3;
+    }
+
+    .vitrine-marca {
+        font-size: 9px;
+    }
+
+    .vitrine-preco-prazo strong {
+        font-size: 12px;
+    }
+
+    .vitrine-preco-vista strong {
+        font-size: 15px;
+    }
+
+    .carrossel-controles-inferior {
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 4px 4px calc(42px + env(safe-area-inset-bottom));
+        gap: 7px;
+        font-size: 9px;
+    }
+
+    .carrossel-controles-inferior .btn-controle-carrossel {
+        padding: 6px 8px;
+        font-size: 9px;
+    }
+
+    .carrossel-sem-resultado,
+    .carrossel-estado-carregamento {
+        margin: 8px auto;
+        padding: 18px 13px;
+    }
+}
+
+@media (min-width: 520px) and (max-width: 759px) {
+    .carrossel-grade {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .carrossel-grade-container {
+        min-height: 0;
+        overflow-y: auto;
+        align-items: flex-start;
+    }
+}

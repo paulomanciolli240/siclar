@@ -1,0 +1,15 @@
+PASTA JS SICLAR CORRIGIDA
+
+CORREÇÃO DA IMPORTAÇÃO CSV
+- leitura em UTF-8;
+- reconhecimento correto do cabeçalho Código;
+- suporte a campos entre aspas;
+- preço com vírgula, como "R$ 165,00", não quebra as colunas;
+- suporte a vírgula ou ponto e vírgula;
+- remoção segura de BOM e espaços invisíveis;
+- linhas sem código são identificadas e ignoradas;
+- erro no console informa o número e o conteúdo do item.
+
+INSTALAÇÃO
+Substitua a pasta js do site pelos arquivos desta pasta, preservando a estrutura do site.
+O arquivo principal corrigido é admin.js.
