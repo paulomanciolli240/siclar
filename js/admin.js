@@ -239,12 +239,20 @@ async function excluirSelecionados() {
 
     try {
         for (const cod of codigosParaExcluir) {
-            await enviarParaGAS({ acao: "excluir", codigo: cod, adminToken });
+            const hDesc = headers.find(h => h.includes('Desc') || h.toLowerCase().includes('nome')) || headers[1];
+            const produto = dadosGlobais.find(item => String(item[hCod]) === String(cod));
+            await enviarParaGAS({
+                acao: "excluir",
+                codigo: cod,
+                descricao: produto ? produto[hDesc] : "",
+                motivo: "EXCLUÍDO MANUALMENTE EM LOTE",
+                adminToken
+            });
         }
         const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
         dadosGlobais = dadosGlobais.filter(i => !codigosParaExcluir.includes(String(i[hCod])));
         renderizarTabela();
-        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) com sucesso!`);
+        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) e enviado(s) para a lista negra.`);
     } catch(e) {
         alert("Erro na exclusão em lote: " + e.message);
     }
@@ -302,11 +310,17 @@ function renderizarTabela() {
 async function confirmarExclusao(cod, desc) {
     if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
     try {
-        await enviarParaGAS({ acao: "excluir", codigo: cod, adminToken });
+        await enviarParaGAS({
+            acao: "excluir",
+            codigo: cod,
+            descricao: desc,
+            motivo: "EXCLUÍDO MANUALMENTE",
+            adminToken
+        });
         const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
         dadosGlobais = dadosGlobais.filter(i => String(i[hCod]) !== String(cod));
         renderizarTabela();
-        alert("Excluído!");
+        alert("Produto excluído e código incluído na lista negra.");
     } catch(e) { alert("Erro: " + e.message); }
 }
 
@@ -447,6 +461,110 @@ async function salvarEProximoProduto() {
     } finally {
         botao.disabled = false;
         botao.textContent = '💾 Salvar e Próximo';
+    }
+}
+
+let listaNegraAtual = [];
+
+function fecharListaNegraProdutos() {
+    const modal = document.getElementById("modalListaNegraProdutos");
+    if (modal) modal.classList.remove("modal-ativo");
+}
+
+async function abrirListaNegraProdutos() {
+    const modal = document.getElementById("modalListaNegraProdutos");
+    const area = document.getElementById("areaListaNegraProdutos");
+
+    if (!modal || !area) return;
+
+    modal.classList.add("modal-ativo");
+    area.innerHTML = '<p class="admin-carregando">Carregando lista negra...</p>';
+
+    try {
+        const resultado = await enviarParaGAS({
+            acao: "listarListaNegra",
+            adminToken
+        });
+
+        listaNegraAtual = Array.isArray(resultado.itens) ? resultado.itens : [];
+        renderizarListaNegraProdutos();
+    } catch (erro) {
+        area.innerHTML = `<p style="padding:20px;color:#dc2626;text-align:center;">${erro.message}</p>`;
+    }
+}
+
+function renderizarListaNegraProdutos() {
+    const area = document.getElementById("areaListaNegraProdutos");
+    const busca = String(document.getElementById("buscaListaNegraProdutos")?.value || "")
+        .trim()
+        .toLowerCase();
+
+    const filtrados = listaNegraAtual.filter(item => {
+        const alvo = [item.codigo, item.descricao, item.motivo]
+            .join(" ")
+            .toLowerCase();
+        return !busca || alvo.includes(busca);
+    });
+
+    if (!filtrados.length) {
+        area.innerHTML = '<div class="admin-vazio">Nenhum código bloqueado.</div>';
+        return;
+    }
+
+    area.innerHTML = `
+        <div class="admin-tabela-wrap">
+            <table class="admin-tabela">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Motivo</th>
+                        <th>Bloqueado em</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtrados.map(item => `
+                        <tr>
+                            <td><strong>${item.codigo || ""}</strong></td>
+                            <td>${item.descricao || ""}</td>
+                            <td>${item.motivo || ""}</td>
+                            <td>${item.bloqueadoEm || ""}</td>
+                            <td>
+                                <button
+                                    type="button"
+                                    class="admin-btn-pequeno"
+                                    onclick='autorizarCodigoListaNegra(${JSON.stringify(String(item.codigo || ""))})'
+                                >Autorizar novamente</button>
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+async function autorizarCodigoListaNegra(codigo) {
+    if (!confirm(
+        `Autorizar novamente o código ${codigo}?\n\n` +
+        "Ele poderá retornar na próxima importação do CSV."
+    )) return;
+
+    try {
+        await enviarParaGAS({
+            acao: "removerListaNegra",
+            codigo,
+            adminToken
+        });
+
+        listaNegraAtual = listaNegraAtual.filter(
+            item => String(item.codigo) !== String(codigo)
+        );
+        renderizarListaNegraProdutos();
+        alert(`Código ${codigo} autorizado novamente.`);
+    } catch (erro) {
+        alert("Erro ao autorizar o código: " + erro.message);
     }
 }
 
@@ -746,7 +864,9 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
                 ? ` Último novo: ${resultado.codigo}.`
                 : resultado && resultado.tipo === "SEM_ALTERACAO"
                     ? ` Último conferido: ${resultado.codigo} — sem alteração.`
-                    : "";
+                    : resultado && resultado.tipo === "LISTA_NEGRA"
+                        ? ` Código bloqueado: ${resultado.codigo} — ignorado pela lista negra.`
+                        : "";
 
         const agoraMs = Date.now();
         const tempoSessaoMs = agoraMs - inicioExecucaoMs;
