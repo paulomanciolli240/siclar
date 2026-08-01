@@ -14,6 +14,10 @@ function normalizarTextoPesquisa(valor) {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
+        .replace(/\bmm\b/g, ' mm ')
+        .replace(/\bcm\b/g, ' cm ')
+        .replace(/\bmt\b/g, ' mt ')
+        .replace(/\bmetros?\b/g, ' mt ')
         .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
@@ -29,7 +33,10 @@ function termoCombinaComPalavras(termo, palavras, textoCompleto) {
     if (!termo) return true;
 
     if (/^\d+$/.test(termo)) {
-        return textoCompleto.includes(termo);
+        return palavras.some(palavra =>
+            palavra === termo ||
+            palavra.startsWith(termo)
+        ) || textoCompleto.includes(termo);
     }
 
     if (palavras.some(palavra => palavra.startsWith(termo))) {
@@ -47,7 +54,11 @@ function buscaInteligente(textoBusca, textoAlvo) {
     const palavrasAlvo = alvoNormalizado.split(' ').filter(Boolean);
 
     return termos.every(termo =>
-        termoCombinaComPalavras(termo, palavrasAlvo, alvoNormalizado)
+        termoCombinaComPalavras(
+            termo,
+            palavrasAlvo,
+            alvoNormalizado
+        )
     );
 }
 
@@ -61,26 +72,68 @@ function calcularPontuacaoPesquisa(textoBusca, textoAlvo) {
 
     termos.forEach(termo => {
         if (palavrasAlvo.includes(termo)) {
-            pontos += 10;
+            pontos += 20;
             return;
         }
 
         if (palavrasAlvo.some(palavra => palavra.startsWith(termo))) {
-            pontos += 6;
+            pontos += 12;
             return;
         }
 
         if (alvoNormalizado.includes(termo)) {
-            pontos += 2;
+            pontos += 4;
         }
     });
 
     const sequencia = termos.join(' ');
     if (sequencia && alvoNormalizado.includes(sequencia)) {
-        pontos += 15;
+        pontos += 30;
+    }
+
+    const primeiroTermo = termos[0];
+    if (
+        primeiroTermo &&
+        palavrasAlvo.length &&
+        palavrasAlvo[0].startsWith(primeiroTermo)
+    ) {
+        pontos += 10;
     }
 
     return pontos;
+}
+
+function montarTextoPesquisaProduto(produto, cabecalhosPesquisa) {
+    return cabecalhosPesquisa
+        .map(cabecalho => produto[cabecalho])
+        .filter(valor => valor !== undefined && valor !== null && valor !== '')
+        .join(' ');
+}
+
+function ordenarProdutosPorPesquisa(produtos, termo, cabecalhosPesquisa) {
+    if (!termo) return produtos.slice();
+
+    return produtos
+        .map(produto => {
+            const textoPesquisa = montarTextoPesquisaProduto(
+                produto,
+                cabecalhosPesquisa
+            );
+
+            return {
+                produto,
+                textoPesquisa,
+                pontuacao: calcularPontuacaoPesquisa(
+                    termo,
+                    textoPesquisa
+                )
+            };
+        })
+        .filter(item =>
+            buscaInteligente(termo, item.textoPesquisa)
+        )
+        .sort((a, b) => b.pontuacao - a.pontuacao)
+        .map(item => item.produto);
 }
 
 function somenteNumeros(valor) {

@@ -75,32 +75,17 @@ function produtosFiltradosPedido() {
 
     const cab = obterCabecalhosProduto();
 
-    const produtos = dadosGlobais
-        .map(produto => {
-            const textoProduto = [
-                produto[cab.codigo],
-                produto[cab.descricao],
-                produto[cab.marca]
-            ].filter(Boolean).join(' ');
+    const camposPesquisa = [
+        cab.codigo,
+        cab.descricao,
+        cab.marca
+    ].filter(Boolean);
 
-            return {
-                produto,
-                textoProduto,
-                pontuacao: termo
-                    ? calcularPontuacaoPesquisa(termo, textoProduto)
-                    : 0
-            };
-        })
-        .filter(item =>
-            !termo ||
-            buscaInteligente(termo, item.textoProduto)
-        );
-
-    if (termo) {
-        produtos.sort((a, b) => b.pontuacao - a.pontuacao);
-    }
-
-    return produtos.map(item => item.produto);
+    return ordenarProdutosPorPesquisa(
+        dadosGlobais,
+        termo,
+        camposPesquisa
+    );
 }
 
 function renderizarProdutosPedido() {

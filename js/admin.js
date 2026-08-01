@@ -15,40 +15,6 @@ let importacaoContadoresIniciais = {
 };
 
 
-const CHAVE_TEMPO_IMPORTACAO_LOCAL = "siclar_tempo_importacao_csv";
-
-function formatarDuracaoImportacao(milissegundos) {
-    if (!Number.isFinite(milissegundos) || milissegundos < 0) return "calculando...";
-    const totalSegundos = Math.max(0, Math.round(milissegundos / 1000));
-    const horas = Math.floor(totalSegundos / 3600);
-    const minutos = Math.floor((totalSegundos % 3600) / 60);
-    const segundos = totalSegundos % 60;
-    if (horas > 0) return `${horas}h ${String(minutos).padStart(2, "0")}min ${String(segundos).padStart(2, "0")}s`;
-    if (minutos > 0) return `${minutos}min ${String(segundos).padStart(2, "0")}s`;
-    return `${segundos}s`;
-}
-
-function carregarTempoAcumuladoImportacao(idImportacao) {
-    try {
-        const salvo = JSON.parse(localStorage.getItem(CHAVE_TEMPO_IMPORTACAO_LOCAL) || "null");
-        if (!salvo || salvo.idImportacao !== idImportacao) return 0;
-        return Math.max(0, Number(salvo.tempoDecorridoMs || 0));
-    } catch { return 0; }
-}
-
-function salvarTempoAcumuladoImportacao(idImportacao, tempoDecorridoMs) {
-    localStorage.setItem(CHAVE_TEMPO_IMPORTACAO_LOCAL, JSON.stringify({
-        idImportacao,
-        tempoDecorridoMs: Math.max(0, Number(tempoDecorridoMs || 0)),
-        atualizadoEm: new Date().toISOString()
-    }));
-}
-
-function limparTempoAcumuladoImportacao() {
-    localStorage.removeItem(CHAVE_TEMPO_IMPORTACAO_LOCAL);
-}
-
-
 function escaparCampoCsvRelatorio(valor) {
     const texto = String(valor == null ? "" : valor);
 
@@ -231,20 +197,29 @@ function atualizarContadorSelecionados() {
 
 async function excluirSelecionados() {
     const codigosParaExcluir = [];
-
     document.querySelectorAll('.chk-produto:checked').forEach(chk => {
-        codigosParaExcluir.push(String(chk.value));
+        codigosParaExcluir.push(chk.value);
     });
 
-    if (codigosParaExcluir.length === 0) {
-        alert("Selecione pelo menos um produto para excluir.");
-        return;
-    }
+    if (!confirm(`Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\nEsta ação não pode ser desfeita!`)) return;
 
-    if (!confirm(
-        `Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\n` +
-        `Os códigos serão enviados para a lista negra e não voltarão nas próximas importações.`
-    )) return;
+    try {
+        for (const cod of codigosParaExcluir) {
+            await enviarParaGAS({ acao: "excluir", codigo: cod, adminToken });
+        }
+        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
+        dadosGlobais = dadosGlobais.filter(i => !codigosParaExcluir.includes(String(i[hCod])));
+        renderizarTabela();
+        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) com sucesso!`);
+    } catch(e) {
+        alert("Erro na exclusão em lote: " + e.message);
+    }
+}
+
+function renderizarTabela() {
+    const fCod = document.getElementById('pesqCodigo').value.trim();
+    const fNome = document.getElementById('pesqNome').value.trim();
+    const fMarca = document.getElementById('pesqMarca').value.trim();
 
     const hCod = headers.find(h =>
         h.includes('Cód') || h.toLowerCase().includes('codigo')
@@ -254,87 +229,71 @@ async function excluirSelecionados() {
         h.includes('Desc') || h.toLowerCase().includes('nome')
     ) || headers[1];
 
-    const botaoExcluir = document.getElementById('btnExcluirLote');
-    const textoOriginalBotao = botaoExcluir ? botaoExcluir.textContent : "";
+    const hMarca = headers.find(h =>
+        h.includes('Marca') || h.toLowerCase().includes('marca')
+    ) || headers[2];
 
-    if (botaoExcluir) {
-        botaoExcluir.disabled = true;
-        botaoExcluir.textContent = "Excluindo...";
-    }
+    const hPreco = headers.find(h =>
+        h.includes('Preço') || h.toLowerCase().includes('venda')
+    ) || headers[3];
 
-    let excluidos = 0;
-    const erros = [];
+    const hFoto = headers.find(h =>
+        h.includes('Foto') || h.toLowerCase().includes('imagem')
+    ) || '';
 
-    try {
-        for (const cod of codigosParaExcluir) {
-            try {
-                const produto = dadosGlobais.find(
-                    item => String(item[hCod] || "") === String(cod)
-                );
+    const hModelo = headers.find(h =>
+        h.toLowerCase().includes('modelo')
+    ) || '';
 
-                await enviarParaGAS({
-                    acao: "excluir",
-                    codigo: cod,
-                    descricao: produto ? String(produto[hDesc] || "") : "",
-                    motivo: "EXCLUÍDO MANUALMENTE EM LOTE",
-                    adminToken
-                });
+    const hMedida = headers.find(h =>
+        h.toLowerCase().includes('medida')
+    ) || '';
 
-                excluidos++;
-            } catch (erroItem) {
-                console.error(`Erro ao excluir o código ${cod}:`, erroItem);
-                erros.push(`${cod}: ${erroItem.message}`);
-            }
-        }
+    const hFabricante = headers.find(h =>
+        h.toLowerCase().includes('fabricante')
+    ) || '';
 
-        const codigosExcluidosComSucesso = new Set(
-            codigosParaExcluir.filter(cod =>
-                !erros.some(erro => erro.startsWith(`${cod}:`))
-            )
+    const hLocacao = headers.find(h =>
+        h.toLowerCase().includes('loca')
+    ) || '';
+
+    const camposPesquisa = [
+        hCod,
+        hDesc,
+        hMarca,
+        hModelo,
+        hMedida,
+        hFabricante,
+        hLocacao
+    ].filter(Boolean);
+
+    listaFiltradaAtual = dadosGlobais.filter(produto => {
+        const codigoOk = !fCod ||
+            buscaInteligente(fCod, produto[hCod]);
+
+        const marcaOk = !fMarca ||
+            buscaInteligente(fMarca, produto[hMarca]);
+
+        const textoCompleto = montarTextoPesquisaProduto(
+            produto,
+            camposPesquisa
         );
 
-        dadosGlobais = dadosGlobais.filter(
-            item => !codigosExcluidosComSucesso.has(String(item[hCod] || ""))
-        );
+        const descricaoOk = !fNome ||
+            buscaInteligente(fNome, textoCompleto);
 
-        renderizarTabela();
-
-        if (erros.length === 0) {
-            alert(
-                `✅ ${excluidos} produto(s) excluído(s) e enviado(s) para a lista negra.`
-            );
-        } else {
-            alert(
-                `${excluidos} produto(s) excluído(s) com sucesso.\n` +
-                `${erros.length} produto(s) apresentaram erro.\n\n` +
-                erros.slice(0, 10).join("\n")
-            );
-        }
-    } catch (erroGeral) {
-        alert("Erro na exclusão em lote: " + erroGeral.message);
-    } finally {
-        if (botaoExcluir) {
-            botaoExcluir.textContent = textoOriginalBotao || "🗑️ Excluir selecionados";
-        }
-        atualizarContadorSelecionados();
-    }
-}
-
-function renderizarTabela() {
-    const fCod = document.getElementById('pesqCodigo').value.toLowerCase(); 
-    const fNome = document.getElementById('pesqNome').value.toLowerCase(); 
-    const fMarca = document.getElementById('pesqMarca').value.toLowerCase();
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
-    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
-    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
-
-    listaFiltradaAtual = dadosGlobais.filter(p => {
-        return String(p[hCod]||'').toLowerCase().includes(fCod) &&
-               String(p[hDesc]||'').toLowerCase().includes(fNome) &&
-               String(p[hMarca]||'').toLowerCase().includes(fMarca);
+        return codigoOk && marcaOk && descricaoOk;
     });
+
+    if (fNome) {
+        listaFiltradaAtual.sort((a, b) => {
+            const textoA = montarTextoPesquisaProduto(a, camposPesquisa);
+            const textoB = montarTextoPesquisaProduto(b, camposPesquisa);
+
+            return calcularPontuacaoPesquisa(fNome, textoB) -
+                   calcularPontuacaoPesquisa(fNome, textoA);
+        });
+    }
 
     document.getElementById('infoQtd').textContent = `${listaFiltradaAtual.length} de ${dadosGlobais.length} registros`;
 
@@ -372,17 +331,11 @@ function renderizarTabela() {
 async function confirmarExclusao(cod, desc) {
     if (!confirm(`Excluir produto?\nCód: ${cod}\n${desc}`)) return;
     try {
-        await enviarParaGAS({
-            acao: "excluir",
-            codigo: cod,
-            descricao: desc,
-            motivo: "EXCLUÍDO MANUALMENTE",
-            adminToken
-        });
+        await enviarParaGAS({ acao: "excluir", codigo: cod, adminToken });
         const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
         dadosGlobais = dadosGlobais.filter(i => String(i[hCod]) !== String(cod));
         renderizarTabela();
-        alert("Produto excluído e código incluído na lista negra.");
+        alert("Excluído!");
     } catch(e) { alert("Erro: " + e.message); }
 }
 
@@ -526,110 +479,6 @@ async function salvarEProximoProduto() {
     }
 }
 
-let listaNegraAtual = [];
-
-function fecharListaNegraProdutos() {
-    const modal = document.getElementById("modalListaNegraProdutos");
-    if (modal) modal.classList.remove("modal-ativo");
-}
-
-async function abrirListaNegraProdutos() {
-    const modal = document.getElementById("modalListaNegraProdutos");
-    const area = document.getElementById("areaListaNegraProdutos");
-
-    if (!modal || !area) return;
-
-    modal.classList.add("modal-ativo");
-    area.innerHTML = '<p class="admin-carregando">Carregando lista negra...</p>';
-
-    try {
-        const resultado = await enviarParaGAS({
-            acao: "listarListaNegra",
-            adminToken
-        });
-
-        listaNegraAtual = Array.isArray(resultado.itens) ? resultado.itens : [];
-        renderizarListaNegraProdutos();
-    } catch (erro) {
-        area.innerHTML = `<p style="padding:20px;color:#dc2626;text-align:center;">${erro.message}</p>`;
-    }
-}
-
-function renderizarListaNegraProdutos() {
-    const area = document.getElementById("areaListaNegraProdutos");
-    const busca = String(document.getElementById("buscaListaNegraProdutos")?.value || "")
-        .trim()
-        .toLowerCase();
-
-    const filtrados = listaNegraAtual.filter(item => {
-        const alvo = [item.codigo, item.descricao, item.motivo]
-            .join(" ")
-            .toLowerCase();
-        return !busca || alvo.includes(busca);
-    });
-
-    if (!filtrados.length) {
-        area.innerHTML = '<div class="admin-vazio">Nenhum código bloqueado.</div>';
-        return;
-    }
-
-    area.innerHTML = `
-        <div class="admin-tabela-wrap">
-            <table class="admin-tabela">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Descrição</th>
-                        <th>Motivo</th>
-                        <th>Bloqueado em</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${filtrados.map(item => `
-                        <tr>
-                            <td><strong>${item.codigo || ""}</strong></td>
-                            <td>${item.descricao || ""}</td>
-                            <td>${item.motivo || ""}</td>
-                            <td>${item.bloqueadoEm || ""}</td>
-                            <td>
-                                <button
-                                    type="button"
-                                    class="admin-btn-pequeno"
-                                    onclick='autorizarCodigoListaNegra(${JSON.stringify(String(item.codigo || ""))})'
-                                >Autorizar novamente</button>
-                            </td>
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
-
-async function autorizarCodigoListaNegra(codigo) {
-    if (!confirm(
-        `Autorizar novamente o código ${codigo}?\n\n` +
-        "Ele poderá retornar na próxima importação do CSV."
-    )) return;
-
-    try {
-        await enviarParaGAS({
-            acao: "removerListaNegra",
-            codigo,
-            adminToken
-        });
-
-        listaNegraAtual = listaNegraAtual.filter(
-            item => String(item.codigo) !== String(codigo)
-        );
-        renderizarListaNegraProdutos();
-        alert(`Código ${codigo} autorizado novamente.`);
-    } catch (erro) {
-        alert("Erro ao autorizar o código: " + erro.message);
-    }
-}
-
 document.getElementById("btnAbrir").addEventListener("click", () => {
     document.getElementById("janela").classList.add("modal-ativo");
 });
@@ -732,7 +581,6 @@ document.getElementById("csvFile").addEventListener("change", event => {
     const file = event.target.files[0];
     const botaoProcessar = document.getElementById("btnProcess");
     const log = document.getElementById("log");
-    log.style.whiteSpace = "pre-line";
 
     csvData = [];
     headers = [];
@@ -820,8 +668,6 @@ document.getElementById("csvFile").addEventListener("change", event => {
     };
 });
 
-const TAMANHO_LOTE_IMPORTACAO = 25;
-
 document.getElementById("btnProcess").addEventListener("click", async () => {
     const btnProcess = document.getElementById("btnProcess");
     const csvFile = document.getElementById("csvFile");
@@ -843,216 +689,122 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     importacaoCancelada = false;
     btnProcess.disabled = true;
     csvFile.disabled = true;
-    btnCancelar.disabled = false;
     btnCancelar.style.display = "inline-block";
     progressContainer.style.display = "block";
 
+    let sucessos = importacaoIndiceInicial;
     let novos = importacaoContadoresIniciais.novos;
     let atualizados = importacaoContadoresIniciais.atualizados;
     let semAlteracao = importacaoContadoresIniciais.semAlteracao;
     let erros = importacaoContadoresIniciais.erros;
-    let falhaFatal = null;
 
-    const inicioExecucaoMs = Date.now();
-    const indiceInicioExecucao = importacaoIndiceInicial;
-    const tempoAcumuladoAnteriorMs =
-        carregarTempoAcumuladoImportacao(importacaoIdAtual);
-
-    const percentualInicial = Math.round(
-        (importacaoIndiceInicial / csvData.length) * 100
-    );
-
+    const percentualInicial = Math.round((importacaoIndiceInicial / csvData.length) * 100);
     progressBar.style.width = `${percentualInicial}%`;
     progressBar.textContent = `${percentualInicial}%`;
 
-    for (
-        let inicioLote = importacaoIndiceInicial;
-        inicioLote < csvData.length;
-        inicioLote += TAMANHO_LOTE_IMPORTACAO
-    ) {
+    for (let index = importacaoIndiceInicial; index < csvData.length; index++) {
         if (importacaoCancelada) break;
 
-        const fimLote = Math.min(
-            inicioLote + TAMANHO_LOTE_IMPORTACAO,
-            csvData.length
-        );
-
-        const itensLote = csvData
-            .slice(inicioLote, fimLote)
-            .map(data => ({ data }));
-
-        log.textContent =
-            `Enviando lote ${inicioLote + 1} a ${fimLote} de ${csvData.length}...`;
-
-        let resultadoLote;
-
         try {
-            resultadoLote = await enviarParaGAS({
-                acao: "importarLote",
+            const resultado = await enviarParaGAS({
+                acao: "importar",
                 adminToken,
                 headers,
                 idImportacao: importacaoIdAtual,
                 nomeArquivo: importacaoArquivoAtual.name,
-                indiceInicial: inicioLote,
+                indiceItem: index,
                 totalItens: csvData.length,
-                items: itensLote
+                items: [{ data: csvData[index] }]
             });
-        } catch (erroLote) {
-            falhaFatal = erroLote;
-            console.error(
-                `Falha no lote ${inicioLote + 1} a ${fimLote}:`,
-                erroLote
-            );
 
-            log.textContent =
-                `Falha ao processar o lote ${inicioLote + 1} a ${fimLote}: ` +
-                `${erroLote.message}. O ponto anterior foi preservado.`;
+            if (resultado.erro) {
+                throw new Error(resultado.erro);
+            }
 
-            break;
+            sucessos = index + 1;
+            importacaoIndiceInicial = index + 1;
+
+            novos = Number(resultado.acumuladoNovos ?? novos);
+            atualizados = Number(resultado.acumuladoAtualizados ?? atualizados);
+            semAlteracao = Number(resultado.acumuladoSemAlteracao ?? semAlteracao);
+            erros = Number(resultado.acumuladoErros ?? erros);
+
+            salvarProgressoImportacaoLocal({
+                idImportacao: importacaoIdAtual,
+                nomeArquivo: importacaoArquivoAtual.name,
+                totalItens: csvData.length,
+                ultimoIndice: index,
+                atualizadoEm: new Date().toISOString()
+            });
+        } catch (erro) {
+            erros++;
+            console.error(`Erro na importação do item ${index + 1}:`, csvData[index], erro);
+
+            try {
+                await enviarParaGAS({
+                    acao: "registrarErroImportacao",
+                    adminToken,
+                    idImportacao: importacaoIdAtual,
+                    nomeArquivo: importacaoArquivoAtual.name,
+                    totalItens: csvData.length,
+                    indiceItem: index,
+                    mensagemErro: erro.message
+                });
+            } catch (erroRegistro) {
+                console.error("Não foi possível registrar o erro da importação:", erroRegistro);
+            }
         }
 
-        const ultimoIndiceConfirmado = Number(
-            resultadoLote.ultimoIndice ?? (fimLote - 1)
-        );
-
-        importacaoIndiceInicial = Math.min(
-            ultimoIndiceConfirmado + 1,
-            csvData.length
-        );
-
-        novos = Number(resultadoLote.acumuladoNovos ?? novos);
-        atualizados = Number(
-            resultadoLote.acumuladoAtualizados ?? atualizados
-        );
-        semAlteracao = Number(
-            resultadoLote.acumuladoSemAlteracao ?? semAlteracao
-        );
-        erros = Number(resultadoLote.acumuladoErros ?? erros);
-
-        salvarProgressoImportacaoLocal({
-            idImportacao: importacaoIdAtual,
-            nomeArquivo: importacaoArquivoAtual.name,
-            totalItens: csvData.length,
-            ultimoIndice: ultimoIndiceConfirmado,
-            atualizadoEm: new Date().toISOString()
-        });
-
-        const percentual = Math.round(
-            (importacaoIndiceInicial / csvData.length) * 100
-        );
-
+        const percentual = Math.round(((index + 1) / csvData.length) * 100);
         progressBar.style.width = `${percentual}%`;
         progressBar.textContent = `${percentual}%`;
+        const camposAlterados = Array.isArray(resultado?.alteracoes)
+            ? resultado.alteracoes.map(item => item.campo).join(", ")
+            : "";
 
-        const ultimo =
-            resultadoLote.ultimoResultado ||
-            (
-                Array.isArray(resultadoLote.resultados) &&
-                resultadoLote.resultados.length
-                    ? resultadoLote.resultados[
-                        resultadoLote.resultados.length - 1
-                    ]
-                    : null
-            );
-
-        const camposAlterados =
-            ultimo && Array.isArray(ultimo.alteracoes)
-                ? ultimo.alteracoes.map(item => item.campo).join(", ")
+        const detalheAtualizacao = resultado?.tipo === "ATUALIZADO"
+            ? ` Último atualizado: ${resultado.codigo} — ${camposAlterados}.`
+            : resultado?.tipo === "NOVO"
+                ? ` Último novo: ${resultado.codigo}.`
                 : "";
 
-        const detalheAtualizacao =
-            ultimo && ultimo.tipo === "ATUALIZADO"
-                ? ` Último atualizado: ${ultimo.codigo} — ` +
-                  `${camposAlterados || "dados sincronizados"}.`
-                : ultimo && ultimo.tipo === "NOVO"
-                    ? ` Último novo: ${ultimo.codigo}.`
-                    : ultimo && ultimo.tipo === "SEM_ALTERACAO"
-                        ? ` Último conferido: ${ultimo.codigo} — sem alteração.`
-                        : ultimo && ultimo.tipo === "LISTA_NEGRA"
-                            ? ` Código bloqueado: ${ultimo.codigo}.`
-                            : ultimo && ultimo.tipo === "ERRO"
-                                ? ` Último erro: ${ultimo.erro}.`
-                                : "";
-
-        const agoraMs = Date.now();
-        const tempoSessaoMs = agoraMs - inicioExecucaoMs;
-        const tempoDecorridoTotalMs =
-            tempoAcumuladoAnteriorMs + tempoSessaoMs;
-
-        const itensProcessadosNestaExecucao = Math.max(
-            1,
-            importacaoIndiceInicial - indiceInicioExecucao
-        );
-
-        const mediaMsPorItem =
-            tempoSessaoMs / itensProcessadosNestaExecucao;
-
-        const itensRestantes = Math.max(
-            0,
-            csvData.length - importacaoIndiceInicial
-        );
-
-        const tempoRestanteMs = itensRestantes * mediaMsPorItem;
-        const itensPorMinuto =
-            mediaMsPorItem > 0
-                ? Math.round(60000 / mediaMsPorItem)
-                : 0;
-
-        salvarTempoAcumuladoImportacao(
-            importacaoIdAtual,
-            tempoDecorridoTotalMs
-        );
-
         log.textContent =
-            `Processando ${importacaoIndiceInicial} de ${csvData.length} — ` +
+            `Processando ${index + 1} de ${csvData.length} — ` +
             `${novos} novo(s), ${atualizados} atualizado(s), ` +
-            `${semAlteracao} sem alteração, ${erros} erro(s).\n` +
-            `Lotes de ${TAMANHO_LOTE_IMPORTACAO} — ` +
-            `Tempo decorrido: ${formatarDuracaoImportacao(tempoDecorridoTotalMs)} — ` +
-            `Tempo restante estimado: ${formatarDuracaoImportacao(tempoRestanteMs)} — ` +
-            `Velocidade média: ${itensPorMinuto} item(ns)/min.` +
+            `${semAlteracao} sem alteração, ${erros} erro(s).` +
             detalheAtualizacao;
-
-        // Entrega o controle ao navegador entre os lotes.
-        await new Promise(resolve => setTimeout(resolve, 40));
     }
 
     btnCancelar.style.display = "none";
-    btnCancelar.disabled = false;
     csvFile.disabled = false;
 
-    if (
-        importacaoCancelada ||
-        falhaFatal ||
-        importacaoIndiceInicial < csvData.length
-    ) {
+    if (importacaoCancelada) {
+        await enviarParaGAS({
+            acao: "pausarImportacao",
+            adminToken,
+            idImportacao: importacaoIdAtual,
+            nomeArquivo: importacaoArquivoAtual.name,
+            totalItens: csvData.length
+        });
+
         try {
-            await enviarParaGAS({
-                acao: "pausarImportacao",
-                adminToken,
-                idImportacao: importacaoIdAtual,
-                nomeArquivo: importacaoArquivoAtual.name,
-                totalItens: csvData.length
-            });
-        } catch (erroPausa) {
-            console.error("Não foi possível marcar a pausa:", erroPausa);
+            const relatorioParcial = await obterEBaixarRelatorioImportacao();
+
+            alert(
+                `Importação interrompida no item ${importacaoIndiceInicial} de ${csvData.length}.\n` +
+                `${relatorioParcial.length} alteração(ões) registrada(s) no relatório parcial.\n` +
+                "Ao selecionar novamente o mesmo CSV, ela continuará deste ponto."
+            );
+        } catch (erroRelatorio) {
+            console.error("Não foi possível baixar o relatório parcial:", erroRelatorio);
+
+            alert(
+                `Importação interrompida no item ${importacaoIndiceInicial} de ${csvData.length}.\n` +
+                "Ao selecionar novamente o mesmo CSV, ela continuará deste ponto."
+            );
         }
 
         btnProcess.disabled = false;
-
-        if (falhaFatal) {
-            alert(
-                `A importação foi pausada no item ${importacaoIndiceInicial + 1}.\n\n` +
-                `${falhaFatal.message}\n\n` +
-                "Selecione o mesmo CSV para continuar do ponto salvo."
-            );
-        } else if (importacaoCancelada) {
-            alert(
-                `Importação interrompida no item ${importacaoIndiceInicial} ` +
-                `de ${csvData.length}.\n` +
-                "O próximo lote continuará desse ponto."
-            );
-        }
     } else {
         await enviarParaGAS({
             acao: "concluirImportacao",
@@ -1063,20 +815,14 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         });
 
         limparProgressoImportacaoLocal();
-        const tempoFinalMs =
-            carregarTempoAcumuladoImportacao(importacaoIdAtual);
 
         let totalDetalhesRelatorio = 0;
 
         try {
-            const relatorioFinal =
-                await obterEBaixarRelatorioImportacao();
+            const relatorioFinal = await obterEBaixarRelatorioImportacao();
             totalDetalhesRelatorio = relatorioFinal.length;
         } catch (erroRelatorio) {
-            console.error(
-                "Não foi possível baixar o relatório final:",
-                erroRelatorio
-            );
+            console.error("Não foi possível baixar o relatório final:", erroRelatorio);
         }
 
         alert(
@@ -1085,11 +831,9 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
             `Produtos atualizados: ${atualizados}\n` +
             `Sem alteração: ${semAlteracao}\n` +
             `Erros: ${erros}\n` +
-            `Tempo total: ${formatarDuracaoImportacao(tempoFinalMs)}\n` +
-            `Detalhes no relatório: ${totalDetalhesRelatorio}`
+            `Detalhes registrados no relatório: ${totalDetalhesRelatorio}`
         );
 
-        limparTempoAcumuladoImportacao();
         btnProcess.disabled = true;
         fechar();
     }
