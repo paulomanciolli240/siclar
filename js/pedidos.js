@@ -68,20 +68,39 @@ function adicionarProdutoInicialAoPedido(codigo) {
 }
 
 function produtosFiltradosPedido() {
-    const termo = document.getElementById('pedidoPesquisaProduto').value.trim().toLowerCase();
+    const termo = document
+        .getElementById('pedidoPesquisaProduto')
+        .value
+        .trim();
+
     const cab = obterCabecalhosProduto();
 
-    return dadosGlobais.filter(produto => {
-        if (!termo) return true;
+    const produtos = dadosGlobais
+        .map(produto => {
+            const textoProduto = [
+                produto[cab.codigo],
+                produto[cab.descricao],
+                produto[cab.marca]
+            ].filter(Boolean).join(' ');
 
-        const alvo = [
-            produto[cab.codigo],
-            produto[cab.descricao],
-            produto[cab.marca]
-        ].join(' ').toLowerCase();
+            return {
+                produto,
+                textoProduto,
+                pontuacao: termo
+                    ? calcularPontuacaoPesquisa(termo, textoProduto)
+                    : 0
+            };
+        })
+        .filter(item =>
+            !termo ||
+            buscaInteligente(termo, item.textoProduto)
+        );
 
-        return termo.split(/\s+/).every(parte => alvo.includes(parte));
-    });
+    if (termo) {
+        produtos.sort((a, b) => b.pontuacao - a.pontuacao);
+    }
+
+    return produtos.map(item => item.produto);
 }
 
 function renderizarProdutosPedido() {

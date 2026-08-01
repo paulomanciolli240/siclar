@@ -9,11 +9,78 @@ function resolverUrlImagem(valFoto) {
     return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
 }
 
+function normalizarTextoPesquisa(valor) {
+    return String(valor || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function separarTermosPesquisa(valor) {
+    return normalizarTextoPesquisa(valor)
+        .split(' ')
+        .filter(Boolean);
+}
+
+function termoCombinaComPalavras(termo, palavras, textoCompleto) {
+    if (!termo) return true;
+
+    if (/^\d+$/.test(termo)) {
+        return textoCompleto.includes(termo);
+    }
+
+    if (palavras.some(palavra => palavra.startsWith(termo))) {
+        return true;
+    }
+
+    return termo.length >= 3 && textoCompleto.includes(termo);
+}
+
 function buscaInteligente(textoBusca, textoAlvo) {
-    if (!textoBusca) return true;
-    const termos = textoBusca.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
-    const alvo = textoAlvo.toLowerCase();
-    return termos.every(termo => alvo.includes(termo));
+    const termos = separarTermosPesquisa(textoBusca);
+    if (termos.length === 0) return true;
+
+    const alvoNormalizado = normalizarTextoPesquisa(textoAlvo);
+    const palavrasAlvo = alvoNormalizado.split(' ').filter(Boolean);
+
+    return termos.every(termo =>
+        termoCombinaComPalavras(termo, palavrasAlvo, alvoNormalizado)
+    );
+}
+
+function calcularPontuacaoPesquisa(textoBusca, textoAlvo) {
+    const termos = separarTermosPesquisa(textoBusca);
+    if (termos.length === 0) return 0;
+
+    const alvoNormalizado = normalizarTextoPesquisa(textoAlvo);
+    const palavrasAlvo = alvoNormalizado.split(' ').filter(Boolean);
+    let pontos = 0;
+
+    termos.forEach(termo => {
+        if (palavrasAlvo.includes(termo)) {
+            pontos += 10;
+            return;
+        }
+
+        if (palavrasAlvo.some(palavra => palavra.startsWith(termo))) {
+            pontos += 6;
+            return;
+        }
+
+        if (alvoNormalizado.includes(termo)) {
+            pontos += 2;
+        }
+    });
+
+    const sequencia = termos.join(' ');
+    if (sequencia && alvoNormalizado.includes(sequencia)) {
+        pontos += 15;
+    }
+
+    return pontos;
 }
 
 function somenteNumeros(valor) {

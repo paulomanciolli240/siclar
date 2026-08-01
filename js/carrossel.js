@@ -39,17 +39,38 @@ function obterProdutosFiltradosCarrossel() {
     const hDesc = headers.find(h => h.includes('Desc') || h.toLowerCase().includes('nome')) || headers[1];
     const hMarca = headers.find(h => h.includes('Marca') || h.toLowerCase().includes('marca')) || headers[2];
 
-    return dadosGlobais.filter(produto => {
-        if (!termoPesquisaCarrossel) return true;
+    const produtos = dadosGlobais
+        .map(produto => {
+            const textoProduto = [
+                produto[hCod],
+                produto[hDesc],
+                produto[hMarca]
+            ].filter(Boolean).join(' ');
 
-        const textoProduto = [
-            produto[hCod],
-            produto[hDesc],
-            produto[hMarca]
-        ].filter(Boolean).join(' ');
+            return {
+                produto,
+                textoProduto,
+                pontuacao: termoPesquisaCarrossel
+                    ? calcularPontuacaoPesquisa(
+                        termoPesquisaCarrossel,
+                        textoProduto
+                    )
+                    : 0
+            };
+        })
+        .filter(item =>
+            !termoPesquisaCarrossel ||
+            buscaInteligente(
+                termoPesquisaCarrossel,
+                item.textoProduto
+            )
+        );
 
-        return buscaInteligente(termoPesquisaCarrossel, textoProduto);
-    });
+    if (termoPesquisaCarrossel) {
+        produtos.sort((a, b) => b.pontuacao - a.pontuacao);
+    }
+
+    return produtos.map(item => item.produto);
 }
 
 function renderizarPaginaCarrossel() {
@@ -87,7 +108,7 @@ function renderizarPaginaCarrossel() {
         const complementoPesquisa = termoPesquisaCarrossel
             ? `<p class="carrossel-sem-resultado-dica">
                    Confira a escrita ou tente outra combinação de palavras.<br>
-                   Ex.: <strong>cimento votoran</strong>, <strong>piso branco</strong> ou o código do produto.
+                   Ex.: <strong>tu sol 25</strong>, <strong>jo esg 90</strong> ou o código do produto.
                </p>
                <button class="btn-controle-carrossel" type="button"
                    onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; indicePaginaCarrossel=0; renderizarPaginaCarrossel();">
