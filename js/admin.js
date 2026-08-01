@@ -642,8 +642,10 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     for (let index = importacaoIndiceInicial; index < csvData.length; index++) {
         if (importacaoCancelada) break;
 
+        let resultado = null;
+
         try {
-            const resultado = await enviarParaGAS({
+            resultado = await enviarParaGAS({
                 acao: "importar",
                 adminToken,
                 headers,
@@ -695,15 +697,17 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         const percentual = Math.round(((index + 1) / csvData.length) * 100);
         progressBar.style.width = `${percentual}%`;
         progressBar.textContent = `${percentual}%`;
-        const camposAlterados = Array.isArray(resultado?.alteracoes)
+        const camposAlterados = Array.isArray(resultado && resultado.alteracoes)
             ? resultado.alteracoes.map(item => item.campo).join(", ")
             : "";
 
-        const detalheAtualizacao = resultado?.tipo === "ATUALIZADO"
-            ? ` Último atualizado: ${resultado.codigo} — ${camposAlterados}.`
-            : resultado?.tipo === "NOVO"
+        const detalheAtualizacao = resultado && resultado.tipo === "ATUALIZADO"
+            ? ` Último atualizado: ${resultado.codigo} — ${camposAlterados || "dados sincronizados"}.`
+            : resultado && resultado.tipo === "NOVO"
                 ? ` Último novo: ${resultado.codigo}.`
-                : "";
+                : resultado && resultado.tipo === "SEM_ALTERACAO"
+                    ? ` Último conferido: ${resultado.codigo} — sem alteração.`
+                    : "";
 
         log.textContent =
             `Processando ${index + 1} de ${csvData.length} — ` +
