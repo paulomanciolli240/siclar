@@ -207,7 +207,10 @@
                         <h3>Produtos</h3>
                         <p>Pesquise, edite, exclua e importe produtos.</p>
                     </div>
-                    <button class="btn" id="btnAbrir">📥 Importar CSV</button>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn" type="button" onclick="abrirListaNegraProdutos()" style="background:#475569;">🚫 Lista negra</button>
+                        <button class="btn" id="btnAbrir">📥 Importar CSV</button>
+                    </div>
                 </div>
 
                 <div class="area-pesquisa">
@@ -282,6 +285,38 @@
                 <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper</button>
             </div>
             <div id="log" style="margin-top:20px; font-weight: 500;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="modalListaNegraProdutos">
+    <div class="modal modal-edicao-ampla">
+        <div class="modal-topo">
+            <div>
+                <h3 style="color:#dc2626;margin-bottom:5px;">Lista negra de produtos</h3>
+                <p style="margin:0;color:#64748b;font-size:13px;">
+                    Códigos excluídos manualmente não retornam nas importações.
+                </p>
+            </div>
+            <button type="button" onclick="fecharListaNegraProdutos()" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:#64748b;">✕</button>
+        </div>
+
+        <div style="margin-bottom:14px;">
+            <input
+                type="text"
+                id="buscaListaNegraProdutos"
+                placeholder="Pesquisar por código, descrição ou motivo..."
+                oninput="renderizarListaNegraProdutos()"
+                style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #cbd5e1;border-radius:9px;"
+            >
+        </div>
+
+        <div id="areaListaNegraProdutos">
+            <p class="admin-carregando">Carregando lista negra...</p>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+            <button class="btn" type="button" style="background:#64748b;" onclick="fecharListaNegraProdutos()">Fechar</button>
         </div>
     </div>
 </div>
