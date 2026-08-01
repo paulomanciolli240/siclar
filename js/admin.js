@@ -231,30 +231,92 @@ function atualizarContadorSelecionados() {
 
 async function excluirSelecionados() {
     const codigosParaExcluir = [];
+
     document.querySelectorAll('.chk-produto:checked').forEach(chk => {
-        codigosParaExcluir.push(chk.value);
+        codigosParaExcluir.push(String(chk.value));
     });
 
-    if (!confirm(`Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\nEsta ação não pode ser desfeita!`)) return;
+    if (codigosParaExcluir.length === 0) {
+        alert("Selecione pelo menos um produto para excluir.");
+        return;
+    }
+
+    if (!confirm(
+        `Deseja excluir ${codigosParaExcluir.length} produto(s) de uma vez?\n` +
+        `Os códigos serão enviados para a lista negra e não voltarão nas próximas importações.`
+    )) return;
+
+    const hCod = headers.find(h =>
+        h.includes('Cód') || h.toLowerCase().includes('codigo')
+    ) || headers[0];
+
+    const hDesc = headers.find(h =>
+        h.includes('Desc') || h.toLowerCase().includes('nome')
+    ) || headers[1];
+
+    const botaoExcluir = document.getElementById('btnExcluirLote');
+    const textoOriginalBotao = botaoExcluir ? botaoExcluir.textContent : "";
+
+    if (botaoExcluir) {
+        botaoExcluir.disabled = true;
+        botaoExcluir.textContent = "Excluindo...";
+    }
+
+    let excluidos = 0;
+    const erros = [];
 
     try {
         for (const cod of codigosParaExcluir) {
-            const hDesc = headers.find(h => h.includes('Desc') || h.toLowerCase().includes('nome')) || headers[1];
-            const produto = dadosGlobais.find(item => String(item[hCod]) === String(cod));
-            await enviarParaGAS({
-                acao: "excluir",
-                codigo: cod,
-                descricao: produto ? produto[hDesc] : "",
-                motivo: "EXCLUÍDO MANUALMENTE EM LOTE",
-                adminToken
-            });
+            try {
+                const produto = dadosGlobais.find(
+                    item => String(item[hCod] || "") === String(cod)
+                );
+
+                await enviarParaGAS({
+                    acao: "excluir",
+                    codigo: cod,
+                    descricao: produto ? String(produto[hDesc] || "") : "",
+                    motivo: "EXCLUÍDO MANUALMENTE EM LOTE",
+                    adminToken
+                });
+
+                excluidos++;
+            } catch (erroItem) {
+                console.error(`Erro ao excluir o código ${cod}:`, erroItem);
+                erros.push(`${cod}: ${erroItem.message}`);
+            }
         }
-        const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-        dadosGlobais = dadosGlobais.filter(i => !codigosParaExcluir.includes(String(i[hCod])));
+
+        const codigosExcluidosComSucesso = new Set(
+            codigosParaExcluir.filter(cod =>
+                !erros.some(erro => erro.startsWith(`${cod}:`))
+            )
+        );
+
+        dadosGlobais = dadosGlobais.filter(
+            item => !codigosExcluidosComSucesso.has(String(item[hCod] || ""))
+        );
+
         renderizarTabela();
-        alert(`✅ ${codigosParaExcluir.length} produto(s) excluído(s) e enviado(s) para a lista negra.`);
-    } catch(e) {
-        alert("Erro na exclusão em lote: " + e.message);
+
+        if (erros.length === 0) {
+            alert(
+                `✅ ${excluidos} produto(s) excluído(s) e enviado(s) para a lista negra.`
+            );
+        } else {
+            alert(
+                `${excluidos} produto(s) excluído(s) com sucesso.\n` +
+                `${erros.length} produto(s) apresentaram erro.\n\n` +
+                erros.slice(0, 10).join("\n")
+            );
+        }
+    } catch (erroGeral) {
+        alert("Erro na exclusão em lote: " + erroGeral.message);
+    } finally {
+        if (botaoExcluir) {
+            botaoExcluir.textContent = textoOriginalBotao || "🗑️ Excluir selecionados";
+        }
+        atualizarContadorSelecionados();
     }
 }
 
