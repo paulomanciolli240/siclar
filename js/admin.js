@@ -15,6 +15,40 @@ let importacaoContadoresIniciais = {
 };
 
 
+const CHAVE_TEMPO_IMPORTACAO_LOCAL = "siclar_tempo_importacao_csv";
+
+function formatarDuracaoImportacao(milissegundos) {
+    if (!Number.isFinite(milissegundos) || milissegundos < 0) return "calculando...";
+    const totalSegundos = Math.max(0, Math.round(milissegundos / 1000));
+    const horas = Math.floor(totalSegundos / 3600);
+    const minutos = Math.floor((totalSegundos % 3600) / 60);
+    const segundos = totalSegundos % 60;
+    if (horas > 0) return `${horas}h ${String(minutos).padStart(2, "0")}min ${String(segundos).padStart(2, "0")}s`;
+    if (minutos > 0) return `${minutos}min ${String(segundos).padStart(2, "0")}s`;
+    return `${segundos}s`;
+}
+
+function carregarTempoAcumuladoImportacao(idImportacao) {
+    try {
+        const salvo = JSON.parse(localStorage.getItem(CHAVE_TEMPO_IMPORTACAO_LOCAL) || "null");
+        if (!salvo || salvo.idImportacao !== idImportacao) return 0;
+        return Math.max(0, Number(salvo.tempoDecorridoMs || 0));
+    } catch { return 0; }
+}
+
+function salvarTempoAcumuladoImportacao(idImportacao, tempoDecorridoMs) {
+    localStorage.setItem(CHAVE_TEMPO_IMPORTACAO_LOCAL, JSON.stringify({
+        idImportacao,
+        tempoDecorridoMs: Math.max(0, Number(tempoDecorridoMs || 0)),
+        atualizadoEm: new Date().toISOString()
+    }));
+}
+
+function limparTempoAcumuladoImportacao() {
+    localStorage.removeItem(CHAVE_TEMPO_IMPORTACAO_LOCAL);
+}
+
+
 function escaparCampoCsvRelatorio(valor) {
     const texto = String(valor == null ? "" : valor);
 
@@ -518,6 +552,7 @@ document.getElementById("csvFile").addEventListener("change", event => {
     const file = event.target.files[0];
     const botaoProcessar = document.getElementById("btnProcess");
     const log = document.getElementById("log");
+    log.style.whiteSpace = "pre-line";
 
     csvData = [];
     headers = [];
@@ -635,6 +670,10 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     let semAlteracao = importacaoContadoresIniciais.semAlteracao;
     let erros = importacaoContadoresIniciais.erros;
 
+    const inicioExecucaoMs = Date.now();
+    const indiceInicioExecucao = importacaoIndiceInicial;
+    const tempoAcumuladoAnteriorMs = carregarTempoAcumuladoImportacao(importacaoIdAtual);
+
     const percentualInicial = Math.round((importacaoIndiceInicial / csvData.length) * 100);
     progressBar.style.width = `${percentualInicial}%`;
     progressBar.textContent = `${percentualInicial}%`;
@@ -709,10 +748,25 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
                     ? ` Último conferido: ${resultado.codigo} — sem alteração.`
                     : "";
 
+        const agoraMs = Date.now();
+        const tempoSessaoMs = agoraMs - inicioExecucaoMs;
+        const tempoDecorridoTotalMs = tempoAcumuladoAnteriorMs + tempoSessaoMs;
+        const itensProcessadosNestaExecucao = Math.max(1, (index + 1) - indiceInicioExecucao);
+        const mediaMsPorItem = tempoSessaoMs / itensProcessadosNestaExecucao;
+        const itensRestantes = Math.max(0, csvData.length - (index + 1));
+        const tempoRestanteMs = itensRestantes * mediaMsPorItem;
+        const itensPorMinuto = mediaMsPorItem > 0 ? Math.round(60000 / mediaMsPorItem) : 0;
+
+        salvarTempoAcumuladoImportacao(importacaoIdAtual, tempoDecorridoTotalMs);
+
         log.textContent =
             `Processando ${index + 1} de ${csvData.length} — ` +
             `${novos} novo(s), ${atualizados} atualizado(s), ` +
-            `${semAlteracao} sem alteração, ${erros} erro(s).` +
+            `${semAlteracao} sem alteração, ${erros} erro(s).
+` +
+            `Tempo decorrido: ${formatarDuracaoImportacao(tempoDecorridoTotalMs)} — ` +
+            `Tempo restante estimado: ${formatarDuracaoImportacao(tempoRestanteMs)} — ` +
+            `Velocidade média: ${itensPorMinuto} item(ns)/min.` +
             detalheAtualizacao;
     }
 
@@ -756,6 +810,7 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         });
 
         limparProgressoImportacaoLocal();
+        const tempoFinalMs = carregarTempoAcumuladoImportacao(importacaoIdAtual);
 
         let totalDetalhesRelatorio = 0;
 
@@ -772,9 +827,11 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
             `Produtos atualizados: ${atualizados}\n` +
             `Sem alteração: ${semAlteracao}\n` +
             `Erros: ${erros}\n` +
+            `Tempo total decorrido: ${formatarDuracaoImportacao(tempoFinalMs)}\n` +
             `Detalhes registrados no relatório: ${totalDetalhesRelatorio}`
         );
 
+        limparTempoAcumuladoImportacao();
         btnProcess.disabled = true;
         fechar();
     }
