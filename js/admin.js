@@ -820,6 +820,8 @@ document.getElementById("csvFile").addEventListener("change", event => {
     };
 });
 
+const TAMANHO_LOTE_IMPORTACAO = 25;
+
 document.getElementById("btnProcess").addEventListener("click", async () => {
     const btnProcess = document.getElementById("btnProcess");
     const csvFile = document.getElementById("csvFile");
@@ -841,147 +843,216 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     importacaoCancelada = false;
     btnProcess.disabled = true;
     csvFile.disabled = true;
+    btnCancelar.disabled = false;
     btnCancelar.style.display = "inline-block";
     progressContainer.style.display = "block";
 
-    let sucessos = importacaoIndiceInicial;
     let novos = importacaoContadoresIniciais.novos;
     let atualizados = importacaoContadoresIniciais.atualizados;
     let semAlteracao = importacaoContadoresIniciais.semAlteracao;
     let erros = importacaoContadoresIniciais.erros;
+    let falhaFatal = null;
 
     const inicioExecucaoMs = Date.now();
     const indiceInicioExecucao = importacaoIndiceInicial;
-    const tempoAcumuladoAnteriorMs = carregarTempoAcumuladoImportacao(importacaoIdAtual);
+    const tempoAcumuladoAnteriorMs =
+        carregarTempoAcumuladoImportacao(importacaoIdAtual);
 
-    const percentualInicial = Math.round((importacaoIndiceInicial / csvData.length) * 100);
+    const percentualInicial = Math.round(
+        (importacaoIndiceInicial / csvData.length) * 100
+    );
+
     progressBar.style.width = `${percentualInicial}%`;
     progressBar.textContent = `${percentualInicial}%`;
 
-    for (let index = importacaoIndiceInicial; index < csvData.length; index++) {
+    for (
+        let inicioLote = importacaoIndiceInicial;
+        inicioLote < csvData.length;
+        inicioLote += TAMANHO_LOTE_IMPORTACAO
+    ) {
         if (importacaoCancelada) break;
 
-        let resultado = null;
+        const fimLote = Math.min(
+            inicioLote + TAMANHO_LOTE_IMPORTACAO,
+            csvData.length
+        );
+
+        const itensLote = csvData
+            .slice(inicioLote, fimLote)
+            .map(data => ({ data }));
+
+        log.textContent =
+            `Enviando lote ${inicioLote + 1} a ${fimLote} de ${csvData.length}...`;
+
+        let resultadoLote;
 
         try {
-            resultado = await enviarParaGAS({
-                acao: "importar",
+            resultadoLote = await enviarParaGAS({
+                acao: "importarLote",
                 adminToken,
                 headers,
                 idImportacao: importacaoIdAtual,
                 nomeArquivo: importacaoArquivoAtual.name,
-                indiceItem: index,
+                indiceInicial: inicioLote,
                 totalItens: csvData.length,
-                items: [{ data: csvData[index] }]
+                items: itensLote
             });
+        } catch (erroLote) {
+            falhaFatal = erroLote;
+            console.error(
+                `Falha no lote ${inicioLote + 1} a ${fimLote}:`,
+                erroLote
+            );
 
-            if (resultado.erro) {
-                throw new Error(resultado.erro);
-            }
+            log.textContent =
+                `Falha ao processar o lote ${inicioLote + 1} a ${fimLote}: ` +
+                `${erroLote.message}. O ponto anterior foi preservado.`;
 
-            sucessos = index + 1;
-            importacaoIndiceInicial = index + 1;
-
-            novos = Number(resultado.acumuladoNovos ?? novos);
-            atualizados = Number(resultado.acumuladoAtualizados ?? atualizados);
-            semAlteracao = Number(resultado.acumuladoSemAlteracao ?? semAlteracao);
-            erros = Number(resultado.acumuladoErros ?? erros);
-
-            salvarProgressoImportacaoLocal({
-                idImportacao: importacaoIdAtual,
-                nomeArquivo: importacaoArquivoAtual.name,
-                totalItens: csvData.length,
-                ultimoIndice: index,
-                atualizadoEm: new Date().toISOString()
-            });
-        } catch (erro) {
-            erros++;
-            console.error(`Erro na importação do item ${index + 1}:`, csvData[index], erro);
-
-            try {
-                await enviarParaGAS({
-                    acao: "registrarErroImportacao",
-                    adminToken,
-                    idImportacao: importacaoIdAtual,
-                    nomeArquivo: importacaoArquivoAtual.name,
-                    totalItens: csvData.length,
-                    indiceItem: index,
-                    mensagemErro: erro.message
-                });
-            } catch (erroRegistro) {
-                console.error("Não foi possível registrar o erro da importação:", erroRegistro);
-            }
+            break;
         }
 
-        const percentual = Math.round(((index + 1) / csvData.length) * 100);
+        const ultimoIndiceConfirmado = Number(
+            resultadoLote.ultimoIndice ?? (fimLote - 1)
+        );
+
+        importacaoIndiceInicial = Math.min(
+            ultimoIndiceConfirmado + 1,
+            csvData.length
+        );
+
+        novos = Number(resultadoLote.acumuladoNovos ?? novos);
+        atualizados = Number(
+            resultadoLote.acumuladoAtualizados ?? atualizados
+        );
+        semAlteracao = Number(
+            resultadoLote.acumuladoSemAlteracao ?? semAlteracao
+        );
+        erros = Number(resultadoLote.acumuladoErros ?? erros);
+
+        salvarProgressoImportacaoLocal({
+            idImportacao: importacaoIdAtual,
+            nomeArquivo: importacaoArquivoAtual.name,
+            totalItens: csvData.length,
+            ultimoIndice: ultimoIndiceConfirmado,
+            atualizadoEm: new Date().toISOString()
+        });
+
+        const percentual = Math.round(
+            (importacaoIndiceInicial / csvData.length) * 100
+        );
+
         progressBar.style.width = `${percentual}%`;
         progressBar.textContent = `${percentual}%`;
-        const camposAlterados = Array.isArray(resultado && resultado.alteracoes)
-            ? resultado.alteracoes.map(item => item.campo).join(", ")
-            : "";
 
-        const detalheAtualizacao = resultado && resultado.tipo === "ATUALIZADO"
-            ? ` Último atualizado: ${resultado.codigo} — ${camposAlterados || "dados sincronizados"}.`
-            : resultado && resultado.tipo === "NOVO"
-                ? ` Último novo: ${resultado.codigo}.`
-                : resultado && resultado.tipo === "SEM_ALTERACAO"
-                    ? ` Último conferido: ${resultado.codigo} — sem alteração.`
-                    : resultado && resultado.tipo === "LISTA_NEGRA"
-                        ? ` Código bloqueado: ${resultado.codigo} — ignorado pela lista negra.`
-                        : "";
+        const ultimo =
+            resultadoLote.ultimoResultado ||
+            (
+                Array.isArray(resultadoLote.resultados) &&
+                resultadoLote.resultados.length
+                    ? resultadoLote.resultados[
+                        resultadoLote.resultados.length - 1
+                    ]
+                    : null
+            );
+
+        const camposAlterados =
+            ultimo && Array.isArray(ultimo.alteracoes)
+                ? ultimo.alteracoes.map(item => item.campo).join(", ")
+                : "";
+
+        const detalheAtualizacao =
+            ultimo && ultimo.tipo === "ATUALIZADO"
+                ? ` Último atualizado: ${ultimo.codigo} — ` +
+                  `${camposAlterados || "dados sincronizados"}.`
+                : ultimo && ultimo.tipo === "NOVO"
+                    ? ` Último novo: ${ultimo.codigo}.`
+                    : ultimo && ultimo.tipo === "SEM_ALTERACAO"
+                        ? ` Último conferido: ${ultimo.codigo} — sem alteração.`
+                        : ultimo && ultimo.tipo === "LISTA_NEGRA"
+                            ? ` Código bloqueado: ${ultimo.codigo}.`
+                            : ultimo && ultimo.tipo === "ERRO"
+                                ? ` Último erro: ${ultimo.erro}.`
+                                : "";
 
         const agoraMs = Date.now();
         const tempoSessaoMs = agoraMs - inicioExecucaoMs;
-        const tempoDecorridoTotalMs = tempoAcumuladoAnteriorMs + tempoSessaoMs;
-        const itensProcessadosNestaExecucao = Math.max(1, (index + 1) - indiceInicioExecucao);
-        const mediaMsPorItem = tempoSessaoMs / itensProcessadosNestaExecucao;
-        const itensRestantes = Math.max(0, csvData.length - (index + 1));
-        const tempoRestanteMs = itensRestantes * mediaMsPorItem;
-        const itensPorMinuto = mediaMsPorItem > 0 ? Math.round(60000 / mediaMsPorItem) : 0;
+        const tempoDecorridoTotalMs =
+            tempoAcumuladoAnteriorMs + tempoSessaoMs;
 
-        salvarTempoAcumuladoImportacao(importacaoIdAtual, tempoDecorridoTotalMs);
+        const itensProcessadosNestaExecucao = Math.max(
+            1,
+            importacaoIndiceInicial - indiceInicioExecucao
+        );
+
+        const mediaMsPorItem =
+            tempoSessaoMs / itensProcessadosNestaExecucao;
+
+        const itensRestantes = Math.max(
+            0,
+            csvData.length - importacaoIndiceInicial
+        );
+
+        const tempoRestanteMs = itensRestantes * mediaMsPorItem;
+        const itensPorMinuto =
+            mediaMsPorItem > 0
+                ? Math.round(60000 / mediaMsPorItem)
+                : 0;
+
+        salvarTempoAcumuladoImportacao(
+            importacaoIdAtual,
+            tempoDecorridoTotalMs
+        );
 
         log.textContent =
-            `Processando ${index + 1} de ${csvData.length} — ` +
+            `Processando ${importacaoIndiceInicial} de ${csvData.length} — ` +
             `${novos} novo(s), ${atualizados} atualizado(s), ` +
-            `${semAlteracao} sem alteração, ${erros} erro(s).
-` +
+            `${semAlteracao} sem alteração, ${erros} erro(s).\n` +
+            `Lotes de ${TAMANHO_LOTE_IMPORTACAO} — ` +
             `Tempo decorrido: ${formatarDuracaoImportacao(tempoDecorridoTotalMs)} — ` +
             `Tempo restante estimado: ${formatarDuracaoImportacao(tempoRestanteMs)} — ` +
             `Velocidade média: ${itensPorMinuto} item(ns)/min.` +
             detalheAtualizacao;
+
+        // Entrega o controle ao navegador entre os lotes.
+        await new Promise(resolve => setTimeout(resolve, 40));
     }
 
     btnCancelar.style.display = "none";
+    btnCancelar.disabled = false;
     csvFile.disabled = false;
 
-    if (importacaoCancelada) {
-        await enviarParaGAS({
-            acao: "pausarImportacao",
-            adminToken,
-            idImportacao: importacaoIdAtual,
-            nomeArquivo: importacaoArquivoAtual.name,
-            totalItens: csvData.length
-        });
-
+    if (
+        importacaoCancelada ||
+        falhaFatal ||
+        importacaoIndiceInicial < csvData.length
+    ) {
         try {
-            const relatorioParcial = await obterEBaixarRelatorioImportacao();
-
-            alert(
-                `Importação interrompida no item ${importacaoIndiceInicial} de ${csvData.length}.\n` +
-                `${relatorioParcial.length} alteração(ões) registrada(s) no relatório parcial.\n` +
-                "Ao selecionar novamente o mesmo CSV, ela continuará deste ponto."
-            );
-        } catch (erroRelatorio) {
-            console.error("Não foi possível baixar o relatório parcial:", erroRelatorio);
-
-            alert(
-                `Importação interrompida no item ${importacaoIndiceInicial} de ${csvData.length}.\n` +
-                "Ao selecionar novamente o mesmo CSV, ela continuará deste ponto."
-            );
+            await enviarParaGAS({
+                acao: "pausarImportacao",
+                adminToken,
+                idImportacao: importacaoIdAtual,
+                nomeArquivo: importacaoArquivoAtual.name,
+                totalItens: csvData.length
+            });
+        } catch (erroPausa) {
+            console.error("Não foi possível marcar a pausa:", erroPausa);
         }
 
         btnProcess.disabled = false;
+
+        if (falhaFatal) {
+            alert(
+                `A importação foi pausada no item ${importacaoIndiceInicial + 1}.\n\n` +
+                `${falhaFatal.message}\n\n` +
+                "Selecione o mesmo CSV para continuar do ponto salvo."
+            );
+        } else if (importacaoCancelada) {
+            alert(
+                `Importação interrompida no item ${importacaoIndiceInicial} ` +
+                `de ${csvData.length}.\n` +
+                "O próximo lote continuará desse ponto."
+            );
+        }
     } else {
         await enviarParaGAS({
             acao: "concluirImportacao",
@@ -992,15 +1063,20 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         });
 
         limparProgressoImportacaoLocal();
-        const tempoFinalMs = carregarTempoAcumuladoImportacao(importacaoIdAtual);
+        const tempoFinalMs =
+            carregarTempoAcumuladoImportacao(importacaoIdAtual);
 
         let totalDetalhesRelatorio = 0;
 
         try {
-            const relatorioFinal = await obterEBaixarRelatorioImportacao();
+            const relatorioFinal =
+                await obterEBaixarRelatorioImportacao();
             totalDetalhesRelatorio = relatorioFinal.length;
         } catch (erroRelatorio) {
-            console.error("Não foi possível baixar o relatório final:", erroRelatorio);
+            console.error(
+                "Não foi possível baixar o relatório final:",
+                erroRelatorio
+            );
         }
 
         alert(
@@ -1009,8 +1085,8 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
             `Produtos atualizados: ${atualizados}\n` +
             `Sem alteração: ${semAlteracao}\n` +
             `Erros: ${erros}\n` +
-            `Tempo total decorrido: ${formatarDuracaoImportacao(tempoFinalMs)}\n` +
-            `Detalhes registrados no relatório: ${totalDetalhesRelatorio}`
+            `Tempo total: ${formatarDuracaoImportacao(tempoFinalMs)}\n` +
+            `Detalhes no relatório: ${totalDetalhesRelatorio}`
         );
 
         limparTempoAcumuladoImportacao();
