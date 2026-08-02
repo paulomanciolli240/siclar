@@ -853,6 +853,305 @@ document.getElementById("btnCancelar").addEventListener("click", () => {
     }, 500);
 });
 
+
+
+/* =========================================================
+   LISTA NEGRA DE PRODUTOS
+   ========================================================= */
+
+let listaNegraProdutosAtual = [];
+let listaNegraCarregando = false;
+
+function abrirListaNegraProdutos() {
+    const modal = document.getElementById("modalListaNegraProdutos");
+    const campoBusca = document.getElementById("buscaListaNegraProdutos");
+
+    if (!modal) {
+        alert("A janela da Lista Negra não foi encontrada no index.html.");
+        return;
+    }
+
+    modal.classList.add("modal-ativo");
+
+    if (campoBusca) {
+        campoBusca.value = "";
+    }
+
+    carregarListaNegraProdutos();
+}
+
+function fecharListaNegraProdutos() {
+    const modal = document.getElementById("modalListaNegraProdutos");
+
+    if (modal) {
+        modal.classList.remove("modal-ativo");
+    }
+}
+
+async function carregarListaNegraProdutos() {
+    if (listaNegraCarregando) return;
+
+    const area = document.getElementById("areaListaNegraProdutos");
+
+    if (!area) {
+        alert("A área da Lista Negra não foi encontrada no index.html.");
+        return;
+    }
+
+    listaNegraCarregando = true;
+
+    area.innerHTML = `
+        <div style="padding:24px;text-align:center;color:#64748b;">
+            <div style="font-size:28px;margin-bottom:8px;">⏳</div>
+            Carregando códigos bloqueados...
+        </div>
+    `;
+
+    try {
+        const resultado = await enviarParaGAS({
+            acao: "listarListaNegra",
+            adminToken
+        });
+
+        if (resultado && resultado.erro) {
+            throw new Error(resultado.erro);
+        }
+
+        listaNegraProdutosAtual = Array.isArray(resultado && resultado.itens)
+            ? resultado.itens
+            : [];
+
+        renderizarListaNegraProdutos();
+    } catch (erro) {
+        console.error("Erro ao carregar lista negra:", erro);
+
+        area.innerHTML = `
+            <div style="
+                padding:20px;
+                border:1px solid #fecaca;
+                background:#fef2f2;
+                color:#991b1b;
+                border-radius:10px;
+                text-align:center;
+            ">
+                <div style="font-size:28px;margin-bottom:8px;">⚠️</div>
+                <strong>Não foi possível carregar a Lista Negra.</strong>
+                <p style="margin:8px 0 14px;">
+                    ${escaparHtmlListaNegra(erro && erro.message ? erro.message : "Erro desconhecido.")}
+                </p>
+                <button
+                    class="btn"
+                    type="button"
+                    onclick="carregarListaNegraProdutos()"
+                >
+                    Tentar novamente
+                </button>
+            </div>
+        `;
+    } finally {
+        listaNegraCarregando = false;
+    }
+}
+
+function escaparHtmlListaNegra(valor) {
+    return String(valor == null ? "" : valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function normalizarTextoListaNegra(valor) {
+    return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
+function renderizarListaNegraProdutos() {
+    const area = document.getElementById("areaListaNegraProdutos");
+    const campoBusca = document.getElementById("buscaListaNegraProdutos");
+
+    if (!area) return;
+
+    const termo = normalizarTextoListaNegra(
+        campoBusca ? campoBusca.value : ""
+    );
+
+    const itensFiltrados = listaNegraProdutosAtual.filter(item => {
+        if (!termo) return true;
+
+        const texto = normalizarTextoListaNegra([
+            item.codigo,
+            item.descricao,
+            item.motivo,
+            item.bloqueadoPor,
+            item.bloqueadoEm
+        ].filter(Boolean).join(" "));
+
+        return termo
+            .split(/\s+/)
+            .filter(Boolean)
+            .every(parte => texto.includes(parte));
+    });
+
+    if (listaNegraProdutosAtual.length === 0) {
+        area.innerHTML = `
+            <div style="
+                padding:28px;
+                text-align:center;
+                border:1px dashed #cbd5e1;
+                border-radius:10px;
+                color:#64748b;
+            ">
+                <div style="font-size:32px;margin-bottom:8px;">✅</div>
+                <strong>Nenhum produto está na Lista Negra.</strong>
+                <p style="margin:8px 0 0;font-size:13px;">
+                    Produtos excluídos manualmente aparecerão aqui.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    if (itensFiltrados.length === 0) {
+        area.innerHTML = `
+            <div style="
+                padding:28px;
+                text-align:center;
+                border:1px dashed #cbd5e1;
+                border-radius:10px;
+                color:#64748b;
+            ">
+                <div style="font-size:32px;margin-bottom:8px;">🔎</div>
+                <strong>Nenhum código encontrado para esta pesquisa.</strong>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div style="
+            margin-bottom:10px;
+            color:#64748b;
+            font-size:13px;
+            font-weight:600;
+        ">
+            ${itensFiltrados.length} de ${listaNegraProdutosAtual.length} código(s) bloqueado(s)
+        </div>
+
+        <div class="tabela-container">
+            <table class="tabela-produtos">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Motivo</th>
+                        <th>Bloqueado em</th>
+                        <th>Bloqueado por</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    itensFiltrados.forEach(item => {
+        const codigo = String(item.codigo || "");
+
+        html += `
+            <tr>
+                <td><strong>${escaparHtmlListaNegra(codigo)}</strong></td>
+                <td>${escaparHtmlListaNegra(item.descricao || "—")}</td>
+                <td>${escaparHtmlListaNegra(item.motivo || "EXCLUÍDO MANUALMENTE")}</td>
+                <td>${escaparHtmlListaNegra(item.bloqueadoEm || "—")}</td>
+                <td>${escaparHtmlListaNegra(item.bloqueadoPor || "—")}</td>
+                <td>
+                    <button
+                        class="btn"
+                        type="button"
+                        style="background:#16a34a;"
+                        onclick='autorizarProdutoListaNegra(${JSON.stringify(codigo)})'
+                    >
+                        ✅ Autorizar novamente
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    area.innerHTML = html;
+}
+
+async function autorizarProdutoListaNegra(codigo) {
+    const codigoNormalizado = String(codigo || "").trim();
+
+    if (!codigoNormalizado) return;
+
+    const confirmar = confirm(
+        `Autorizar novamente o produto de código ${codigoNormalizado}?\n\n` +
+        "Ele poderá retornar em uma próxima importação."
+    );
+
+    if (!confirmar) return;
+
+    const botoes = Array.from(
+        document.querySelectorAll("#areaListaNegraProdutos button")
+    );
+
+    botoes.forEach(botao => {
+        botao.disabled = true;
+    });
+
+    try {
+        const resultado = await enviarParaGAS({
+            acao: "removerListaNegra",
+            codigo: codigoNormalizado,
+            adminToken
+        });
+
+        if (resultado && resultado.erro) {
+            throw new Error(resultado.erro);
+        }
+
+        listaNegraProdutosAtual = listaNegraProdutosAtual.filter(
+            item => String(item.codigo || "") !== codigoNormalizado
+        );
+
+        renderizarListaNegraProdutos();
+
+        alert(
+            `Código ${codigoNormalizado} autorizado novamente.\n` +
+            "Ele poderá voltar em uma próxima importação."
+        );
+    } catch (erro) {
+        console.error("Erro ao autorizar produto:", erro);
+        alert(
+            "Não foi possível autorizar o produto novamente.\n\n" +
+            (erro && erro.message ? erro.message : "Erro desconhecido.")
+        );
+
+        renderizarListaNegraProdutos();
+    }
+}
+
+document.addEventListener("keydown", evento => {
+    if (evento.key !== "Escape") return;
+
+    const modal = document.getElementById("modalListaNegraProdutos");
+
+    if (modal && modal.classList.contains("modal-ativo")) {
+        fecharListaNegraProdutos();
+    }
+});
+
 document.getElementById("pesqCodigo").addEventListener("input", renderizarTabela);
 document.getElementById("pesqNome").addEventListener("input", renderizarTabela);
 document.getElementById("pesqMarca").addEventListener("input", renderizarTabela);
