@@ -85,15 +85,18 @@ function configurarErrosImagemCarrossel() {
 
 function pausarTimerCarrossel() {
     if (timerCarrossel) {
-        clearTimeout(timerCarrossel);
+        pausarTimerCarrossel();
         timerCarrossel = null;
     }
 }
 
 
 
-const LIMITE_PRODUTOS_VITRINE = 20;
-let produtosAleatoriosVitrine = [];
+const QUANTIDADE_LOTE_VITRINE = 24;
+const MAXIMO_CODIGOS_RECENTES = 240;
+
+let produtosLoteVitrine = [];
+let codigosRecentesVitrine = [];
 let cicloAutomaticoConcluido = false;
 
 function embaralharProdutosCarrossel(lista) {
@@ -107,28 +110,68 @@ function embaralharProdutosCarrossel(lista) {
     return copia;
 }
 
-function prepararProdutosAleatoriosVitrine() {
-    produtosAleatoriosVitrine = embaralharProdutosCarrossel(
-        Array.isArray(dadosGlobais) ? dadosGlobais : []
-    ).slice(0, LIMITE_PRODUTOS_VITRINE);
+function obterCabecalhoCodigoCarrossel() {
+    return headers.find(h =>
+        String(h || "").includes("Cód") ||
+        String(h || "").toLowerCase().includes("codigo")
+    ) || headers[0];
+}
 
-    cicloAutomaticoConcluido = false;
+function selecionarNovoLoteVitrine() {
+    const base = Array.isArray(dadosGlobais) ? dadosGlobais : [];
+    const hCod = obterCabecalhoCodigoCarrossel();
+
+    if (base.length === 0) {
+        produtosLoteVitrine = [];
+        indicePaginaCarrossel = 0;
+        cicloAutomaticoConcluido = false;
+        assinaturaUltimaPaginaCarrossel = "";
+        return;
+    }
+
+    const recentes = new Set(codigosRecentesVitrine);
+
+    let candidatos = base.filter(produto => {
+        const codigo = String(produto[hCod] || "").trim();
+        return codigo && !recentes.has(codigo);
+    });
+
+    // Quando quase todo o catálogo já foi exibido, libera novamente os antigos.
+    if (candidatos.length < QUANTIDADE_LOTE_VITRINE) {
+        codigosRecentesVitrine = [];
+        candidatos = base.slice();
+    }
+
+    produtosLoteVitrine = embaralharProdutosCarrossel(candidatos)
+        .slice(0, QUANTIDADE_LOTE_VITRINE);
+
+    const novosCodigos = produtosLoteVitrine
+        .map(produto => String(produto[hCod] || "").trim())
+        .filter(Boolean);
+
+    codigosRecentesVitrine = [
+        ...codigosRecentesVitrine,
+        ...novosCodigos
+    ].slice(-MAXIMO_CODIGOS_RECENTES);
+
     indicePaginaCarrossel = 0;
+    cicloAutomaticoConcluido = false;
     assinaturaUltimaPaginaCarrossel = "";
 }
 
 function obterBaseProdutosCarrossel() {
-    const existePesquisa = String(termoPesquisaCarrossel || "").trim() !== "";
+    const existePesquisa =
+        String(termoPesquisaCarrossel || "").trim() !== "";
 
     if (existePesquisa) {
         return Array.isArray(dadosGlobais) ? dadosGlobais : [];
     }
 
-    if (produtosAleatoriosVitrine.length === 0) {
-        prepararProdutosAleatoriosVitrine();
+    if (produtosLoteVitrine.length === 0) {
+        selecionarNovoLoteVitrine();
     }
 
-    return produtosAleatoriosVitrine;
+    return produtosLoteVitrine;
 }
 
 function calcularItensPorPaginaCarrossel() {
@@ -155,7 +198,7 @@ function voltarParaCarrossel() {
 function iniciarCarrossel() {
     carrosselAtivo = true;
     itensPorPagina = calcularItensPorPaginaCarrossel();
-    prepararProdutosAleatoriosVitrine();
+    selecionarNovoLoteVitrine();
     document.getElementById('moduloCarrossel').style.display = 'flex';
     renderizarPaginaCarrossel();
 }
@@ -219,19 +262,7 @@ function renderizarPaginaCarrossel() {
     if (assinaturaPagina === assinaturaUltimaPaginaCarrossel) {
         if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden && !cicloAutomaticoConcluido) {
             timerCarrossel = setTimeout(() => {
-                const totalPaginasVitrine = Math.max(
-                    1,
-                    Math.ceil(produtosFiltrados.length / itensPorPagina)
-                );
-
-                if (indicePaginaCarrossel + 1 >= totalPaginasVitrine) {
-                    cicloAutomaticoConcluido = true;
-                    pausarTimerCarrossel();
-                    return;
-                }
-
                 indicePaginaCarrossel++;
-                assinaturaUltimaPaginaCarrossel = "";
                 renderizarPaginaCarrossel();
             }, 6000);
         }
@@ -252,7 +283,7 @@ function renderizarPaginaCarrossel() {
                    Ex.: <strong>cimento votoran</strong>, <strong>piso branco</strong> ou o código do produto.
                </p>
                <button class="btn-controle-carrossel" type="button"
-                   onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; prepararProdutosAleatoriosVitrine(); renderizarPaginaCarrossel();">
+                   onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; selecionarNovoLoteVitrine(); renderizarPaginaCarrossel();">
                    Limpar pesquisa
                </button>`
             : `<button class="btn-controle-carrossel" onclick="recarregarProdutos()">Tentar novamente</button>`;
@@ -301,24 +332,16 @@ function renderizarPaginaCarrossel() {
     assinaturaUltimaPaginaCarrossel = assinaturaPagina;
 
     document.getElementById('contadorVitrine').textContent = 
-        produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
+        produtosFiltrados.length === 0
+            ? 'Nenhum resultado'
+            : termoPesquisaCarrossel
+                ? `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} encontrados)`
+                : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos na vitrine)`;
 
     // Só agenda próxima troca se NÃO estiver pausado
         if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden && !cicloAutomaticoConcluido) {
             timerCarrossel = setTimeout(() => {
-                const totalPaginasVitrine = Math.max(
-                    1,
-                    Math.ceil(produtosFiltrados.length / itensPorPagina)
-                );
-
-                if (indicePaginaCarrossel + 1 >= totalPaginasVitrine) {
-                    cicloAutomaticoConcluido = true;
-                    pausarTimerCarrossel();
-                    return;
-                }
-
                 indicePaginaCarrossel++;
-                assinaturaUltimaPaginaCarrossel = "";
                 renderizarPaginaCarrossel();
             }, 6000);
         }
@@ -351,23 +374,11 @@ function retomarCarrosselAposHover(card) {
         carrosselAtivo &&
         !termoPesquisaCarrossel &&
         produtosFiltrados.length > 0 &&
-        !document.hidden &&
-        !cicloAutomaticoConcluido
+        !document.hidden
     ) {
         pausarTimerCarrossel();
 
         timerCarrossel = setTimeout(() => {
-            const totalPaginasVitrine = Math.max(
-                1,
-                Math.ceil(produtosFiltrados.length / itensPorPagina)
-            );
-
-            if (indicePaginaCarrossel + 1 >= totalPaginasVitrine) {
-                cicloAutomaticoConcluido = true;
-                pausarTimerCarrossel();
-                return;
-            }
-
             indicePaginaCarrossel++;
             assinaturaUltimaPaginaCarrossel = "";
             renderizarPaginaCarrossel();
@@ -401,20 +412,41 @@ async function recarregarProdutos() {
 
     if (carregou) {
         pausaPorHover = false;
-        prepararProdutosAleatoriosVitrine();
+        selecionarNovoLoteVitrine();
         renderizarPaginaCarrossel();
     }
 }
 
 function mudarSlideCarrossel(d) {
     if (!carrosselAtivo) return;
+
     pausarTimerCarrossel();
     pausaPorHover = false;
 
-    const totalProdutos = obterProdutosFiltradosCarrossel().length;
-    const totalPaginas = Math.max(1, Math.ceil(totalProdutos / itensPorPagina));
+    const produtosAtuais = obterProdutosFiltradosCarrossel();
+    const totalPaginas = Math.max(
+        1,
+        Math.ceil(produtosAtuais.length / itensPorPagina)
+    );
 
-    indicePaginaCarrossel = (indicePaginaCarrossel + d + totalPaginas) % totalPaginas;
+    const existePesquisa =
+        String(termoPesquisaCarrossel || "").trim() !== "";
+
+    // Na vitrine normal, clicar em Próxima na última página
+    // sorteia mais 24 produtos sem repetir os recentes.
+    if (
+        d > 0 &&
+        !existePesquisa &&
+        indicePaginaCarrossel >= totalPaginas - 1
+    ) {
+        selecionarNovoLoteVitrine();
+        renderizarPaginaCarrossel();
+        return;
+    }
+
+    indicePaginaCarrossel =
+        (indicePaginaCarrossel + d + totalPaginas) % totalPaginas;
+
     assinaturaUltimaPaginaCarrossel = "";
     renderizarPaginaCarrossel();
 }
@@ -466,8 +498,7 @@ document.addEventListener("visibilitychange", function() {
     if (
         carrosselAtivo &&
         !termoPesquisaCarrossel &&
-        !pausaPorHover &&
-        !cicloAutomaticoConcluido
+        !pausaPorHover
     ) {
         assinaturaUltimaPaginaCarrossel = "";
         renderizarPaginaCarrossel();
@@ -475,15 +506,15 @@ document.addEventListener("visibilitychange", function() {
 });
 
 
-
 function renovarVitrineAleatoria() {
     pausarTimerCarrossel();
+
     termoPesquisaCarrossel = "";
 
     const campoPesquisa = document.getElementById("pesquisaCarrossel");
     if (campoPesquisa) campoPesquisa.value = "";
 
-    prepararProdutosAleatoriosVitrine();
+    selecionarNovoLoteVitrine();
     renderizarPaginaCarrossel();
 }
 
