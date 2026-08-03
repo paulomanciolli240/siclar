@@ -85,11 +85,51 @@ function configurarErrosImagemCarrossel() {
 
 function pausarTimerCarrossel() {
     if (timerCarrossel) {
-        pausarTimerCarrossel();
+        clearTimeout(timerCarrossel);
         timerCarrossel = null;
     }
 }
 
+
+
+const LIMITE_PRODUTOS_VITRINE = 20;
+let produtosAleatoriosVitrine = [];
+let cicloAutomaticoConcluido = false;
+
+function embaralharProdutosCarrossel(lista) {
+    const copia = Array.isArray(lista) ? lista.slice() : [];
+
+    for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+
+    return copia;
+}
+
+function prepararProdutosAleatoriosVitrine() {
+    produtosAleatoriosVitrine = embaralharProdutosCarrossel(
+        Array.isArray(dadosGlobais) ? dadosGlobais : []
+    ).slice(0, LIMITE_PRODUTOS_VITRINE);
+
+    cicloAutomaticoConcluido = false;
+    indicePaginaCarrossel = 0;
+    assinaturaUltimaPaginaCarrossel = "";
+}
+
+function obterBaseProdutosCarrossel() {
+    const existePesquisa = String(termoPesquisaCarrossel || "").trim() !== "";
+
+    if (existePesquisa) {
+        return Array.isArray(dadosGlobais) ? dadosGlobais : [];
+    }
+
+    if (produtosAleatoriosVitrine.length === 0) {
+        prepararProdutosAleatoriosVitrine();
+    }
+
+    return produtosAleatoriosVitrine;
+}
 
 function calcularItensPorPaginaCarrossel() {
     const largura = window.innerWidth || document.documentElement.clientWidth || 360;
@@ -115,8 +155,7 @@ function voltarParaCarrossel() {
 function iniciarCarrossel() {
     carrosselAtivo = true;
     itensPorPagina = calcularItensPorPaginaCarrossel();
-    indicePaginaCarrossel = 0;
-    assinaturaUltimaPaginaCarrossel = "";
+    prepararProdutosAleatoriosVitrine();
     document.getElementById('moduloCarrossel').style.display = 'flex';
     renderizarPaginaCarrossel();
 }
@@ -138,7 +177,7 @@ function obterProdutosFiltradosCarrossel() {
     ].filter(Boolean);
 
     return ordenarProdutosPorPesquisa(
-        dadosGlobais,
+        obterBaseProdutosCarrossel(),
         termoPesquisaCarrossel,
         camposPesquisa
     );
@@ -178,9 +217,21 @@ function renderizarPaginaCarrossel() {
     });
 
     if (assinaturaPagina === assinaturaUltimaPaginaCarrossel) {
-        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden) {
+        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden && !cicloAutomaticoConcluido) {
             timerCarrossel = setTimeout(() => {
+                const totalPaginasVitrine = Math.max(
+                    1,
+                    Math.ceil(produtosFiltrados.length / itensPorPagina)
+                );
+
+                if (indicePaginaCarrossel + 1 >= totalPaginasVitrine) {
+                    cicloAutomaticoConcluido = true;
+                    pausarTimerCarrossel();
+                    return;
+                }
+
                 indicePaginaCarrossel++;
+                assinaturaUltimaPaginaCarrossel = "";
                 renderizarPaginaCarrossel();
             }, 6000);
         }
@@ -201,7 +252,7 @@ function renderizarPaginaCarrossel() {
                    Ex.: <strong>cimento votoran</strong>, <strong>piso branco</strong> ou o código do produto.
                </p>
                <button class="btn-controle-carrossel" type="button"
-                   onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; indicePaginaCarrossel=0; renderizarPaginaCarrossel();">
+                   onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; prepararProdutosAleatoriosVitrine(); renderizarPaginaCarrossel();">
                    Limpar pesquisa
                </button>`
             : `<button class="btn-controle-carrossel" onclick="recarregarProdutos()">Tentar novamente</button>`;
@@ -253,9 +304,21 @@ function renderizarPaginaCarrossel() {
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
     // Só agenda próxima troca se NÃO estiver pausado
-        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden) {
+        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden && !cicloAutomaticoConcluido) {
             timerCarrossel = setTimeout(() => {
+                const totalPaginasVitrine = Math.max(
+                    1,
+                    Math.ceil(produtosFiltrados.length / itensPorPagina)
+                );
+
+                if (indicePaginaCarrossel + 1 >= totalPaginasVitrine) {
+                    cicloAutomaticoConcluido = true;
+                    pausarTimerCarrossel();
+                    return;
+                }
+
                 indicePaginaCarrossel++;
+                assinaturaUltimaPaginaCarrossel = "";
                 renderizarPaginaCarrossel();
             }, 6000);
         }
@@ -288,11 +351,23 @@ function retomarCarrosselAposHover(card) {
         carrosselAtivo &&
         !termoPesquisaCarrossel &&
         produtosFiltrados.length > 0 &&
-        !document.hidden
+        !document.hidden &&
+        !cicloAutomaticoConcluido
     ) {
         pausarTimerCarrossel();
 
         timerCarrossel = setTimeout(() => {
+            const totalPaginasVitrine = Math.max(
+                1,
+                Math.ceil(produtosFiltrados.length / itensPorPagina)
+            );
+
+            if (indicePaginaCarrossel + 1 >= totalPaginasVitrine) {
+                cicloAutomaticoConcluido = true;
+                pausarTimerCarrossel();
+                return;
+            }
+
             indicePaginaCarrossel++;
             assinaturaUltimaPaginaCarrossel = "";
             renderizarPaginaCarrossel();
@@ -325,9 +400,8 @@ async function recarregarProdutos() {
     const carregou = await carregarDadosPlanilha();
 
     if (carregou) {
-        indicePaginaCarrossel = 0;
         pausaPorHover = false;
-        assinaturaUltimaPaginaCarrossel = "";
+        prepararProdutosAleatoriosVitrine();
         renderizarPaginaCarrossel();
     }
 }
@@ -392,12 +466,26 @@ document.addEventListener("visibilitychange", function() {
     if (
         carrosselAtivo &&
         !termoPesquisaCarrossel &&
-        !pausaPorHover
+        !pausaPorHover &&
+        !cicloAutomaticoConcluido
     ) {
         assinaturaUltimaPaginaCarrossel = "";
         renderizarPaginaCarrossel();
     }
 });
+
+
+
+function renovarVitrineAleatoria() {
+    pausarTimerCarrossel();
+    termoPesquisaCarrossel = "";
+
+    const campoPesquisa = document.getElementById("pesquisaCarrossel");
+    if (campoPesquisa) campoPesquisa.value = "";
+
+    prepararProdutosAleatoriosVitrine();
+    renderizarPaginaCarrossel();
+}
 
 document.addEventListener('keydown', function(evento) {
     if (evento.key !== 'Escape') return;
