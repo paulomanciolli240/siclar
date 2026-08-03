@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SICLAR - Catálogo e Gestão</title>
+<link rel="stylesheet" href="css/estilo.css?v=20260731-1745">
+</head>
+<body>
+
+<div id="telaBoasVindas">
+    <div class="conteudo-animado">
+        <div class="linha-1">SICLAR</div>
+        <div class="linha-2">Sistema Integrado do Catálogo Lar Doce Lar</div>
+        <div class="linha-3">A sua cyber compra de materiais para construção em Barra do Garças.</div>
+        <div class="linha-boas-vindas">Seja muito bem-vindo!</div>
+    </div>
+    <div class="spinner-carregando"></div>
+</div>
+
+<div id="moduloCarrossel">
+    <section id="telaProdutosCarrossel" class="tela-carrossel ativa">
+        <div class="carrossel-barra-topo">
+            <div class="carrossel-logo" id="gatilhoAdminMobile" role="button" aria-label="SICLAR Virtual">
+                SICLAR VIRTUAL
+                <small id="versaoCatalogoMobile" class="versao-catalogo-mobile">MOBILE 20260731-1745</small>
+            </div>
+
+            <div class="carrossel-frase-destaque">
+                Aprecie nossos produtos
+                <small>Clique em qualquer produto para iniciar seu pedido</small>
+            </div>
+
+            <div class="carrossel-topo-acoes">
+                <div class="pesquisa-carrossel">
+                    <input
+                        type="text"
+                        id="pesquisaCarrossel"
+                        placeholder="🔍 Digite o nome, parte do nome ou combine palavras. Ex.: cimento votoran"
+                    >
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-instrucoes-carrossel"
+                    onclick="abrirInstrucoesCarrossel()"
+                    aria-label="Abrir instruções de compra"
+                >
+                    ℹ️ Instruções
+                </button>
+            </div>
+        </div>
+
+        <div class="carrossel-grade-container">
+            <div id="containerGradeVitrine" class="carrossel-grade"></div>
+        </div>
+
+        <div class="carrossel-controles-inferior">
+            <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(-1)">❮ Anterior</button>
+            <span id="contadorVitrine">Página 1 de 1</span>
+            <button class="btn-controle-carrossel" onclick="mudarSlideCarrossel(1)">Próxima ❯</button>
+        </div>
+    </section>
+
+    <section id="telaInstrucoesCarrossel" class="tela-carrossel tela-instrucoes-carrossel" aria-hidden="true">
+        <div class="instrucoes-cabecalho">
+            <div class="carrossel-logo">SICLAR VIRTUAL</div>
+            <h2>Instruções</h2>
+            <button
+                type="button"
+                class="btn-fechar-instrucoes-topo"
+                onclick="voltarAosProdutosCarrossel()"
+                aria-label="Fechar instruções e voltar aos produtos"
+            >
+                ✕ Produtos
+            </button>
+        </div>
+
+        <div class="instrucoes-painel">
+            <article class="instrucao-item">
+                <div class="instrucao-icone">🛒</div>
+                <div>
+                    <h3>Como começar</h3>
+                    <p>
+                        Clique em qualquer produto do carrossel para iniciar seu pedido.
+                        Depois de selecionar o primeiro produto, você poderá adicionar outros itens.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">➕</div>
+                <div>
+                    <h3>Monte seu pedido</h3>
+                    <p>
+                        Adicione quantos produtos desejar, altere as quantidades,
+                        remova itens e revise o carrinho antes de finalizar.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">💳</div>
+                <div>
+                    <h3>Escolha o pagamento</h3>
+                    <p>
+                        Na finalização, escolha pagamento à vista, com 4,9% de desconto,
+                        ou pagamento a prazo pelo preço cadastrado.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">✅</div>
+                <div>
+                    <h3>Confirmação</h3>
+                    <p>
+                        Antes da confirmação, nossa equipe conferirá preços,
+                        referências e disponibilidade dos produtos.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item">
+                <div class="instrucao-icone">❓</div>
+                <div>
+                    <h3>Dúvidas</h3>
+                    <p>
+                        Em caso de dúvidas durante a compra, fale com um dos nossos vendedores.
+                    </p>
+                </div>
+            </article>
+
+            <article class="instrucao-item instrucao-importante">
+                <div class="instrucao-icone">🛡️</div>
+                <div>
+                    <h3>Importante</h3>
+                    <p>
+                        O site ainda está em fase de aprimoramento. Caso exista alguma divergência
+                        de preço, referência ou descrição, a equipe fará a conferência antes de confirmar o pedido.
+                    </p>
+                </div>
+            </article>
+        </div>
+
+        <button
+            type="button"
+            class="btn-voltar-produtos"
+            onclick="voltarAosProdutosCarrossel()"
+        >
+            ← Voltar aos produtos
+        </button>
+    </section>
+</div>
+
+
+<div id="moduloAdministrativo" class="admin-central">
+    <header class="admin-topo">
+        <div>
+            <div class="admin-marca">SICLAR ADMIN</div>
+            <h2>Central de Administração</h2>
+            <p>Produtos, clientes, pedidos e operação em um só lugar.</p>
+        </div>
+        <div class="admin-topo-acoes">
+            <div class="admin-identificacao">
+                <strong id="adminUsuarioNome">Usuário administrativo</strong>
+                <span id="adminSessaoStatus" class="admin-sessao">Sessão administrativa ativa</span>
+            </div>
+            <button class="btn" style="background:#475569;" type="button" onclick="sairAdministrativo()">Sair</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="admin-menu">
+            <button class="admin-menu-item ativo" data-admin-tab="resumo" onclick="abrirAbaAdmin('resumo')">📊 Resumo</button>
+            <button class="admin-menu-item" data-admin-permissao="admin" data-admin-tab="produtos" onclick="abrirAbaAdmin('produtos')">📦 Produtos</button>
+            <button class="admin-menu-item" data-admin-tab="clientes" onclick="abrirAbaAdmin('clientes')">👥 Clientes</button>
+            <button class="admin-menu-item" data-admin-tab="pedidos" onclick="abrirAbaAdmin('pedidos')">🧾 Pedidos</button>
+        </aside>
+
+        <main class="admin-conteudo">
+            <section id="adminAbaResumo" class="admin-aba ativa" data-admin-permissao="admin">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Visão geral</h3>
+                        <p>Acompanhe rapidamente o movimento do SICLAR.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="carregarResumoAdmin()">Atualizar</button>
+                </div>
+                <div id="adminCardsResumo" class="admin-cards-resumo">
+                    <div class="admin-card-metrica"><span>Produtos</span><strong>—</strong></div>
+                    <div class="admin-card-metrica"><span>Clientes</span><strong>—</strong></div>
+                    <div class="admin-card-metrica"><span>Pedidos</span><strong>—</strong></div>
+                    <div class="admin-card-metrica"><span>Pedidos em aberto</span><strong>—</strong></div>
+                </div>
+                <div class="admin-painel">
+                    <h4>Pedidos recentes</h4>
+                    <div id="adminPedidosRecentes" class="admin-tabela-wrap">
+                        <p class="admin-carregando">Carregando...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="adminAbaProdutos" class="admin-aba" data-admin-permissao="admin">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Produtos</h3>
+                        <p>Pesquise, edite, exclua e importe produtos.</p>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn" type="button" onclick="abrirListaNegraProdutos()" style="background:#475569;">🚫 Lista negra</button>
+                        <button class="btn" id="btnAbrir">📥 Importar CSV</button>
+                    </div>
+                </div>
+
+                <div class="area-pesquisa">
+                    <div class="campo-pesquisa"><label>Código</label><input type="text" id="pesqCodigo" placeholder="Pesquisar por código..."></div>
+                    <div class="campo-pesquisa"><label>Descrição</label><input type="text" id="pesqNome" placeholder="Pesquisar por descrição..."></div>
+                    <div class="campo-pesquisa"><label>Marca</label><input type="text" id="pesqMarca" placeholder="Pesquisar por marca..."></div>
+                </div>
+
+                <p id="infoQtd"></p>
+                <button class="btn btn-excluir-lote" id="btnExcluirLote" onclick="excluirSelecionados()" disabled>🗑️ Excluir selecionados</button>
+                <div class="contador-selecionados" id="contadorSelecionados">Nenhum produto selecionado</div>
+                <div id="areaLista" class="tabela-container"><p class="admin-carregando">Carregando produtos...</p></div>
+            </section>
+
+            <section id="adminAbaClientes" class="admin-aba">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Clientes</h3>
+                        <p>Consulte e atualize os cadastros.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="carregarClientesAdmin()">Atualizar</button>
+                </div>
+                <div class="admin-filtros">
+                    <input type="text" id="adminBuscaCliente" placeholder="Pesquisar por CPF, nome, telefone, cidade...">
+                </div>
+                <div id="adminListaClientes" class="admin-tabela-wrap"><p class="admin-carregando">Carregando clientes...</p></div>
+            </section>
+
+            <section id="adminAbaPedidos" class="admin-aba">
+                <div class="admin-titulo-secao">
+                    <div>
+                        <h3>Pedidos</h3>
+                        <p>Visualize pedidos, itens e altere o status operacional.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="carregarPedidosAdmin()">Atualizar</button>
+                </div>
+                <div class="admin-filtros admin-filtros-pedidos">
+                    <input type="text" id="adminBuscaPedido" placeholder="Pesquisar por pedido, CPF ou cliente...">
+                    <select id="adminFiltroStatus">
+                        <option value="">Todos os status</option>
+                        <option>NOVO</option>
+                        <option>ABERTO</option>
+                        <option>EM ABERTO</option>
+                        <option>EM SEPARAÇÃO</option>
+                        <option>PRONTO</option>
+                        <option>EM TRANSPORTE</option>
+                        <option>ENTREGUE</option>
+                        <option>CANCELADO</option>
+                    </select>
+                </div>
+                <div class="admin-pedidos-grid">
+                    <div id="adminListaPedidos" class="admin-tabela-wrap"><p class="admin-carregando">Carregando pedidos...</p></div>
+                    <div id="adminDetalhePedido" class="admin-detalhe-pedido"><div class="admin-vazio">Selecione um pedido.</div></div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<div class="modal-fundo" id="janela">
+    <div class="modal">
+        <div class="modal-topo">
+            <h3>Importação Direta para o Google Sheets</h3>
+            <button onclick="fechar()" style="background:transparent;border:none;cursor:pointer;font-size:18px;font-weight:bold;color:#64748b;">✕</button>
+        </div>
+        <div>
+            <input type="file" id="csvFile" accept=".csv" style="margin-bottom: 10px;">
+            <p id="fileName" style="font-size: 13px; color: #64748b; margin-top: 5px;">Nenhum arquivo selecionado</p>
+            <div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar">0%</div></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btnProcess" class="btn" disabled>Iniciar Importação</button>
+                <button id="btnCancelar" class="btn" style="background:#dc2626; display:none;">Interromper</button>
+            </div>
+            <div id="log" style="margin-top:20px; font-weight: 500;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="modalListaNegraProdutos">
+    <div class="modal modal-edicao-ampla">
+        <div class="modal-topo">
+            <div>
+                <h3 style="color:#dc2626;margin-bottom:5px;">Lista negra de produtos</h3>
+                <p style="margin:0;color:#64748b;font-size:13px;">
+                    Códigos excluídos manualmente não retornam nas importações.
+                </p>
+            </div>
+            <button type="button" onclick="fecharListaNegraProdutos()" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:#64748b;">✕</button>
+        </div>
+
+        <div style="margin-bottom:14px;">
+            <input
+                type="text"
+                id="buscaListaNegraProdutos"
+                placeholder="Pesquisar por código, descrição ou motivo..."
+                oninput="renderizarListaNegraProdutos()"
+                style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #cbd5e1;border-radius:9px;"
+            >
+        </div>
+
+        <div id="areaListaNegraProdutos">
+            <p class="admin-carregando">Carregando lista negra...</p>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+            <button class="btn" type="button" style="background:#64748b;" onclick="fecharListaNegraProdutos()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="modalEdicaoFundo">
+    <div class="modal modal-edicao-ampla">
+        <div class="modal-topo">
+            <div>
+                <h3 style="color: var(--primary-color);">Edição de Produto</h3>
+                <p id="infoProgressoEdicao" style="font-size: 12px; color: #64748b;"></p>
+            </div>
+            <button onclick="fecharModalEdicao()" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:#64748b;">✕</button>
+        </div>
+        <div id="containerCamposEdicao" class="grid-edicao-ampla"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+            <button class="btn" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
+            <button class="btn" id="btnSalvarProduto" onclick="salvarProdutoSemAvancar()">💾 Salvar</button>
+            <button class="btn" id="btnSalvarEProximo" onclick="salvarEProximoProduto()">💾 Salvar e Próximo</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div id="moduloHistoricoPedidos">
+    <div class="historico-topo">
+        <div>
+            <h2>Meus pedidos</h2>
+            <p>Consulte seus pedidos e acrescente complementos enquanto estiverem em aberto.</p>
+        </div>
+        <button class="btn" style="background:#475569;" onclick="fecharHistoricoPedidos()">← Voltar</button>
+    </div>
+    <div class="historico-conteudo">
+        <div id="listaPedidosCliente" class="historico-lista"></div>
+        <div id="detalhePedidoCliente" class="historico-detalhe">
+            <div class="historico-vazio">Selecione um pedido para visualizar.</div>
+        </div>
+    </div>
+</div>
+
+<div id="moduloPedidos">
+    <div class="pedido-topo">
+        <div class="pedido-topo-linha">
+            <div class="pedido-marca">
+                <div class="pedido-logo">🛒</div>
+                <div>
+                    <h2>Monte seu pedido SICLAR</h2>
+                    <p>Escolha os produtos, ajuste as quantidades e finalize quando estiver pronto.</p>
+                </div>
+            </div>
+
+            <div id="pedidoClienteChip" class="pedido-cliente-chip">Cliente identificado</div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn" style="background:#0f766e;" type="button" onclick="abrirHistoricoPedidos()">
+                    📋 Meus pedidos
+                </button>
+                <button class="btn" style="background:#475569;" type="button" onclick="voltarAoCarrosselDoPedido()">
+                    ← Voltar ao catálogo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pedido-layout">
+        <section class="pedido-catalogo">
+            <div class="pedido-cabecalho-secao">
+                <h3>Produtos disponíveis</h3>
+
+                <div class="pedido-busca">
+                    <input
+                        type="text"
+                        id="pedidoPesquisaProduto"
+                        placeholder="🔎 Pesquise por código, descrição ou marca..."
+                    >
+                </div>
+            </div>
+
+            <div id="pedidoGradeProdutos" class="pedido-grade-produtos"></div>
+
+            <div class="pedido-paginacao">
+                <button type="button" onclick="mudarPaginaPedido(-1)">❮ Anterior</button>
+                <span id="pedidoContadorPagina">Página 1 de 1</span>
+                <button type="button" onclick="mudarPaginaPedido(1)">Próxima ❯</button>
+            </div>
+        </section>
+
+        <aside class="pedido-carrinho">
+            <div class="pedido-carrinho-topo">
+                <h3>Seu pedido</h3>
+                <p id="pedidoQuantidadeResumo">Nenhum item adicionado</p>
+            </div>
+
+            <div id="pedidoItens" class="pedido-itens"></div>
+
+            <div class="pedido-resumo">
+                <div class="pedido-resumo-linha">
+                    <span>Quantidade de produtos</span>
+                    <strong id="pedidoQtdTotal">0</strong>
+                </div>
+
+                <div class="pedido-resumo-linha">
+                    <span>Itens diferentes</span>
+                    <strong id="pedidoItensDiferentes">0</strong>
+                </div>
+
+                <div class="pedido-resumo-total">
+                    <span>Total</span>
+                    <span id="pedidoValorTotal">R$ 0,00</span>
+                </div>
+
+
+                <fieldset class="pedido-forma-pagamento" id="pedidoFormaPagamentoGrupo">
+                    <legend>Forma de pagamento</legend>
+
+                    <label class="opcao-forma-pagamento">
+                        <input
+                            type="radio"
+                            name="pedidoFormaPagamento"
+                            value="A VISTA"
+                            checked
+                            onchange="alterarFormaPagamentoPedido(this.value)"
+                        >
+                        <span>
+                            <strong>À vista</strong>
+                            <small>4,9% de desconto sobre o preço a prazo</small>
+                        </span>
+                    </label>
+
+                    <label class="opcao-forma-pagamento">
+                        <input
+                            type="radio"
+                            name="pedidoFormaPagamento"
+                            value="A PRAZO"
+                            onchange="alterarFormaPagamentoPedido(this.value)"
+                        >
+                        <span>
+                            <strong>A prazo</strong>
+                            <small>Utiliza o preço cadastrado do produto</small>
+                        </span>
+                    </label>
+                </fieldset>
+
+                <div class="pedido-vendedor">
+                    <label for="pedidoVendedor"><strong>Enviar o pedido para</strong></label>
+                    <select id="pedidoVendedor">
+                        <option value="">Selecione o vendedor</option>
+                        <option value="PAULO">Paulo</option>
+                        <option value="WALDIR">Waldir</option>
+                        <option value="RONEOMAR">Roneomar</option>
+                    </select>
+                    <small>O WhatsApp será aberto para o vendedor escolhido.</small>
+                </div>
+
+                <div class="pedido-observacao">
+                    <label for="pedidoObservacao">Observação do pedido</label>
+                    <textarea
+                        id="pedidoObservacao"
+                        placeholder="Ex.: preferência de entrega, cor, modelo ou outra informação..."
+                    ></textarea>
+                </div>
+
+                <button
+                    id="btnFinalizarPedido"
+                    class="btn-finalizar-pedido"
+                    type="button"
+                    onclick="finalizarPedido()"
+                    disabled
+                >
+                    Finalizar pedido
+                </button>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div id="modalPedidoSucesso" class="pedido-sucesso">
+    <div class="pedido-sucesso-card">
+        <div class="pedido-sucesso-icone">✓</div>
+        <h3>Pedido registrado!</h3>
+        <p id="mensagemPedidoSucesso"></p>
+
+        <div id="resumoPedidoConcluido" class="resumo-pedido-concluido"></div>
+
+        <div class="acoes-pedido-concluido">
+            <button class="btn btn-pdf-pedido" type="button" onclick="baixarPdfPedidoConcluido()">
+                📄 Baixar PDF
+            </button>
+            <button class="btn btn-whatsapp-pedido" type="button" onclick="enviarPedidoConcluidoWhatsApp()">
+                💬 Enviar pelo WhatsApp
+            </button>
+            <button class="btn" style="background:#0f766e;" type="button" onclick="abrirMeusPedidosAposConclusao()">
+                📋 Meus pedidos
+            </button>
+            <button class="btn" style="background:#475569;" type="button" onclick="fecharPedidoConcluido()">
+                Voltar ao catálogo
+            </button>
+        </div>
+
+        <p class="nota-pdf-whatsapp">
+            O PDF só será baixado quando você escolher “Baixar PDF”.
+            O WhatsApp abrirá com o resumo do pedido pronto para envio.
+        </p>
+    </div>
+</div>
+
+<div id="telaCadastroCliente" class="tela-cliente">
+    <div class="painel-cliente">
+        <div class="cabecalho-cliente">
+            <div>
+                <h3>Continuar compra na SICLAR</h3>
+                <p>Identificação e cadastro do cliente</p>
+            </div>
+            <button class="fechar-cliente" type="button" onclick="fecharTelaCliente()">✕</button>
+        </div>
+
+        <div class="conteudo-cliente">
+            <div id="produtoSelecionadoCliente" class="produto-selecionado-cliente"></div>
+
+            <div id="etapaCpfCliente" class="etapa-cliente ativa">
+                <p class="texto-orientacao-cliente"><strong>Digite seu CPF.</strong></p>
+
+                <div class="campo-cliente">
+                    <label for="clienteCpfConsulta">CPF</label>
+                    <input
+                        type="text"
+                        id="clienteCpfConsulta"
+                        inputmode="numeric"
+                        maxlength="14"
+                        placeholder="000.000.000-00"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div id="mensagemConsultaCliente" class="mensagem-cliente"></div>
+
+                <div class="acoes-cliente">
+                    <button class="btn" style="background:#64748b;" type="button" onclick="fecharTelaCliente()">Cancelar</button>
+                    <button class="btn" id="btnConsultarCpf" type="button" onclick="consultarCpfCliente()">Continuar</button>
+                </div>
+            </div>
+
+            <div id="etapaClienteExistente" class="etapa-cliente">
+                <div class="mensagem-cliente sucesso" style="display:block;">
+                    Você já é nosso cliente. Deseja alterar o cadastro ou continuar comprando?
+                </div>
+
+                <div class="acoes-cliente">
+                    <button class="btn" style="background:#64748b;" type="button" onclick="abrirAlteracaoCliente()">
+                        Alterar cadastro
+                    </button>
+                    <button class="btn" style="background:#0f766e;" type="button" onclick="abrirMeusPedidosCliente()">
+                        Meus pedidos
+                    </button>
+                    <button class="btn" type="button" onclick="continuarComprandoCliente()">
+                        Continuar comprando
+                    </button>
+                </div>
+            </div>
+
+            <div id="etapaCadastroCliente" class="etapa-cliente">
+                <p class="texto-orientacao-cliente">
+                    <strong>Seja bem-vindo à SICLAR.</strong><br>
+                    Preencha seus dados para continuarmos com sua compra.
+                </p>
+
+                <form id="formCadastroCliente" onsubmit="salvarCadastroCliente(event)">
+                    <div class="grid-cliente">
+                        <div class="campo-cliente">
+                            <label for="clienteCpf">CPF</label>
+                            <input type="text" id="clienteCpf" readonly>
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteNome">Nome completo</label>
+                            <input type="text" id="clienteNome" required autocomplete="name">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteTelefone">Telefone</label>
+                            <input type="text" id="clienteTelefone" required inputmode="tel" maxlength="15" autocomplete="tel">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteEmail">E-mail</label>
+                            <input type="email" id="clienteEmail" autocomplete="email" placeholder="Opcional">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteCep">CEP</label>
+                            <input type="text" id="clienteCep" inputmode="numeric" maxlength="9" autocomplete="postal-code" placeholder="Opcional">
+                            <small class="ajuda-campo-cliente">Não sabe o CEP? Deixe em branco e preencha o endereço manualmente.</small>
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteNumero">Número</label>
+                            <input type="text" id="clienteNumero" required autocomplete="address-line2">
+                        </div>
+
+                        <div class="campo-cliente largura-total">
+                            <label for="clienteEndereco">Endereço</label>
+                            <input type="text" id="clienteEndereco" autocomplete="street-address">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteBairro">Bairro</label>
+                            <input type="text" id="clienteBairro">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteCidade">Cidade</label>
+                            <input type="text" id="clienteCidade">
+                        </div>
+
+                        <div class="campo-cliente">
+                            <label for="clienteUf">UF</label>
+                            <input type="text" id="clienteUf" maxlength="2" placeholder="MT">
+                        </div>
+
+                        <div class="campo-cliente largura-total">
+                            <label for="clientePontoReferencia">Ponto de referência</label>
+                            <input type="text" id="clientePontoReferencia" autocomplete="off">
+                        </div>
+
+                        <div class="campo-cliente largura-total">
+                            <label for="clienteObservacoes">Observações</label>
+                            <textarea id="clienteObservacoes"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="mensagemCadastroCliente" class="mensagem-cliente"></div>
+
+                    <div class="acoes-cliente">
+                        <button class="btn" style="background:#64748b;" type="button" onclick="voltarEtapaCpf()">Voltar</button>
+                        <button class="btn" id="btnSalvarCliente" type="submit">Salvar cadastro</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="etapaCadastroConcluido" class="etapa-cliente">
+                <div class="mensagem-cliente sucesso" style="display:block;">
+                    Cadastro realizado com sucesso. Seja bem-vindo à SICLAR!
+                </div>
+
+                <div class="acoes-cliente">
+                    <button class="btn" type="button" onclick="continuarAposCadastro()">Continuar comprando</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal-fundo" id="modalAcessoAdminMobile">
+    <div class="modal modal-acesso-admin-mobile">
+        <div class="modal-topo">
+            <div>
+                <h3>Acesso administrativo</h3>
+                <p style="margin:5px 0 0;color:#64748b;font-size:13px;">Digite seu usuário e sua senha para continuar.</p>
+            </div>
+            <button type="button" onclick="fecharAcessoAdminMobile()" style="background:transparent;border:none;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+
+        <div class="grupo-campo-edicao">
+            <label for="usuarioAdminMobile">Usuário</label>
+            <input
+                type="text"
+                id="usuarioAdminMobile"
+                autocomplete="username"
+                placeholder="Digite seu usuário"
+            >
+        </div>
+
+        <div class="grupo-campo-edicao">
+            <label for="senhaAdminMobile">Senha</label>
+            <input
+                type="password"
+                id="senhaAdminMobile"
+                autocomplete="current-password"
+                placeholder="Digite a senha administrativa"
+            >
+        </div>
+
+        <div id="mensagemAdminMobile" class="mensagem-cliente"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+            <button class="btn" style="background:#64748b;" type="button" onclick="fecharAcessoAdminMobile()">Cancelar</button>
+            <button class="btn" id="btnEntrarAdminMobile" type="button" onclick="confirmarAcessoAdminMobile()">Entrar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-fundo" id="modalAdminCliente">
+    <div class="modal modal-edicao-ampla">
+        <div class="modal-topo">
+            <div>
+                <h3 style="color:var(--primary-color);">Editar cliente</h3>
+                <p id="adminClienteCpfInfo" style="font-size:12px;color:#64748b;"></p>
+            </div>
+            <button type="button" onclick="fecharModalAdminCliente()" style="background:transparent;border:none;cursor:pointer;font-size:20px;">✕</button>
+        </div>
+        <div id="adminCamposCliente" class="grid-edicao-ampla"></div>
+        <div id="adminMensagemCliente" class="mensagem-cliente"></div>
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+            <button class="btn" style="background:#64748b;" type="button" onclick="fecharModalAdminCliente()">Cancelar</button>
+            <button class="btn" id="btnSalvarAdminCliente" type="button" onclick="salvarClienteAdmin()">Salvar alterações</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/config.js?v=20260731-1745"></script>
+<script src="js/state.js?v=20260731-1745"></script>
+<script src="js/utils.js?v=20260731-1745"></script>
+<script src="js/api.js?v=20260731-1745"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/clientes.js?v=20260731-1745"></script>
+<script src="js/pdf-whatsapp.js?v=20260731-1745"></script>
+<script src="js/pedidos.js?v=20260731-1745"></script>
+<script src="js/historico.js?v=20260731-1745"></script>
+<script src="js/carrossel.js?v=20260803-1"></script>
+<script src="js/admin.js?v=20260731-1745"></script>
+<script src="js/admin-dashboard.js?v=20260731-1745"></script>
+<script src="js/app.js?v=20260731-1745"></script>
+</body>
+</html>
