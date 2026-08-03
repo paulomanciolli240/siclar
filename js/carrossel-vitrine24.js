@@ -85,7 +85,7 @@ function configurarErrosImagemCarrossel() {
 
 function pausarTimerCarrossel() {
     if (timerCarrossel) {
-        pausarTimerCarrossel();
+        clearTimeout(timerCarrossel);
         timerCarrossel = null;
     }
 }
