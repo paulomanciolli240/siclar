@@ -1,5 +1,96 @@
 "use strict";
 
+
+const IMAGEM_SEM_FOTO_SICLAR =
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+            <rect width="300" height="300" fill="#f1f5f9"/>
+            <rect x="74" y="82" width="152" height="118" rx="12" fill="none" stroke="#94a3b8" stroke-width="8"/>
+            <circle cx="122" cy="125" r="18" fill="#94a3b8"/>
+            <path d="M88 184l42-42 30 30 22-22 30 34" fill="none" stroke="#94a3b8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="150" y="236" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#64748b">Sem imagem</text>
+        </svg>
+    `);
+
+const imagensComFalhaCarrossel = new Set();
+let assinaturaUltimaPaginaCarrossel = "";
+
+function escaparHtmlCarrossel(valor) {
+    return String(valor == null ? "" : valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function obterUrlImagemCarrossel(valor) {
+    const texto = String(valor == null ? "" : valor).trim();
+
+    if (!texto) return "";
+
+    const superior = texto.toUpperCase();
+
+    if (
+        superior === "NÃO" ||
+        superior === "NAO" ||
+        superior === "SEM FOTO" ||
+        superior === "SEM IMAGEM"
+    ) {
+        return "";
+    }
+
+    try {
+        return resolverUrlImagem(texto);
+    } catch (erro) {
+        console.warn("Imagem inválida:", texto, erro);
+        return "";
+    }
+}
+
+function gerarImagemCarrossel(valorFoto, descricao) {
+    const url = obterUrlImagemCarrossel(valorFoto);
+
+    if (!url || imagensComFalhaCarrossel.has(url)) {
+        return `<img src="${IMAGEM_SEM_FOTO_SICLAR}" alt="Sem imagem" loading="lazy" decoding="async">`;
+    }
+
+    return `
+        <img
+            src="${url}"
+            alt="${escaparHtmlCarrossel(descricao || "Produto")}"
+            loading="lazy"
+            decoding="async"
+            data-imagem-carrossel="${escaparHtmlCarrossel(url)}"
+        >
+    `;
+}
+
+function configurarErrosImagemCarrossel() {
+    document
+        .querySelectorAll("#containerGradeVitrine img[data-imagem-carrossel]")
+        .forEach(imagem => {
+            imagem.addEventListener("error", () => {
+                const url = imagem.dataset.imagemCarrossel || imagem.src;
+
+                if (url) imagensComFalhaCarrossel.add(url);
+
+                imagem.removeAttribute("data-imagem-carrossel");
+                imagem.src = IMAGEM_SEM_FOTO_SICLAR;
+                imagem.alt = "Sem imagem";
+            }, { once: true });
+        });
+}
+
+function pausarTimerCarrossel() {
+    if (timerCarrossel) {
+        pausarTimerCarrossel();
+        timerCarrossel = null;
+    }
+}
+
+
 function calcularItensPorPaginaCarrossel() {
     const largura = window.innerWidth || document.documentElement.clientWidth || 360;
 
@@ -25,13 +116,14 @@ function iniciarCarrossel() {
     carrosselAtivo = true;
     itensPorPagina = calcularItensPorPaginaCarrossel();
     indicePaginaCarrossel = 0;
+    assinaturaUltimaPaginaCarrossel = "";
     document.getElementById('moduloCarrossel').style.display = 'flex';
     renderizarPaginaCarrossel();
 }
 
 function pararCarrossel() {
     carrosselAtivo = false;
-    if (timerCarrossel) clearTimeout(timerCarrossel);
+    pausarTimerCarrossel();
 }
 
 function obterProdutosFiltradosCarrossel() {
@@ -55,7 +147,7 @@ function obterProdutosFiltradosCarrossel() {
 function renderizarPaginaCarrossel() {
     try {
         // Sempre limpa o temporizador primeiro
-        if (timerCarrossel) clearTimeout(timerCarrossel);
+        pausarTimerCarrossel();
 
     // O conteúdo continua sendo renderizado durante pesquisa e hover.
     // Apenas a troca automática de página fica pausada.
@@ -75,6 +167,25 @@ function renderizarPaginaCarrossel() {
     const inicio = indicePaginaCarrossel * itensPorPagina;
     const fim = inicio + itensPorPagina;
     const produtosPagina = produtosFiltrados.slice(inicio, fim);
+
+    const assinaturaPagina = JSON.stringify({
+        pagina: indicePaginaCarrossel,
+        itensPorPagina,
+        termo: termoPesquisaCarrossel,
+        total: produtosFiltrados.length,
+        codigos: produtosPagina.map(produto => String(produto[hCod] || "")),
+        fotos: produtosPagina.map(produto => String(hFoto ? produto[hFoto] || "" : ""))
+    });
+
+    if (assinaturaPagina === assinaturaUltimaPaginaCarrossel) {
+        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden) {
+            timerCarrossel = setTimeout(() => {
+                indicePaginaCarrossel++;
+                renderizarPaginaCarrossel();
+            }, 6000);
+        }
+        return;
+    }
 
     let html = '';
     if (produtosPagina.length === 0) {
@@ -102,9 +213,10 @@ function renderizarPaginaCarrossel() {
         </div>`;
     } else {
         produtosPagina.forEach(p => {
-            let fotoHtml = hFoto && p[hFoto] && p[hFoto].toUpperCase() !== 'NÃO' 
-                ? `<img src="${resolverUrlImagem(p[hFoto])}" alt="Produto" onerror="this.src='https://via.placeholder.com/300?text=Sem+Imagem'">` 
-                : `<div style="color:#94a3b8; font-size:11px;">Sem imagem</div>`;
+            const fotoHtml = gerarImagemCarrossel(
+                hFoto ? p[hFoto] : "",
+                p[hDesc] || "Produto"
+            );
 
             html += `
             <div class="card-quadrado-vitrine" 
@@ -134,11 +246,14 @@ function renderizarPaginaCarrossel() {
     }
 
     document.getElementById('containerGradeVitrine').innerHTML = html;
+    configurarErrosImagemCarrossel();
+    assinaturaUltimaPaginaCarrossel = assinaturaPagina;
+
     document.getElementById('contadorVitrine').textContent = 
         produtosFiltrados.length === 0 ? 'Nenhum resultado' : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos)`;
 
     // Só agenda próxima troca se NÃO estiver pausado
-        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0) {
+        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden) {
             timerCarrossel = setTimeout(() => {
                 indicePaginaCarrossel++;
                 renderizarPaginaCarrossel();
@@ -159,13 +274,30 @@ function renderizarPaginaCarrossel() {
 
 function pausarCarrosselPorHover() {
     pausaPorHover = true;
-    if (timerCarrossel) clearTimeout(timerCarrossel);
+    pausarTimerCarrossel();
 }
 
 function retomarCarrosselAposHover(card) {
     if (card.classList.contains('ativo-clique')) return;
+
     pausaPorHover = false;
-    renderizarPaginaCarrossel();
+
+    const produtosFiltrados = obterProdutosFiltradosCarrossel();
+
+    if (
+        carrosselAtivo &&
+        !termoPesquisaCarrossel &&
+        produtosFiltrados.length > 0 &&
+        !document.hidden
+    ) {
+        pausarTimerCarrossel();
+
+        timerCarrossel = setTimeout(() => {
+            indicePaginaCarrossel++;
+            assinaturaUltimaPaginaCarrossel = "";
+            renderizarPaginaCarrossel();
+        }, 6000);
+    }
 }
 
 function alternarDestaqueCard(card) {
@@ -195,19 +327,21 @@ async function recarregarProdutos() {
     if (carregou) {
         indicePaginaCarrossel = 0;
         pausaPorHover = false;
+        assinaturaUltimaPaginaCarrossel = "";
         renderizarPaginaCarrossel();
     }
 }
 
 function mudarSlideCarrossel(d) {
     if (!carrosselAtivo) return;
-    clearTimeout(timerCarrossel);
+    pausarTimerCarrossel();
     pausaPorHover = false;
 
     const totalProdutos = obterProdutosFiltradosCarrossel().length;
     const totalPaginas = Math.max(1, Math.ceil(totalProdutos / itensPorPagina));
 
     indicePaginaCarrossel = (indicePaginaCarrossel + d + totalPaginas) % totalPaginas;
+    assinaturaUltimaPaginaCarrossel = "";
     renderizarPaginaCarrossel();
 }
 
@@ -246,6 +380,24 @@ function voltarAosProdutosCarrossel() {
         if (campoPesquisa) campoPesquisa.focus();
     }, 350);
 }
+
+
+
+document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+        pausarTimerCarrossel();
+        return;
+    }
+
+    if (
+        carrosselAtivo &&
+        !termoPesquisaCarrossel &&
+        !pausaPorHover
+    ) {
+        assinaturaUltimaPaginaCarrossel = "";
+        renderizarPaginaCarrossel();
+    }
+});
 
 document.addEventListener('keydown', function(evento) {
     if (evento.key !== 'Escape') return;
