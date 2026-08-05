@@ -1,5 +1,22 @@
 "use strict";
 
+/*
+  SICLAR — VITRINE ESTÁVEL
+
+  Regras:
+  - sem troca automática;
+  - uma única linha de produtos;
+  - 5 produtos somente em telas muito largas;
+  - 4 produtos no computador/notebook;
+  - 2 produtos no tablet;
+  - 1 produto no celular;
+  - Próxima sorteia uma nova visualização;
+  - Anterior retorna à visualização anterior;
+  - a pesquisa é paginada;
+  - não cria setas por JavaScript;
+  - usa apenas os controles já existentes no index.html;
+  - não procura fotos pelo código do produto.
+*/
 
 const IMAGEM_SEM_FOTO_SICLAR =
     "data:image/svg+xml;charset=UTF-8," +
@@ -14,7 +31,14 @@ const IMAGEM_SEM_FOTO_SICLAR =
     `);
 
 const imagensComFalhaCarrossel = new Set();
+const MAXIMO_CODIGOS_RECENTES = 240;
+
+let produtosLoteVitrine = [];
+let historicoLotesVitrine = [];
+let indiceHistoricoLoteVitrine = -1;
+let codigosRecentesVitrine = [];
 let assinaturaUltimaPaginaCarrossel = "";
+let quantidadeAtualVitrine = 0;
 
 function escaparHtmlCarrossel(valor) {
     return String(valor == null ? "" : valor)
@@ -25,62 +49,20 @@ function escaparHtmlCarrossel(valor) {
         .replace(/'/g, "&#039;");
 }
 
-function obterUrlImagemCarrossel(valor) {
-    const texto = String(valor == null ? "" : valor).trim();
+function obterQuantidadeProdutosVitrine() {
+    const largura =
+        window.innerWidth ||
+        document.documentElement.clientWidth ||
+        1200;
 
-    if (!texto) return "";
-
-    const superior = texto.toUpperCase();
-
-    if (
-        superior === "NÃO" ||
-        superior === "NAO" ||
-        superior === "SEM FOTO" ||
-        superior === "SEM IMAGEM"
-    ) {
-        return "";
-    }
-
-    try {
-        return resolverUrlImagem(texto);
-    } catch (erro) {
-        console.warn("Imagem inválida:", texto, erro);
-        return "";
-    }
+    if (largura >= 1600) return 5;
+    if (largura >= 900) return 4;
+    if (largura >= 600) return 2;
+    return 1;
 }
 
-function gerarImagemCarrossel(valorFoto, descricao) {
-    const url = obterUrlImagemCarrossel(valorFoto);
-
-    if (!url || imagensComFalhaCarrossel.has(url)) {
-        return `<img src="${IMAGEM_SEM_FOTO_SICLAR}" alt="Sem imagem" loading="lazy" decoding="async">`;
-    }
-
-    return `
-        <img
-            src="${url}"
-            alt="${escaparHtmlCarrossel(descricao || "Produto")}"
-            loading="lazy"
-            decoding="async"
-            data-imagem-carrossel="${escaparHtmlCarrossel(url)}"
-        >
-    `;
-}
-
-function configurarErrosImagemCarrossel() {
-    document
-        .querySelectorAll("#containerGradeVitrine img[data-imagem-carrossel]")
-        .forEach(imagem => {
-            imagem.addEventListener("error", () => {
-                const url = imagem.dataset.imagemCarrossel || imagem.src;
-
-                if (url) imagensComFalhaCarrossel.add(url);
-
-                imagem.removeAttribute("data-imagem-carrossel");
-                imagem.src = IMAGEM_SEM_FOTO_SICLAR;
-                imagem.alt = "Sem imagem";
-            }, { once: true });
-        });
+function calcularItensPorPaginaCarrossel() {
+    return obterQuantidadeProdutosVitrine();
 }
 
 function pausarTimerCarrossel() {
@@ -90,146 +72,22 @@ function pausarTimerCarrossel() {
     }
 }
 
+function aplicarEstiloVitrineEstavel() {
+    let estilo = document.getElementById("siclar-vitrine-estavel-css");
 
+    if (!estilo) {
+        estilo = document.createElement("style");
+        estilo.id = "siclar-vitrine-estavel-css";
+        estilo.textContent = `
+            #telaProdutosCarrossel {
+                min-height: 100vh !important;
+            }
 
-function obterQuantidadeProdutosVitrine() {
-    const largura = window.innerWidth || document.documentElement.clientWidth || 1200;
+            .carrossel-grade-container {
+                width: 100% !important;
+                overflow: visible !important;
+            }
 
-    if (largura >= 1600) return 5;
-    if (largura >= 900) return 4;
-    if (largura >= 600) return 2;
-    return 1;
-}
-const MAXIMO_CODIGOS_RECENTES = 240;
-
-let produtosLoteVitrine = [];
-let codigosRecentesVitrine = [];
-let historicoLotesVitrine = [];
-let indiceHistoricoLoteVitrine = -1;
-let cicloAutomaticoConcluido = true;
-
-function embaralharProdutosCarrossel(lista) {
-    const copia = Array.isArray(lista) ? lista.slice() : [];
-
-    for (let i = copia.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copia[i], copia[j]] = [copia[j], copia[i]];
-    }
-
-    return copia;
-}
-
-function obterCabecalhoCodigoCarrossel() {
-    return headers.find(h =>
-        String(h || "").includes("Cód") ||
-        String(h || "").toLowerCase().includes("codigo")
-    ) || headers[0];
-}
-
-function selecionarNovoLoteVitrine() {
-    const base = Array.isArray(dadosGlobais) ? dadosGlobais : [];
-    const hCod = obterCabecalhoCodigoCarrossel();
-    const hFoto = headers.find(h =>
-        String(h || "").includes("Foto") ||
-        String(h || "").toLowerCase().includes("imagem")
-    ) || "";
-
-    if (base.length === 0) {
-        produtosLoteVitrine = [];
-        indicePaginaCarrossel = 0;
-        assinaturaUltimaPaginaCarrossel = "";
-        return;
-    }
-
-    const recentes = new Set(codigosRecentesVitrine);
-
-    let candidatos = base.filter(produto => {
-        const codigo = String(produto[hCod] || "").trim();
-        return codigo && !recentes.has(codigo);
-    });
-
-    if (candidatos.length < obterQuantidadeProdutosVitrine()) {
-        codigosRecentesVitrine = [];
-        candidatos = base.slice();
-    }
-
-    const possuiFotoDeclarada = produto => {
-        if (!hFoto) return false;
-
-        const valor = String(produto[hFoto] || "").trim();
-        if (!valor) return false;
-
-        return ![
-            "NÃO",
-            "NAO",
-            "SEM FOTO",
-            "SEM IMAGEM",
-            "0",
-            "-"
-        ].includes(valor.toUpperCase());
-    };
-
-    const comFoto = embaralharProdutosCarrossel(
-        candidatos.filter(possuiFotoDeclarada)
-    );
-
-    const semFoto = embaralharProdutosCarrossel(
-        candidatos.filter(produto => !possuiFotoDeclarada(produto))
-    );
-
-    const novoLote = [...comFoto, ...semFoto]
-        .slice(0, obterQuantidadeProdutosVitrine());
-
-    if (indiceHistoricoLoteVitrine < historicoLotesVitrine.length - 1) {
-        historicoLotesVitrine = historicoLotesVitrine.slice(
-            0,
-            indiceHistoricoLoteVitrine + 1
-        );
-    }
-
-    historicoLotesVitrine.push(novoLote);
-    indiceHistoricoLoteVitrine = historicoLotesVitrine.length - 1;
-    produtosLoteVitrine = novoLote;
-
-    const novosCodigos = novoLote
-        .map(produto => String(produto[hCod] || "").trim())
-        .filter(Boolean);
-
-    codigosRecentesVitrine = [
-        ...codigosRecentesVitrine,
-        ...novosCodigos
-    ].slice(-MAXIMO_CODIGOS_RECENTES);
-
-    indicePaginaCarrossel = 0;
-    assinaturaUltimaPaginaCarrossel = "";
-}
-function obterBaseProdutosCarrossel() {
-    const existePesquisa =
-        String(termoPesquisaCarrossel || "").trim() !== "";
-
-    if (existePesquisa) {
-        return Array.isArray(dadosGlobais) ? dadosGlobais : [];
-    }
-
-    if (produtosLoteVitrine.length === 0) {
-        selecionarNovoLoteVitrine();
-    }
-
-    return produtosLoteVitrine;
-}
-
-function calcularItensPorPaginaCarrossel() {
-    return obterQuantidadeProdutosVitrine();
-}
-
-
-function aplicarEstiloVitrineResponsiva() {
-    let style = document.getElementById("siclar-vitrine-responsiva-css");
-
-    if (!style) {
-        style = document.createElement("style");
-        style.id = "siclar-vitrine-responsiva-css";
-        style.textContent = `
             #containerGradeVitrine {
                 display: grid !important;
                 grid-template-columns:
@@ -240,8 +98,8 @@ function aplicarEstiloVitrineResponsiva() {
                 grid-template-rows: 1fr !important;
                 align-items: stretch !important;
                 gap: 24px !important;
-                width: min(1280px, calc(100% - 48px)) !important;
-                margin: 28px auto 18px !important;
+                width: min(1280px, calc(100% - 110px)) !important;
+                margin: 28px auto 12px !important;
                 overflow: visible !important;
             }
 
@@ -257,36 +115,68 @@ function aplicarEstiloVitrineResponsiva() {
                 box-shadow: 0 10px 28px rgba(15, 23, 42, .18) !important;
             }
 
-            #containerGradeVitrine .card-quadrado-vitrine:hover {
+            #containerGradeVitrine .card-quadrado-vitrine:hover,
+            #containerGradeVitrine .card-quadrado-vitrine:focus-visible {
                 transform: translateY(-3px) !important;
+                outline: 3px solid rgba(249, 115, 22, .34) !important;
+                outline-offset: 2px !important;
             }
 
             #containerGradeVitrine .vitrine-foto-container {
+                width: 100% !important;
                 height: 170px !important;
                 min-height: 170px !important;
+                overflow: hidden !important;
+            }
+
+            #containerGradeVitrine .vitrine-foto-container img {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain !important;
+            }
+
+            #containerGradeVitrine .vitrine-info {
+                flex: 1 1 auto !important;
+            }
+
+            #containerGradeVitrine .vitrine-rodape-preco {
+                margin-top: auto !important;
             }
 
             /*
-              Os controles ficam logo abaixo da única linha de produtos.
-              Foram incluídos seletores alternativos para preservar
-              diferentes versões do HTML do SICLAR.
+              Estes são os controles reais presentes no index.html.
+              Eles permanecem visíveis logo abaixo da única linha.
             */
-            .controles-carrossel,
-            .carrossel-controles,
-            .controles-vitrine,
-            #controlesCarrossel,
-            #controlesVitrine {
+            #moduloCarrossel .carrossel-controles-inferior {
                 position: relative !important;
-                z-index: 20 !important;
+                z-index: 30 !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                gap: 14px !important;
+                gap: 16px !important;
                 width: 100% !important;
-                margin: 8px auto 22px !important;
-                padding: 8px 16px !important;
+                margin: 10px auto 24px !important;
+                padding: 10px 16px !important;
                 visibility: visible !important;
                 opacity: 1 !important;
+            }
+
+            #moduloCarrossel .carrossel-controles-inferior .btn-controle-carrossel {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-width: 126px !important;
+                min-height: 42px !important;
+                padding: 10px 16px !important;
+                cursor: pointer !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            #moduloCarrossel .carrossel-controles-inferior .btn-controle-carrossel:disabled {
+                opacity: .35 !important;
+                cursor: default !important;
             }
 
             #contadorVitrine {
@@ -296,14 +186,14 @@ function aplicarEstiloVitrineResponsiva() {
 
             @media (max-width: 899px) {
                 #containerGradeVitrine {
-                    width: min(760px, calc(100% - 34px)) !important;
+                    width: min(760px, calc(100% - 44px)) !important;
                     gap: 20px !important;
                 }
             }
 
             @media (max-width: 599px) {
                 #containerGradeVitrine {
-                    width: min(390px, calc(100% - 26px)) !important;
+                    width: min(390px, calc(100% - 28px)) !important;
                     gap: 18px !important;
                     margin-top: 20px !important;
                 }
@@ -317,520 +207,952 @@ function aplicarEstiloVitrineResponsiva() {
                     min-height: 185px !important;
                 }
 
+                #moduloCarrossel .carrossel-controles-inferior {
+                    gap: 8px !important;
+                    padding: 8px !important;
+                }
+
+                #moduloCarrossel .carrossel-controles-inferior .btn-controle-carrossel {
+                    min-width: 98px !important;
+                    padding: 9px 10px !important;
+                    font-size: 12px !important;
+                }
+
                 #contadorVitrine {
                     min-width: 0 !important;
-                    font-size: 12px !important;
+                    font-size: 11px !important;
                 }
             }
         `;
 
-        document.head.appendChild(style);
+        document.head.appendChild(estilo);
     }
 
-    const quantidade = obterQuantidadeProdutosVitrine();
+    quantidadeAtualVitrine = obterQuantidadeProdutosVitrine();
 
     document.documentElement.style.setProperty(
         "--siclar-colunas-vitrine",
-        String(quantidade)
+        String(quantidadeAtualVitrine)
     );
 }
 
+function obterUrlImagemCarrossel(valor) {
+    const texto = String(valor == null ? "" : valor).trim();
 
-function garantirSetasLateraisCarrossel() {
-    if (document.getElementById("siclar-seta-carrossel-anterior")) {
-        atualizarSetasLateraisCarrossel();
+    if (!texto) return "";
+
+    try {
+        const url = resolverUrlImagem(texto);
+
+        if (!url || imagensComFalhaCarrossel.has(url)) {
+            return "";
+        }
+
+        return url;
+    } catch (erro) {
+        return "";
+    }
+}
+
+function gerarImagemCarrossel(valorFoto, descricao) {
+    const url = obterUrlImagemCarrossel(valorFoto);
+
+    if (!url) {
+        return `
+            <img
+                src="${IMAGEM_SEM_FOTO_SICLAR}"
+                alt="Sem imagem"
+                loading="lazy"
+                decoding="async"
+            >
+        `;
+    }
+
+    return `
+        <img
+            src="${escaparHtmlCarrossel(url)}"
+            alt="${escaparHtmlCarrossel(descricao || "Produto")}"
+            loading="lazy"
+            decoding="async"
+            data-imagem-carrossel="${escaparHtmlCarrossel(url)}"
+        >
+    `;
+}
+
+function configurarErrosImagemCarrossel() {
+    document
+        .querySelectorAll(
+            "#containerGradeVitrine img[data-imagem-carrossel]"
+        )
+        .forEach(imagem => {
+            imagem.addEventListener(
+                "error",
+                () => {
+                    const url =
+                        imagem.dataset.imagemCarrossel ||
+                        imagem.src;
+
+                    if (url) {
+                        imagensComFalhaCarrossel.add(url);
+                    }
+
+                    imagem.removeAttribute(
+                        "data-imagem-carrossel"
+                    );
+
+                    imagem.src =
+                        IMAGEM_SEM_FOTO_SICLAR;
+
+                    imagem.alt = "Sem imagem";
+                },
+                { once: true }
+            );
+        });
+}
+
+function embaralharProdutosCarrossel(lista) {
+    const copia = Array.isArray(lista)
+        ? lista.slice()
+        : [];
+
+    for (let i = copia.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(
+            Math.random() * (i + 1)
+        );
+
+        [copia[i], copia[j]] = [
+            copia[j],
+            copia[i]
+        ];
+    }
+
+    return copia;
+}
+
+function obterCabecalhoCodigoCarrossel() {
+    return (
+        headers.find(cabecalho =>
+            String(cabecalho || "").includes("Cód") ||
+            String(cabecalho || "")
+                .toLowerCase()
+                .includes("codigo")
+        ) ||
+        headers[0]
+    );
+}
+
+function selecionarNovoLoteVitrine() {
+    const base = Array.isArray(dadosGlobais)
+        ? dadosGlobais.filter(Boolean)
+        : [];
+
+    const cabecalhoCodigo =
+        obterCabecalhoCodigoCarrossel();
+
+    if (!base.length) {
+        produtosLoteVitrine = [];
+        assinaturaUltimaPaginaCarrossel = "";
         return;
     }
 
-    const estilo = document.createElement("style");
-    estilo.id = "siclar-setas-laterais-css";
-    estilo.textContent = `
-        /*
-          As setas ficam presas às laterais da tela e não dependem
-          da altura dos cards ou da rolagem da página.
-        */
-        .siclar-seta-lateral-carrossel {
-            position: fixed;
-            top: 50%;
-            z-index: 9998;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 58px;
-            height: 92px;
-            padding: 0;
-            border: 1px solid rgba(255, 255, 255, .34);
-            border-radius: 16px;
-            background: rgba(15, 23, 42, .86);
-            color: #ffffff;
-            box-shadow: 0 12px 34px rgba(0, 0, 0, .34);
-            font-size: 46px;
-            font-family: Arial, sans-serif;
-            font-weight: 700;
-            line-height: 1;
-            cursor: pointer;
-            translate: 0 -50%;
-            transition:
-                background .16s ease,
-                scale .16s ease,
-                opacity .16s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
+    const recentes =
+        new Set(codigosRecentesVitrine);
 
-        .siclar-seta-lateral-carrossel:hover,
-        .siclar-seta-lateral-carrossel:focus-visible {
-            background: rgba(234, 88, 12, .96);
-            scale: 1.06;
-            outline: 3px solid rgba(255, 255, 255, .78);
-            outline-offset: 3px;
-        }
+    let candidatos = base.filter(produto => {
+        const codigo = String(
+            produto[cabecalhoCodigo] || ""
+        ).trim();
 
-        .siclar-seta-lateral-carrossel:disabled {
-            opacity: .25;
-            cursor: default;
-            scale: 1;
-        }
-
-        #siclar-seta-carrossel-anterior {
-            left: 10px;
-        }
-
-        #siclar-seta-carrossel-proxima {
-            right: 10px;
-        }
-
-        /*
-          Os controles antigos do rodapé são escondidos.
-          As setas laterais passam a ser a navegação principal.
-        */
-        #moduloCarrossel .controles-carrossel,
-        #moduloCarrossel .carrossel-controles,
-        #moduloCarrossel .controles-vitrine,
-        #moduloCarrossel #controlesCarrossel,
-        #moduloCarrossel #controlesVitrine {
-            display: none !important;
-        }
-
-        @media (max-width: 720px) {
-            .siclar-seta-lateral-carrossel {
-                width: 46px;
-                height: 72px;
-                border-radius: 13px;
-                font-size: 36px;
-            }
-
-            #siclar-seta-carrossel-anterior {
-                left: 5px;
-            }
-
-            #siclar-seta-carrossel-proxima {
-                right: 5px;
-            }
-        }
-    `;
-
-    document.head.appendChild(estilo);
-
-    const anterior = document.createElement("button");
-    anterior.id = "siclar-seta-carrossel-anterior";
-    anterior.className = "siclar-seta-lateral-carrossel";
-    anterior.type = "button";
-    anterior.textContent = "‹";
-    anterior.title = "Visualização anterior";
-    anterior.setAttribute("aria-label", "Visualização anterior");
-    anterior.addEventListener("click", () => {
-        mudarSlideCarrossel(-1);
-        atualizarSetasLateraisCarrossel();
+        return codigo && !recentes.has(codigo);
     });
 
-    const proxima = document.createElement("button");
-    proxima.id = "siclar-seta-carrossel-proxima";
-    proxima.className = "siclar-seta-lateral-carrossel";
-    proxima.type = "button";
-    proxima.textContent = "›";
-    proxima.title = "Próxima visualização";
-    proxima.setAttribute("aria-label", "Próxima visualização");
-    proxima.addEventListener("click", () => {
-        mudarSlideCarrossel(1);
-        atualizarSetasLateraisCarrossel();
-    });
+    const quantidade =
+        obterQuantidadeProdutosVitrine();
 
-    document.body.appendChild(anterior);
-    document.body.appendChild(proxima);
+    if (candidatos.length < quantidade) {
+        codigosRecentesVitrine = [];
+        candidatos = base.slice();
+    }
 
-    atualizarSetasLateraisCarrossel();
+    const novoLote =
+        embaralharProdutosCarrossel(candidatos)
+            .slice(0, quantidade);
+
+    if (
+        indiceHistoricoLoteVitrine <
+        historicoLotesVitrine.length - 1
+    ) {
+        historicoLotesVitrine =
+            historicoLotesVitrine.slice(
+                0,
+                indiceHistoricoLoteVitrine + 1
+            );
+    }
+
+    historicoLotesVitrine.push(novoLote);
+
+    indiceHistoricoLoteVitrine =
+        historicoLotesVitrine.length - 1;
+
+    produtosLoteVitrine = novoLote;
+
+    const codigos = novoLote
+        .map(produto =>
+            String(
+                produto[cabecalhoCodigo] || ""
+            ).trim()
+        )
+        .filter(Boolean);
+
+    codigosRecentesVitrine = [
+        ...codigosRecentesVitrine,
+        ...codigos
+    ].slice(-MAXIMO_CODIGOS_RECENTES);
+
+    indicePaginaCarrossel = 0;
+    assinaturaUltimaPaginaCarrossel = "";
 }
 
-function atualizarSetasLateraisCarrossel() {
-    const anterior =
-        document.getElementById("siclar-seta-carrossel-anterior");
-
-    const proxima =
-        document.getElementById("siclar-seta-carrossel-proxima");
-
-    if (!anterior || !proxima) return;
-
-    const modulo = document.getElementById("moduloCarrossel");
-    const moduloVisivel =
-        carrosselAtivo &&
-        modulo &&
-        getComputedStyle(modulo).display !== "none";
-
-    anterior.style.display = moduloVisivel ? "flex" : "none";
-    proxima.style.display = moduloVisivel ? "flex" : "none";
-
-    if (!moduloVisivel) return;
-
+function obterBaseProdutosCarrossel() {
     const existePesquisa =
-        String(termoPesquisaCarrossel || "").trim() !== "";
+        String(
+            termoPesquisaCarrossel || ""
+        ).trim() !== "";
 
-    /*
-      Na pesquisa, a navegação é circular.
-      Na vitrine normal, a seta esquerda fica desativada
-      enquanto ainda não existe uma visualização anterior.
-    */
-    anterior.disabled =
-        !existePesquisa &&
-        indiceHistoricoLoteVitrine <= 0;
-
-    proxima.disabled = false;
-}
-
-function abrirPainelAdministrativo() {
-    pararCarrossel();
-    document.getElementById('moduloCarrossel').style.display = 'none';
-    document.getElementById('moduloAdministrativo').style.display = 'block';
-}
-
-function voltarParaCarrossel() {
-    document.getElementById('moduloAdministrativo').style.display = 'none';
-    document.getElementById('moduloCarrossel').style.display = 'flex';
-    iniciarCarrossel();
-}
-
-function iniciarCarrossel() {
-    aplicarEstiloVitrineResponsiva();
-    garantirSetasLateraisCarrossel();
-    carrosselAtivo = true;
-    itensPorPagina = obterQuantidadeProdutosVitrine();
-    pausarTimerCarrossel();
+    if (existePesquisa) {
+        return Array.isArray(dadosGlobais)
+            ? dadosGlobais
+            : [];
+    }
 
     if (!produtosLoteVitrine.length) {
         selecionarNovoLoteVitrine();
     }
 
-    document.getElementById('moduloCarrossel').style.display = 'flex';
-    renderizarPaginaCarrossel();
-}
-
-function pararCarrossel() {
-    carrosselAtivo = false;
-    atualizarSetasLateraisCarrossel();
-    pausarTimerCarrossel();
+    return produtosLoteVitrine;
 }
 
 function obterProdutosFiltradosCarrossel() {
-    const hCod = headers.find(h => h.includes('Cód') || h.toLowerCase().includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.includes('Desc') || h.toLowerCase().includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.includes('Marca') || h.toLowerCase().includes('marca')) || headers[2];
+    const hCod =
+        headers.find(cabecalho =>
+            String(cabecalho || "").includes("Cód") ||
+            String(cabecalho || "")
+                .toLowerCase()
+                .includes("codigo")
+        ) ||
+        headers[0];
 
-    const camposPesquisa = [
-        hCod,
-        hDesc,
-        hMarca
-    ].filter(Boolean);
+    const hDesc =
+        headers.find(cabecalho =>
+            String(cabecalho || "").includes("Desc") ||
+            String(cabecalho || "")
+                .toLowerCase()
+                .includes("nome")
+        ) ||
+        headers[1];
+
+    const hMarca =
+        headers.find(cabecalho =>
+            String(cabecalho || "")
+                .toLowerCase()
+                .includes("marca")
+        ) ||
+        headers[2];
 
     return ordenarProdutosPorPesquisa(
         obterBaseProdutosCarrossel(),
         termoPesquisaCarrossel,
-        camposPesquisa
+        [hCod, hDesc, hMarca].filter(Boolean)
     );
+}
+
+function atualizarControlesCarrossel(
+    existePesquisa,
+    totalPaginas
+) {
+    const controles =
+        document.querySelector(
+            ".carrossel-controles-inferior"
+        );
+
+    if (!controles) return;
+
+    const botoes =
+        controles.querySelectorAll("button");
+
+    const botaoAnterior = botoes[0];
+    const botaoProxima = botoes[1];
+
+    if (botaoAnterior) {
+        botaoAnterior.disabled =
+            !existePesquisa &&
+            indiceHistoricoLoteVitrine <= 0;
+    }
+
+    if (botaoProxima) {
+        botaoProxima.disabled =
+            existePesquisa &&
+            totalPaginas <= 1;
+    }
 }
 
 function renderizarPaginaCarrossel() {
     try {
-        aplicarEstiloVitrineResponsiva();
-        // Sempre limpa o temporizador primeiro
+        aplicarEstiloVitrineEstavel();
         pausarTimerCarrossel();
 
-    // O conteúdo continua sendo renderizado durante pesquisa e hover.
-    // Apenas a troca automática de página fica pausada.
-    if (!carrosselAtivo) return;
+        if (!carrosselAtivo) return;
 
-    const hCod = headers.find(h => h.includes('Cód') || h.includes('codigo')) || headers[0];
-    const hDesc = headers.find(h => h.includes('Desc') || h.includes('nome')) || headers[1];
-    const hMarca = headers.find(h => h.includes('Marca')) || headers[2];
-    const hPreco = headers.find(h => h.includes('Preço') || h.includes('venda')) || headers[3];
-    const hFoto = headers.find(h => h.includes('Foto') || h.includes('imagem')) || '';
+        itensPorPagina =
+            obterQuantidadeProdutosVitrine();
 
-    const produtosFiltrados = obterProdutosFiltradosCarrossel();
+        const hCod =
+            headers.find(cabecalho =>
+                String(cabecalho || "").includes("Cód") ||
+                String(cabecalho || "")
+                    .toLowerCase()
+                    .includes("codigo")
+            ) ||
+            headers[0];
 
-    const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
-    if (indicePaginaCarrossel >= totalPaginas && totalPaginas > 0) indicePaginaCarrossel = 0;
+        const hDesc =
+            headers.find(cabecalho =>
+                String(cabecalho || "").includes("Desc") ||
+                String(cabecalho || "")
+                    .toLowerCase()
+                    .includes("nome")
+            ) ||
+            headers[1];
 
-    const inicio = indicePaginaCarrossel * itensPorPagina;
-    const fim = inicio + itensPorPagina;
-    const produtosPagina = produtosFiltrados.slice(inicio, fim);
+        const hMarca =
+            headers.find(cabecalho =>
+                String(cabecalho || "")
+                    .toLowerCase()
+                    .includes("marca")
+            ) ||
+            headers[2];
 
-    const assinaturaPagina = JSON.stringify({
-        pagina: indicePaginaCarrossel,
-        itensPorPagina,
-        termo: termoPesquisaCarrossel,
-        total: produtosFiltrados.length,
-        codigos: produtosPagina.map(produto => String(produto[hCod] || "")),
-        fotos: produtosPagina.map(produto => String(hFoto ? produto[hFoto] || "" : ""))
-    });
+        const hPreco =
+            headers.find(cabecalho =>
+                String(cabecalho || "").includes("Preço") ||
+                String(cabecalho || "")
+                    .toLowerCase()
+                    .includes("venda")
+            ) ||
+            headers[3];
 
-    if (assinaturaPagina === assinaturaUltimaPaginaCarrossel) {
-        return;
-    }
+        const hFoto =
+            headers.find(cabecalho =>
+                String(cabecalho || "").includes("Foto") ||
+                String(cabecalho || "")
+                    .toLowerCase()
+                    .includes("imagem")
+            ) ||
+            "";
 
-    let html = '';
-    if (produtosPagina.length === 0) {
-        const mensagem = erroCarregamentoPlanilha
-            ? `Erro ao carregar a planilha: ${erroCarregamentoPlanilha}`
-            : termoPesquisaCarrossel
-                ? 'Nenhum produto encontrado para esta pesquisa.'
-                : 'Nenhum produto foi encontrado na aba produto.';
+        const existePesquisa =
+            String(
+                termoPesquisaCarrossel || ""
+            ).trim() !== "";
 
-        const complementoPesquisa = termoPesquisaCarrossel
-            ? `<p class="carrossel-sem-resultado-dica">
-                   Confira a escrita ou tente outra combinação de palavras.<br>
-                   Ex.: <strong>cimento votoran</strong>, <strong>piso branco</strong> ou o código do produto.
-               </p>
-               <button class="btn-controle-carrossel" type="button"
-                   onclick="document.getElementById('pesquisaCarrossel').value=''; termoPesquisaCarrossel=''; selecionarNovoLoteVitrine(); renderizarPaginaCarrossel();">
-                   Limpar pesquisa
-               </button>`
-            : `<button class="btn-controle-carrossel" onclick="recarregarProdutos()">Tentar novamente</button>`;
+        const produtosFiltrados =
+            obterProdutosFiltradosCarrossel();
 
-        html = `<div class="carrossel-sem-resultado">
-            <div class="carrossel-sem-resultado-icone">${termoPesquisaCarrossel ? '😕' : '📦'}</div>
-            <p>${mensagem}</p>
-            ${complementoPesquisa}
-        </div>`;
-    } else {
-        produtosPagina.forEach(p => {
-            const fotoHtml = gerarImagemCarrossel(
-                hFoto ? p[hFoto] : "",
-                p[hDesc] || "Produto"
+        const totalPaginas =
+            existePesquisa
+                ? Math.max(
+                    1,
+                    Math.ceil(
+                        produtosFiltrados.length /
+                        itensPorPagina
+                    )
+                )
+                : 1;
+
+        if (existePesquisa) {
+            indicePaginaCarrossel = Math.max(
+                0,
+                Math.min(
+                    indicePaginaCarrossel,
+                    totalPaginas - 1
+                )
+            );
+        } else {
+            indicePaginaCarrossel = 0;
+        }
+
+        const inicio =
+            existePesquisa
+                ? indicePaginaCarrossel *
+                  itensPorPagina
+                : 0;
+
+        const produtosPagina =
+            produtosFiltrados.slice(
+                inicio,
+                inicio + itensPorPagina
             );
 
-            html += `
-            <div class="card-quadrado-vitrine" 
-                 onclick='iniciarFluxoCliente(${JSON.stringify(String(p[hCod] || ""))}, ${JSON.stringify(String(p[hDesc] || ""))})' 
-                 onmouseenter="pausarCarrosselPorHover()" 
-                 onmouseleave="retomarCarrosselAposHover(this)">
-                <div class="vitrine-foto-container">${fotoHtml}</div>
-                <div class="vitrine-info">
-                    <div class="vitrine-marca">${p[hMarca] || ''}</div>
-                    <div class="vitrine-descricao">${p[hDesc] || ''}</div>
-                </div>
-                <div class="vitrine-rodape-preco">
-                    <span class="vitrine-codigo">Cód: ${p[hCod] || ''}</span>
-                    <div class="vitrine-precos">
-                        <div class="vitrine-preco-prazo">
-                            <small>Preço a prazo</small>
-                            <strong>${formatarMoeda(moedaParaNumero(p[hPreco]))}</strong>
-                        </div>
-                        <div class="vitrine-preco-vista">
-                            <small>À vista (4,9% de desconto)</small>
-                            <strong>${formatarMoeda(calcularPrecoAVista(p[hPreco]))}</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        const assinatura = JSON.stringify({
+            pesquisa: termoPesquisaCarrossel,
+            pagina: indicePaginaCarrossel,
+            historico: indiceHistoricoLoteVitrine,
+            quantidade: itensPorPagina,
+            codigos: produtosPagina.map(
+                produto =>
+                    String(
+                        produto[hCod] || ""
+                    )
+            ),
+            fotos: produtosPagina.map(
+                produto =>
+                    String(
+                        hFoto
+                            ? produto[hFoto] || ""
+                            : ""
+                    )
+            )
         });
-    }
 
-    document.getElementById('containerGradeVitrine').innerHTML = html;
-    configurarErrosImagemCarrossel();
-    assinaturaUltimaPaginaCarrossel = assinaturaPagina;
-        atualizarSetasLateraisCarrossel();
+        if (
+            assinatura ===
+            assinaturaUltimaPaginaCarrossel
+        ) {
+            atualizarControlesCarrossel(
+                existePesquisa,
+                totalPaginas
+            );
 
-    document.getElementById('contadorVitrine').textContent = 
-        produtosFiltrados.length === 0
-            ? 'Nenhum resultado'
-            : termoPesquisaCarrossel
-                ? `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} encontrados)`
-                : `${produtosPagina.length} produtos nesta visualização`;
+            return;
+        }
 
-    // A vitrine não troca automaticamente.
+        let html = "";
+
+        if (!produtosPagina.length) {
+            const mensagem =
+                erroCarregamentoPlanilha
+                    ? `Erro ao carregar a planilha: ${escaparHtmlCarrossel(erroCarregamentoPlanilha)}`
+                    : existePesquisa
+                        ? "Nenhum produto encontrado para esta pesquisa."
+                        : "Nenhum produto foi encontrado na aba produto.";
+
+            html = `
+                <div class="carrossel-sem-resultado">
+                    <div class="carrossel-sem-resultado-icone">
+                        ${existePesquisa ? "😕" : "📦"}
+                    </div>
+
+                    <p>${mensagem}</p>
+
+                    ${
+                        existePesquisa
+                            ? `
+                                <button
+                                    class="btn-controle-carrossel"
+                                    type="button"
+                                    onclick="limparPesquisaCarrosselEstavel()"
+                                >
+                                    Limpar pesquisa
+                                </button>
+                            `
+                            : `
+                                <button
+                                    class="btn-controle-carrossel"
+                                    type="button"
+                                    onclick="recarregarProdutos()"
+                                >
+                                    Tentar novamente
+                                </button>
+                            `
+                    }
+                </div>
+            `;
+        } else {
+            produtosPagina.forEach(produto => {
+                const codigo =
+                    String(produto[hCod] || "");
+
+                const descricao =
+                    String(produto[hDesc] || "");
+
+                const marca =
+                    String(produto[hMarca] || "");
+
+                const foto =
+                    hFoto
+                        ? produto[hFoto]
+                        : "";
+
+                html += `
+                    <article
+                        class="card-quadrado-vitrine"
+                        tabindex="0"
+                        role="button"
+                        aria-label="Selecionar ${escaparHtmlCarrossel(descricao)}"
+                        onclick='iniciarFluxoCliente(
+                            ${JSON.stringify(codigo)},
+                            ${JSON.stringify(descricao)}
+                        )'
+                        onkeydown='
+                            if (
+                                event.key === "Enter" ||
+                                event.key === " "
+                            ) {
+                                event.preventDefault();
+
+                                iniciarFluxoCliente(
+                                    ${JSON.stringify(codigo)},
+                                    ${JSON.stringify(descricao)}
+                                );
+                            }
+                        '
+                    >
+                        <div class="vitrine-foto-container">
+                            ${gerarImagemCarrossel(
+                                foto,
+                                descricao
+                            )}
+                        </div>
+
+                        <div class="vitrine-info">
+                            <div class="vitrine-marca">
+                                ${escaparHtmlCarrossel(marca)}
+                            </div>
+
+                            <div class="vitrine-descricao">
+                                ${escaparHtmlCarrossel(descricao)}
+                            </div>
+                        </div>
+
+                        <div class="vitrine-rodape-preco">
+                            <span class="vitrine-codigo">
+                                Cód: ${escaparHtmlCarrossel(codigo)}
+                            </span>
+
+                            <div class="vitrine-precos">
+                                <div class="vitrine-preco-prazo">
+                                    <small>Preço a prazo</small>
+
+                                    <strong>
+                                        ${formatarMoeda(
+                                            moedaParaNumero(
+                                                produto[hPreco]
+                                            )
+                                        )}
+                                    </strong>
+                                </div>
+
+                                <div class="vitrine-preco-vista">
+                                    <small>
+                                        À vista (4,9% de desconto)
+                                    </small>
+
+                                    <strong>
+                                        ${formatarMoeda(
+                                            calcularPrecoAVista(
+                                                produto[hPreco]
+                                            )
+                                        )}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            });
+        }
+
+        const container =
+            document.getElementById(
+                "containerGradeVitrine"
+            );
+
+        if (container) {
+            container.innerHTML = html;
+        }
+
+        configurarErrosImagemCarrossel();
+
+        assinaturaUltimaPaginaCarrossel =
+            assinatura;
+
+        const contador =
+            document.getElementById(
+                "contadorVitrine"
+            );
+
+        if (contador) {
+            if (!produtosFiltrados.length) {
+                contador.textContent =
+                    "Nenhum resultado";
+            } else if (existePesquisa) {
+                contador.textContent =
+                    `Página ${indicePaginaCarrossel + 1} ` +
+                    `de ${totalPaginas} ` +
+                    `(${produtosFiltrados.length} encontrados)`;
+            } else {
+                contador.textContent =
+                    `${produtosPagina.length} produtos nesta visualização`;
+            }
+        }
+
+        atualizarControlesCarrossel(
+            existePesquisa,
+            totalPaginas
+        );
     } catch (erro) {
-        console.error("Erro ao montar a vitrine:", erro);
+        console.error(
+            "Erro ao montar a vitrine:",
+            erro
+        );
 
-        if (typeof mostrarEstadoCarrossel === "function") {
+        if (
+            typeof mostrarEstadoCarrossel ===
+            "function"
+        ) {
             mostrarEstadoCarrossel(
-                "Etapa 3/3 falhou — erro ao montar os produtos",
-                erro && erro.message ? erro.message : "Erro desconhecido ao renderizar a vitrine.",
+                "Não foi possível montar os produtos",
+                erro && erro.message
+                    ? erro.message
+                    : "Erro desconhecido ao renderizar a vitrine.",
                 true
             );
         }
     }
 }
 
-function pausarCarrosselPorHover() {
-    pausaPorHover = true;
-    pausarTimerCarrossel();
-}
+function limparPesquisaCarrosselEstavel() {
+    termoPesquisaCarrossel = "";
+    indicePaginaCarrossel = 0;
+    assinaturaUltimaPaginaCarrossel = "";
 
-function retomarCarrosselAposHover(card) {
-    if (card && card.classList.contains('ativo-clique')) return;
-    pausaPorHover = false;
-}
+    const campo =
+        document.getElementById(
+            "pesquisaCarrossel"
+        );
 
-function alternarDestaqueCard(card) {
-    document.querySelectorAll('.card-quadrado-vitrine.ativo-clique').forEach(outro => {
-        if (outro !== card) outro.classList.remove('ativo-clique');
-    });
-
-    card.classList.toggle('ativo-clique');
-    pausaPorHover = card.classList.contains('ativo-clique');
-
-    if (!pausaPorHover) renderizarPaginaCarrossel();
-}
-
-async function recarregarProdutos() {
-    const botoes = document.querySelectorAll(
-        '.carrossel-estado-carregamento button, .carrossel-sem-resultado button'
-    );
-
-    botoes.forEach(botao => {
-        botao.disabled = true;
-        botao.textContent = 'Carregando...';
-    });
-
-    carrosselAtivo = true;
-    const carregou = await carregarDadosPlanilha();
-
-    if (carregou) {
-        pausaPorHover = false;
-        selecionarNovoLoteVitrine();
-        renderizarPaginaCarrossel();
+    if (campo) {
+        campo.value = "";
     }
+
+    selecionarNovoLoteVitrine();
+    renderizarPaginaCarrossel();
 }
 
 function mudarSlideCarrossel(direcao) {
     if (!carrosselAtivo) return;
 
     pausarTimerCarrossel();
-    pausaPorHover = false;
 
     const existePesquisa =
-        String(termoPesquisaCarrossel || "").trim() !== "";
+        String(
+            termoPesquisaCarrossel || ""
+        ).trim() !== "";
 
     if (existePesquisa) {
-        const produtosAtuais = obterProdutosFiltradosCarrossel();
-        const totalPaginas = Math.max(
-            1,
-            Math.ceil(produtosAtuais.length / obterQuantidadeProdutosVitrine())
-        );
+        const produtosAtuais =
+            obterProdutosFiltradosCarrossel();
+
+        const totalPaginas =
+            Math.max(
+                1,
+                Math.ceil(
+                    produtosAtuais.length /
+                    obterQuantidadeProdutosVitrine()
+                )
+            );
 
         indicePaginaCarrossel =
-            (indicePaginaCarrossel + direcao + totalPaginas) % totalPaginas;
+            (
+                indicePaginaCarrossel +
+                direcao +
+                totalPaginas
+            ) % totalPaginas;
+    } else if (direcao > 0) {
+        if (
+            indiceHistoricoLoteVitrine <
+            historicoLotesVitrine.length - 1
+        ) {
+            indiceHistoricoLoteVitrine += 1;
 
-        assinaturaUltimaPaginaCarrossel = "";
-        renderizarPaginaCarrossel();
-        return;
-    }
-
-    if (direcao > 0) {
-        if (indiceHistoricoLoteVitrine < historicoLotesVitrine.length - 1) {
-            indiceHistoricoLoteVitrine++;
             produtosLoteVitrine =
-                historicoLotesVitrine[indiceHistoricoLoteVitrine];
+                historicoLotesVitrine[
+                    indiceHistoricoLoteVitrine
+                ];
         } else {
             selecionarNovoLoteVitrine();
         }
+
+        indicePaginaCarrossel = 0;
     } else if (
         direcao < 0 &&
         indiceHistoricoLoteVitrine > 0
     ) {
-        indiceHistoricoLoteVitrine--;
+        indiceHistoricoLoteVitrine -= 1;
+
         produtosLoteVitrine =
-            historicoLotesVitrine[indiceHistoricoLoteVitrine];
+            historicoLotesVitrine[
+                indiceHistoricoLoteVitrine
+            ];
+
+        indicePaginaCarrossel = 0;
     }
 
-    indicePaginaCarrossel = 0;
     assinaturaUltimaPaginaCarrossel = "";
     renderizarPaginaCarrossel();
 
-    atualizarSetasLateraisCarrossel();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const grade =
+        document.querySelector(
+            ".carrossel-grade-container"
+        );
+
+    if (grade) {
+        grade.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
 }
+
+function pausarCarrosselPorHover() {
+    pausarTimerCarrossel();
+}
+
+function retomarCarrosselAposHover() {
+    // A vitrine não se movimenta automaticamente.
+}
+
+function alternarDestaqueCard() {
+    // Mantido somente para compatibilidade.
+}
+
+async function recarregarProdutos() {
+    const botoes =
+        document.querySelectorAll(
+            ".carrossel-estado-carregamento button, " +
+            ".carrossel-sem-resultado button"
+        );
+
+    botoes.forEach(botao => {
+        botao.disabled = true;
+        botao.textContent = "Carregando...";
+    });
+
+    carrosselAtivo = true;
+
+    const carregou =
+        await carregarDadosPlanilha();
+
+    if (carregou) {
+        produtosLoteVitrine = [];
+        historicoLotesVitrine = [];
+        indiceHistoricoLoteVitrine = -1;
+        codigosRecentesVitrine = [];
+        indicePaginaCarrossel = 0;
+        assinaturaUltimaPaginaCarrossel = "";
+
+        selecionarNovoLoteVitrine();
+        renderizarPaginaCarrossel();
+    }
+}
+
+function iniciarCarrossel() {
+    carrosselAtivo = true;
+    pausarTimerCarrossel();
+    aplicarEstiloVitrineEstavel();
+
+    itensPorPagina =
+        obterQuantidadeProdutosVitrine();
+
+    if (!produtosLoteVitrine.length) {
+        selecionarNovoLoteVitrine();
+    }
+
+    const modulo =
+        document.getElementById(
+            "moduloCarrossel"
+        );
+
+    if (modulo) {
+        modulo.style.display = "flex";
+    }
+
+    renderizarPaginaCarrossel();
+}
+
+function pararCarrossel() {
+    carrosselAtivo = false;
+    pausarTimerCarrossel();
+}
+
+function abrirPainelAdministrativo() {
+    pararCarrossel();
+
+    document.getElementById(
+        "moduloCarrossel"
+    ).style.display = "none";
+
+    document.getElementById(
+        "moduloAdministrativo"
+    ).style.display = "block";
+}
+
+function voltarParaCarrossel() {
+    document.getElementById(
+        "moduloAdministrativo"
+    ).style.display = "none";
+
+    document.getElementById(
+        "moduloCarrossel"
+    ).style.display = "flex";
+
+    iniciarCarrossel();
+}
+
 function abrirInstrucoesCarrossel() {
-    const telaProdutos = document.getElementById('telaProdutosCarrossel');
-    const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
+    const telaProdutos =
+        document.getElementById(
+            "telaProdutosCarrossel"
+        );
 
-    if (!telaProdutos || !telaInstrucoes) return;
+    const telaInstrucoes =
+        document.getElementById(
+            "telaInstrucoesCarrossel"
+        );
 
-    telaProdutos.classList.remove('ativa');
-    telaProdutos.setAttribute('aria-hidden', 'true');
+    if (
+        !telaProdutos ||
+        !telaInstrucoes
+    ) {
+        return;
+    }
 
-    telaInstrucoes.classList.add('ativa');
-    telaInstrucoes.setAttribute('aria-hidden', 'false');
+    telaProdutos.classList.remove("ativa");
+    telaProdutos.setAttribute(
+        "aria-hidden",
+        "true"
+    );
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    telaInstrucoes.classList.add("ativa");
+    telaInstrucoes.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
 
 function voltarAosProdutosCarrossel() {
-    const telaProdutos = document.getElementById('telaProdutosCarrossel');
-    const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
+    const telaProdutos =
+        document.getElementById(
+            "telaProdutosCarrossel"
+        );
 
-    if (!telaProdutos || !telaInstrucoes) return;
+    const telaInstrucoes =
+        document.getElementById(
+            "telaInstrucoesCarrossel"
+        );
 
-    telaInstrucoes.classList.remove('ativa');
-    telaInstrucoes.setAttribute('aria-hidden', 'true');
-
-    telaProdutos.classList.add('ativa');
-    telaProdutos.setAttribute('aria-hidden', 'false');
-
-    renderizarPaginaCarrossel();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    setTimeout(() => {
-        const campoPesquisa = document.getElementById('pesquisaCarrossel');
-        if (campoPesquisa) campoPesquisa.focus();
-    }, 350);
-}
-
-
-
-document.addEventListener("visibilitychange", function() {
-    if (document.hidden) {
-        pausarTimerCarrossel();
+    if (
+        !telaProdutos ||
+        !telaInstrucoes
+    ) {
+        return;
     }
-});
 
+    telaInstrucoes.classList.remove("ativa");
+    telaInstrucoes.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    telaProdutos.classList.add("ativa");
+    telaProdutos.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    assinaturaUltimaPaginaCarrossel = "";
+    renderizarPaginaCarrossel();
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
 
 function renovarVitrineAleatoria() {
     pausarTimerCarrossel();
 
     termoPesquisaCarrossel = "";
+    indicePaginaCarrossel = 0;
 
-    const campoPesquisa = document.getElementById("pesquisaCarrossel");
-    if (campoPesquisa) campoPesquisa.value = "";
+    const campo =
+        document.getElementById(
+            "pesquisaCarrossel"
+        );
+
+    if (campo) {
+        campo.value = "";
+    }
 
     selecionarNovoLoteVitrine();
     renderizarPaginaCarrossel();
 }
 
-document.addEventListener('keydown', function(evento) {
-    if (evento.key !== 'Escape') return;
-
-    const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
-    if (telaInstrucoes && telaInstrucoes.classList.contains('ativa')) {
-        voltarAosProdutosCarrossel();
+document.addEventListener(
+    "visibilitychange",
+    () => {
+        if (document.hidden) {
+            pausarTimerCarrossel();
+        }
     }
-});
+);
 
-window.addEventListener("resize", () => {
-        const novaQuantidade = obterQuantidadeProdutosVitrine();
+document.addEventListener(
+    "keydown",
+    evento => {
+        if (evento.key !== "Escape") {
+            return;
+        }
 
-        aplicarEstiloVitrineResponsiva();
+        const telaInstrucoes =
+            document.getElementById(
+                "telaInstrucoesCarrossel"
+            );
 
-        if (novaQuantidade !== itensPorPagina) {
-            itensPorPagina = novaQuantidade;
+        if (
+            telaInstrucoes &&
+            telaInstrucoes.classList.contains(
+                "ativa"
+            )
+        ) {
+            voltarAosProdutosCarrossel();
+        }
+    }
+);
+
+window.addEventListener(
+    "resize",
+    () => {
+        const novaQuantidade =
+            obterQuantidadeProdutosVitrine();
+
+        aplicarEstiloVitrineEstavel();
+
+        if (
+            novaQuantidade !==
+            quantidadeAtualVitrine
+        ) {
+            quantidadeAtualVitrine =
+                novaQuantidade;
+
+            itensPorPagina =
+                novaQuantidade;
+
             produtosLoteVitrine = [];
             historicoLotesVitrine = [];
             indiceHistoricoLoteVitrine = -1;
@@ -840,4 +1162,5 @@ window.addEventListener("resize", () => {
             selecionarNovoLoteVitrine();
             renderizarPaginaCarrossel();
         }
-    });
+    }
+);
