@@ -26,10 +26,25 @@ function escaparHtmlCarrossel(valor) {
 }
 
 function obterUrlImagemCarrossel(valor) {
+    const texto = String(valor == null ? "" : valor).trim();
+
+    if (!texto) return "";
+
+    const superior = texto.toUpperCase();
+
+    if (
+        superior === "NÃO" ||
+        superior === "NAO" ||
+        superior === "SEM FOTO" ||
+        superior === "SEM IMAGEM"
+    ) {
+        return "";
+    }
+
     try {
-        return resolverUrlImagem(valor);
+        return resolverUrlImagem(texto);
     } catch (erro) {
-        console.warn("Imagem inválida:", valor, erro);
+        console.warn("Imagem inválida:", texto, erro);
         return "";
     }
 }
@@ -142,14 +157,16 @@ function selecionarNovoLoteVitrine() {
         if (!hFoto) return false;
 
         const valor = String(produto[hFoto] || "").trim();
-
         if (!valor) return false;
 
-        try {
-            return Boolean(resolverUrlImagem(valor));
-        } catch (erro) {
-            return false;
-        }
+        return ![
+            "NÃO",
+            "NAO",
+            "SEM FOTO",
+            "SEM IMAGEM",
+            "0",
+            "-"
+        ].includes(valor.toUpperCase());
     };
 
     const comFoto = embaralharProdutosCarrossel(
@@ -318,6 +335,167 @@ function aplicarEstiloVitrineResponsiva() {
     );
 }
 
+
+function garantirSetasLateraisCarrossel() {
+    if (document.getElementById("siclar-seta-carrossel-anterior")) {
+        atualizarSetasLateraisCarrossel();
+        return;
+    }
+
+    const estilo = document.createElement("style");
+    estilo.id = "siclar-setas-laterais-css";
+    estilo.textContent = `
+        /*
+          As setas ficam presas às laterais da tela e não dependem
+          da altura dos cards ou da rolagem da página.
+        */
+        .siclar-seta-lateral-carrossel {
+            position: fixed;
+            top: 50%;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 58px;
+            height: 92px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, .34);
+            border-radius: 16px;
+            background: rgba(15, 23, 42, .86);
+            color: #ffffff;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, .34);
+            font-size: 46px;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            translate: 0 -50%;
+            transition:
+                background .16s ease,
+                scale .16s ease,
+                opacity .16s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .siclar-seta-lateral-carrossel:hover,
+        .siclar-seta-lateral-carrossel:focus-visible {
+            background: rgba(234, 88, 12, .96);
+            scale: 1.06;
+            outline: 3px solid rgba(255, 255, 255, .78);
+            outline-offset: 3px;
+        }
+
+        .siclar-seta-lateral-carrossel:disabled {
+            opacity: .25;
+            cursor: default;
+            scale: 1;
+        }
+
+        #siclar-seta-carrossel-anterior {
+            left: 10px;
+        }
+
+        #siclar-seta-carrossel-proxima {
+            right: 10px;
+        }
+
+        /*
+          Os controles antigos do rodapé são escondidos.
+          As setas laterais passam a ser a navegação principal.
+        */
+        #moduloCarrossel .controles-carrossel,
+        #moduloCarrossel .carrossel-controles,
+        #moduloCarrossel .controles-vitrine,
+        #moduloCarrossel #controlesCarrossel,
+        #moduloCarrossel #controlesVitrine {
+            display: none !important;
+        }
+
+        @media (max-width: 720px) {
+            .siclar-seta-lateral-carrossel {
+                width: 46px;
+                height: 72px;
+                border-radius: 13px;
+                font-size: 36px;
+            }
+
+            #siclar-seta-carrossel-anterior {
+                left: 5px;
+            }
+
+            #siclar-seta-carrossel-proxima {
+                right: 5px;
+            }
+        }
+    `;
+
+    document.head.appendChild(estilo);
+
+    const anterior = document.createElement("button");
+    anterior.id = "siclar-seta-carrossel-anterior";
+    anterior.className = "siclar-seta-lateral-carrossel";
+    anterior.type = "button";
+    anterior.textContent = "‹";
+    anterior.title = "Visualização anterior";
+    anterior.setAttribute("aria-label", "Visualização anterior");
+    anterior.addEventListener("click", () => {
+        mudarSlideCarrossel(-1);
+        atualizarSetasLateraisCarrossel();
+    });
+
+    const proxima = document.createElement("button");
+    proxima.id = "siclar-seta-carrossel-proxima";
+    proxima.className = "siclar-seta-lateral-carrossel";
+    proxima.type = "button";
+    proxima.textContent = "›";
+    proxima.title = "Próxima visualização";
+    proxima.setAttribute("aria-label", "Próxima visualização");
+    proxima.addEventListener("click", () => {
+        mudarSlideCarrossel(1);
+        atualizarSetasLateraisCarrossel();
+    });
+
+    document.body.appendChild(anterior);
+    document.body.appendChild(proxima);
+
+    atualizarSetasLateraisCarrossel();
+}
+
+function atualizarSetasLateraisCarrossel() {
+    const anterior =
+        document.getElementById("siclar-seta-carrossel-anterior");
+
+    const proxima =
+        document.getElementById("siclar-seta-carrossel-proxima");
+
+    if (!anterior || !proxima) return;
+
+    const modulo = document.getElementById("moduloCarrossel");
+    const moduloVisivel =
+        carrosselAtivo &&
+        modulo &&
+        getComputedStyle(modulo).display !== "none";
+
+    anterior.style.display = moduloVisivel ? "flex" : "none";
+    proxima.style.display = moduloVisivel ? "flex" : "none";
+
+    if (!moduloVisivel) return;
+
+    const existePesquisa =
+        String(termoPesquisaCarrossel || "").trim() !== "";
+
+    /*
+      Na pesquisa, a navegação é circular.
+      Na vitrine normal, a seta esquerda fica desativada
+      enquanto ainda não existe uma visualização anterior.
+    */
+    anterior.disabled =
+        !existePesquisa &&
+        indiceHistoricoLoteVitrine <= 0;
+
+    proxima.disabled = false;
+}
+
 function abrirPainelAdministrativo() {
     pararCarrossel();
     document.getElementById('moduloCarrossel').style.display = 'none';
@@ -332,6 +510,7 @@ function voltarParaCarrossel() {
 
 function iniciarCarrossel() {
     aplicarEstiloVitrineResponsiva();
+    garantirSetasLateraisCarrossel();
     carrosselAtivo = true;
     itensPorPagina = obterQuantidadeProdutosVitrine();
     pausarTimerCarrossel();
@@ -346,6 +525,7 @@ function iniciarCarrossel() {
 
 function pararCarrossel() {
     carrosselAtivo = false;
+    atualizarSetasLateraisCarrossel();
     pausarTimerCarrossel();
 }
 
@@ -466,6 +646,7 @@ function renderizarPaginaCarrossel() {
     document.getElementById('containerGradeVitrine').innerHTML = html;
     configurarErrosImagemCarrossel();
     assinaturaUltimaPaginaCarrossel = assinaturaPagina;
+        atualizarSetasLateraisCarrossel();
 
     document.getElementById('contadorVitrine').textContent = 
         produtosFiltrados.length === 0
@@ -574,6 +755,7 @@ function mudarSlideCarrossel(direcao) {
     assinaturaUltimaPaginaCarrossel = "";
     renderizarPaginaCarrossel();
 
+    atualizarSetasLateraisCarrossel();
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function abrirInstrucoesCarrossel() {
