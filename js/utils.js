@@ -1,12 +1,57 @@
 "use strict";
 
 function resolverUrlImagem(valFoto) {
-    if (!valFoto) return '';
-    let limpa = valFoto.trim();
-    if (limpa.toUpperCase() === 'NÃO' || limpa.toUpperCase() === 'NAO') return '';
-    if (limpa.startsWith('http')) return limpa;
-    let base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    return base + (limpa.startsWith('imagens/') ? '' : 'imagens/') + limpa;
+    const valor = String(valFoto == null ? "" : valFoto).trim();
+
+    if (!valor) return "";
+
+    const superior = valor.toUpperCase();
+
+    if (
+        superior === "NÃO" ||
+        superior === "NAO" ||
+        superior === "SEM FOTO" ||
+        superior === "SEM IMAGEM" ||
+        superior === "0" ||
+        superior === "-"
+    ) {
+        return "";
+    }
+
+    if (
+        valor.startsWith("data:") ||
+        valor.startsWith("blob:") ||
+        /^https?:\/\//i.test(valor)
+    ) {
+        return valor;
+    }
+
+    /*
+      Fotos automáticas antigas como imagens/1234.png são ignoradas.
+      Somente fotos editadas manualmente, com nome descritivo, são exibidas.
+    */
+    const caminho = valor
+        .replace(/\\/g, "/")
+        .replace(/^\.\//, "");
+
+    if (!caminho.toLowerCase().startsWith("imagens/")) {
+        return "";
+    }
+
+    const nomeArquivo = caminho.split("/").pop() || "";
+    const nomeSemExtensao = nomeArquivo.replace(/\.[^.]+$/, "");
+
+    if (!nomeArquivo || /^\d+$/.test(nomeSemExtensao)) {
+        return "";
+    }
+
+    const base =
+        window.location.href.substring(
+            0,
+            window.location.href.lastIndexOf("/") + 1
+        );
+
+    return base + caminho;
 }
 
 function normalizarTextoPesquisa(valor) {

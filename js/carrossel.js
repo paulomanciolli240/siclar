@@ -26,25 +26,10 @@ function escaparHtmlCarrossel(valor) {
 }
 
 function obterUrlImagemCarrossel(valor) {
-    const texto = String(valor == null ? "" : valor).trim();
-
-    if (!texto) return "";
-
-    const superior = texto.toUpperCase();
-
-    if (
-        superior === "NÃO" ||
-        superior === "NAO" ||
-        superior === "SEM FOTO" ||
-        superior === "SEM IMAGEM"
-    ) {
-        return "";
-    }
-
     try {
-        return resolverUrlImagem(texto);
+        return resolverUrlImagem(valor);
     } catch (erro) {
-        console.warn("Imagem inválida:", texto, erro);
+        console.warn("Imagem inválida:", valor, erro);
         return "";
     }
 }
@@ -85,19 +70,28 @@ function configurarErrosImagemCarrossel() {
 
 function pausarTimerCarrossel() {
     if (timerCarrossel) {
-        pausarTimerCarrossel();
+        clearTimeout(timerCarrossel);
         timerCarrossel = null;
     }
 }
 
 
 
-const QUANTIDADE_LOTE_VITRINE = 24;
+function obterQuantidadeProdutosVitrine() {
+    const largura = window.innerWidth || document.documentElement.clientWidth || 1200;
+
+    if (largura >= 1600) return 5;
+    if (largura >= 900) return 4;
+    if (largura >= 600) return 2;
+    return 1;
+}
 const MAXIMO_CODIGOS_RECENTES = 240;
 
 let produtosLoteVitrine = [];
 let codigosRecentesVitrine = [];
-let cicloAutomaticoConcluido = false;
+let historicoLotesVitrine = [];
+let indiceHistoricoLoteVitrine = -1;
+let cicloAutomaticoConcluido = true;
 
 function embaralharProdutosCarrossel(lista) {
     const copia = Array.isArray(lista) ? lista.slice() : [];
@@ -120,11 +114,14 @@ function obterCabecalhoCodigoCarrossel() {
 function selecionarNovoLoteVitrine() {
     const base = Array.isArray(dadosGlobais) ? dadosGlobais : [];
     const hCod = obterCabecalhoCodigoCarrossel();
+    const hFoto = headers.find(h =>
+        String(h || "").includes("Foto") ||
+        String(h || "").toLowerCase().includes("imagem")
+    ) || "";
 
     if (base.length === 0) {
         produtosLoteVitrine = [];
         indicePaginaCarrossel = 0;
-        cicloAutomaticoConcluido = false;
         assinaturaUltimaPaginaCarrossel = "";
         return;
     }
@@ -136,16 +133,48 @@ function selecionarNovoLoteVitrine() {
         return codigo && !recentes.has(codigo);
     });
 
-    // Quando quase todo o catálogo já foi exibido, libera novamente os antigos.
-    if (candidatos.length < QUANTIDADE_LOTE_VITRINE) {
+    if (candidatos.length < obterQuantidadeProdutosVitrine()) {
         codigosRecentesVitrine = [];
         candidatos = base.slice();
     }
 
-    produtosLoteVitrine = embaralharProdutosCarrossel(candidatos)
-        .slice(0, QUANTIDADE_LOTE_VITRINE);
+    const possuiFotoDeclarada = produto => {
+        if (!hFoto) return false;
 
-    const novosCodigos = produtosLoteVitrine
+        const valor = String(produto[hFoto] || "").trim();
+
+        if (!valor) return false;
+
+        try {
+            return Boolean(resolverUrlImagem(valor));
+        } catch (erro) {
+            return false;
+        }
+    };
+
+    const comFoto = embaralharProdutosCarrossel(
+        candidatos.filter(possuiFotoDeclarada)
+    );
+
+    const semFoto = embaralharProdutosCarrossel(
+        candidatos.filter(produto => !possuiFotoDeclarada(produto))
+    );
+
+    const novoLote = [...comFoto, ...semFoto]
+        .slice(0, obterQuantidadeProdutosVitrine());
+
+    if (indiceHistoricoLoteVitrine < historicoLotesVitrine.length - 1) {
+        historicoLotesVitrine = historicoLotesVitrine.slice(
+            0,
+            indiceHistoricoLoteVitrine + 1
+        );
+    }
+
+    historicoLotesVitrine.push(novoLote);
+    indiceHistoricoLoteVitrine = historicoLotesVitrine.length - 1;
+    produtosLoteVitrine = novoLote;
+
+    const novosCodigos = novoLote
         .map(produto => String(produto[hCod] || "").trim())
         .filter(Boolean);
 
@@ -155,10 +184,8 @@ function selecionarNovoLoteVitrine() {
     ].slice(-MAXIMO_CODIGOS_RECENTES);
 
     indicePaginaCarrossel = 0;
-    cicloAutomaticoConcluido = false;
     assinaturaUltimaPaginaCarrossel = "";
 }
-
 function obterBaseProdutosCarrossel() {
     const existePesquisa =
         String(termoPesquisaCarrossel || "").trim() !== "";
@@ -175,12 +202,120 @@ function obterBaseProdutosCarrossel() {
 }
 
 function calcularItensPorPaginaCarrossel() {
-    const largura = window.innerWidth || document.documentElement.clientWidth || 360;
+    return obterQuantidadeProdutosVitrine();
+}
 
-    if (largura >= 1200) return 8;
-    if (largura >= 760) return 4;
-    if (largura >= 520) return 2;
-    return 1;
+
+function aplicarEstiloVitrineResponsiva() {
+    let style = document.getElementById("siclar-vitrine-responsiva-css");
+
+    if (!style) {
+        style = document.createElement("style");
+        style.id = "siclar-vitrine-responsiva-css";
+        style.textContent = `
+            #containerGradeVitrine {
+                display: grid !important;
+                grid-template-columns:
+                    repeat(
+                        var(--siclar-colunas-vitrine, 4),
+                        minmax(0, 1fr)
+                    ) !important;
+                grid-template-rows: 1fr !important;
+                align-items: stretch !important;
+                gap: 24px !important;
+                width: min(1280px, calc(100% - 48px)) !important;
+                margin: 28px auto 18px !important;
+                overflow: visible !important;
+            }
+
+            #containerGradeVitrine .card-quadrado-vitrine {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                min-height: 390px !important;
+                padding: 14px !important;
+                border-radius: 16px !important;
+                transform: none !important;
+                box-shadow: 0 10px 28px rgba(15, 23, 42, .18) !important;
+            }
+
+            #containerGradeVitrine .card-quadrado-vitrine:hover {
+                transform: translateY(-3px) !important;
+            }
+
+            #containerGradeVitrine .vitrine-foto-container {
+                height: 170px !important;
+                min-height: 170px !important;
+            }
+
+            /*
+              Os controles ficam logo abaixo da única linha de produtos.
+              Foram incluídos seletores alternativos para preservar
+              diferentes versões do HTML do SICLAR.
+            */
+            .controles-carrossel,
+            .carrossel-controles,
+            .controles-vitrine,
+            #controlesCarrossel,
+            #controlesVitrine {
+                position: relative !important;
+                z-index: 20 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 14px !important;
+                width: 100% !important;
+                margin: 8px auto 22px !important;
+                padding: 8px 16px !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            #contadorVitrine {
+                min-width: 230px !important;
+                text-align: center !important;
+            }
+
+            @media (max-width: 899px) {
+                #containerGradeVitrine {
+                    width: min(760px, calc(100% - 34px)) !important;
+                    gap: 20px !important;
+                }
+            }
+
+            @media (max-width: 599px) {
+                #containerGradeVitrine {
+                    width: min(390px, calc(100% - 26px)) !important;
+                    gap: 18px !important;
+                    margin-top: 20px !important;
+                }
+
+                #containerGradeVitrine .card-quadrado-vitrine {
+                    min-height: 370px !important;
+                }
+
+                #containerGradeVitrine .vitrine-foto-container {
+                    height: 185px !important;
+                    min-height: 185px !important;
+                }
+
+                #contadorVitrine {
+                    min-width: 0 !important;
+                    font-size: 12px !important;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    const quantidade = obterQuantidadeProdutosVitrine();
+
+    document.documentElement.style.setProperty(
+        "--siclar-colunas-vitrine",
+        String(quantidade)
+    );
 }
 
 function abrirPainelAdministrativo() {
@@ -196,9 +331,15 @@ function voltarParaCarrossel() {
 }
 
 function iniciarCarrossel() {
+    aplicarEstiloVitrineResponsiva();
     carrosselAtivo = true;
-    itensPorPagina = calcularItensPorPaginaCarrossel();
-    selecionarNovoLoteVitrine();
+    itensPorPagina = obterQuantidadeProdutosVitrine();
+    pausarTimerCarrossel();
+
+    if (!produtosLoteVitrine.length) {
+        selecionarNovoLoteVitrine();
+    }
+
     document.getElementById('moduloCarrossel').style.display = 'flex';
     renderizarPaginaCarrossel();
 }
@@ -228,6 +369,7 @@ function obterProdutosFiltradosCarrossel() {
 
 function renderizarPaginaCarrossel() {
     try {
+        aplicarEstiloVitrineResponsiva();
         // Sempre limpa o temporizador primeiro
         pausarTimerCarrossel();
 
@@ -260,12 +402,6 @@ function renderizarPaginaCarrossel() {
     });
 
     if (assinaturaPagina === assinaturaUltimaPaginaCarrossel) {
-        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden && !cicloAutomaticoConcluido) {
-            timerCarrossel = setTimeout(() => {
-                indicePaginaCarrossel++;
-                renderizarPaginaCarrossel();
-            }, 6000);
-        }
         return;
     }
 
@@ -336,15 +472,9 @@ function renderizarPaginaCarrossel() {
             ? 'Nenhum resultado'
             : termoPesquisaCarrossel
                 ? `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} encontrados)`
-                : `Página ${indicePaginaCarrossel + 1} de ${totalPaginas} (${produtosFiltrados.length} produtos na vitrine)`;
+                : `${produtosPagina.length} produtos nesta visualização`;
 
-    // Só agenda próxima troca se NÃO estiver pausado
-        if (!termoPesquisaCarrossel && !pausaPorHover && produtosFiltrados.length > 0 && !document.hidden && !cicloAutomaticoConcluido) {
-            timerCarrossel = setTimeout(() => {
-                indicePaginaCarrossel++;
-                renderizarPaginaCarrossel();
-            }, 6000);
-        }
+    // A vitrine não troca automaticamente.
     } catch (erro) {
         console.error("Erro ao montar a vitrine:", erro);
 
@@ -364,26 +494,8 @@ function pausarCarrosselPorHover() {
 }
 
 function retomarCarrosselAposHover(card) {
-    if (card.classList.contains('ativo-clique')) return;
-
+    if (card && card.classList.contains('ativo-clique')) return;
     pausaPorHover = false;
-
-    const produtosFiltrados = obterProdutosFiltradosCarrossel();
-
-    if (
-        carrosselAtivo &&
-        !termoPesquisaCarrossel &&
-        produtosFiltrados.length > 0 &&
-        !document.hidden
-    ) {
-        pausarTimerCarrossel();
-
-        timerCarrossel = setTimeout(() => {
-            indicePaginaCarrossel++;
-            assinaturaUltimaPaginaCarrossel = "";
-            renderizarPaginaCarrossel();
-        }, 6000);
-    }
 }
 
 function alternarDestaqueCard(card) {
@@ -417,40 +529,53 @@ async function recarregarProdutos() {
     }
 }
 
-function mudarSlideCarrossel(d) {
+function mudarSlideCarrossel(direcao) {
     if (!carrosselAtivo) return;
 
     pausarTimerCarrossel();
     pausaPorHover = false;
 
-    const produtosAtuais = obterProdutosFiltradosCarrossel();
-    const totalPaginas = Math.max(
-        1,
-        Math.ceil(produtosAtuais.length / itensPorPagina)
-    );
-
     const existePesquisa =
         String(termoPesquisaCarrossel || "").trim() !== "";
 
-    // Na vitrine normal, clicar em Próxima na última página
-    // sorteia mais 24 produtos sem repetir os recentes.
-    if (
-        d > 0 &&
-        !existePesquisa &&
-        indicePaginaCarrossel >= totalPaginas - 1
-    ) {
-        selecionarNovoLoteVitrine();
+    if (existePesquisa) {
+        const produtosAtuais = obterProdutosFiltradosCarrossel();
+        const totalPaginas = Math.max(
+            1,
+            Math.ceil(produtosAtuais.length / obterQuantidadeProdutosVitrine())
+        );
+
+        indicePaginaCarrossel =
+            (indicePaginaCarrossel + direcao + totalPaginas) % totalPaginas;
+
+        assinaturaUltimaPaginaCarrossel = "";
         renderizarPaginaCarrossel();
         return;
     }
 
-    indicePaginaCarrossel =
-        (indicePaginaCarrossel + d + totalPaginas) % totalPaginas;
+    if (direcao > 0) {
+        if (indiceHistoricoLoteVitrine < historicoLotesVitrine.length - 1) {
+            indiceHistoricoLoteVitrine++;
+            produtosLoteVitrine =
+                historicoLotesVitrine[indiceHistoricoLoteVitrine];
+        } else {
+            selecionarNovoLoteVitrine();
+        }
+    } else if (
+        direcao < 0 &&
+        indiceHistoricoLoteVitrine > 0
+    ) {
+        indiceHistoricoLoteVitrine--;
+        produtosLoteVitrine =
+            historicoLotesVitrine[indiceHistoricoLoteVitrine];
+    }
 
+    indicePaginaCarrossel = 0;
     assinaturaUltimaPaginaCarrossel = "";
     renderizarPaginaCarrossel();
-}
 
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
 function abrirInstrucoesCarrossel() {
     const telaProdutos = document.getElementById('telaProdutosCarrossel');
     const telaInstrucoes = document.getElementById('telaInstrucoesCarrossel');
@@ -492,16 +617,6 @@ function voltarAosProdutosCarrossel() {
 document.addEventListener("visibilitychange", function() {
     if (document.hidden) {
         pausarTimerCarrossel();
-        return;
-    }
-
-    if (
-        carrosselAtivo &&
-        !termoPesquisaCarrossel &&
-        !pausaPorHover
-    ) {
-        assinaturaUltimaPaginaCarrossel = "";
-        renderizarPaginaCarrossel();
     }
 });
 
@@ -526,3 +641,21 @@ document.addEventListener('keydown', function(evento) {
         voltarAosProdutosCarrossel();
     }
 });
+
+window.addEventListener("resize", () => {
+        const novaQuantidade = obterQuantidadeProdutosVitrine();
+
+        aplicarEstiloVitrineResponsiva();
+
+        if (novaQuantidade !== itensPorPagina) {
+            itensPorPagina = novaQuantidade;
+            produtosLoteVitrine = [];
+            historicoLotesVitrine = [];
+            indiceHistoricoLoteVitrine = -1;
+            indicePaginaCarrossel = 0;
+            assinaturaUltimaPaginaCarrossel = "";
+
+            selecionarNovoLoteVitrine();
+            renderizarPaginaCarrossel();
+        }
+    });

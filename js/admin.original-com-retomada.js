@@ -3,8 +3,16 @@
 const CHAVE_RASCUNHO_PRODUTO_ADMIN = "siclar_rascunho_produto_admin";
 
 
+const CHAVE_PROGRESSO_IMPORTACAO_LOCAL = "siclar_progresso_importacao_csv";
 let importacaoArquivoAtual = null;
 let importacaoIdAtual = "";
+let importacaoIndiceInicial = 0;
+let importacaoContadoresIniciais = {
+    novos: 0,
+    atualizados: 0,
+    semAlteracao: 0,
+    erros: 0
+};
 
 
 function escaparCampoCsvRelatorio(valor) {
@@ -88,12 +96,94 @@ async function obterEBaixarRelatorioImportacao() {
     return relatorio;
 }
 
-function criarIdImportacao() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-        return window.crypto.randomUUID();
+async function gerarHashArquivoImportacao(arquivo) {
+    const buffer = await arquivo.arrayBuffer();
+    const hash = await crypto.subtle.digest("SHA-256", buffer);
+    return Array.from(new Uint8Array(hash))
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+function salvarProgressoImportacaoLocal(dados) {
+    localStorage.setItem(CHAVE_PROGRESSO_IMPORTACAO_LOCAL, JSON.stringify(dados));
+}
+
+function limparProgressoImportacaoLocal() {
+    localStorage.removeItem(CHAVE_PROGRESSO_IMPORTACAO_LOCAL);
+}
+
+async function consultarRetomadaImportacao() {
+    if (!importacaoIdAtual || !importacaoArquivoAtual || !csvData.length) return;
+
+    const resultado = await enviarParaGAS({
+        acao: "consultarImportacao",
+        adminToken,
+        idImportacao: importacaoIdAtual,
+        nomeArquivo: importacaoArquivoAtual.name,
+        totalItens: csvData.length
+    });
+
+    const ultimoIndice = Number(resultado.ultimoIndice ?? -1);
+    const status = String(resultado.status || "").toUpperCase();
+
+    importacaoContadoresIniciais = {
+        novos: Number(resultado.novos || 0),
+        atualizados: Number(resultado.atualizados || 0),
+        semAlteracao: Number(resultado.semAlteracao || 0),
+        erros: Number(resultado.erros || 0)
+    };
+
+    if (status === "CONCLUIDA") {
+        const reprocessar = confirm(
+            `Este CSV já foi importado completamente (${csvData.length} itens).\n\n` +
+            "Deseja processá-lo novamente desde o início?"
+        );
+
+        if (reprocessar) {
+            await enviarParaGAS({
+                acao: "reiniciarImportacao",
+                adminToken,
+                idImportacao: importacaoIdAtual,
+                nomeArquivo: importacaoArquivoAtual.name,
+                totalItens: csvData.length
+            });
+            importacaoIndiceInicial = 0;
+            importacaoContadoresIniciais = { novos: 0, atualizados: 0, semAlteracao: 0, erros: 0 };
+        } else {
+            importacaoIndiceInicial = csvData.length;
+            document.getElementById("btnProcess").disabled = true;
+            document.getElementById("log").textContent =
+                "Este arquivo já foi importado completamente.";
+        }
+        return;
     }
 
-    return `siclar-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    if (ultimoIndice >= 0 && ultimoIndice < csvData.length - 1) {
+        const continuar = confirm(
+            `Importação anterior encontrada.\n\n` +
+            `Concluídos: ${ultimoIndice + 1} de ${csvData.length}.\n` +
+            `Próximo item: ${ultimoIndice + 2}.\n\n` +
+            "Deseja continuar exatamente de onde parou?"
+        );
+
+        if (continuar) {
+            importacaoIndiceInicial = ultimoIndice + 1;
+            document.getElementById("log").textContent =
+                `Retomada preparada no item ${importacaoIndiceInicial + 1} de ${csvData.length}.`;
+        } else {
+            await enviarParaGAS({
+                acao: "reiniciarImportacao",
+                adminToken,
+                idImportacao: importacaoIdAtual,
+                nomeArquivo: importacaoArquivoAtual.name,
+                totalItens: csvData.length
+            });
+            importacaoIndiceInicial = 0;
+            importacaoContadoresIniciais = { novos: 0, atualizados: 0, semAlteracao: 0, erros: 0 };
+        }
+    } else {
+        importacaoIndiceInicial = Math.max(0, ultimoIndice + 1);
+    }
 }
 
 
@@ -496,6 +586,8 @@ document.getElementById("csvFile").addEventListener("change", event => {
     headers = [];
     importacaoArquivoAtual = file || null;
     importacaoIdAtual = "";
+    importacaoIndiceInicial = 0;
+    importacaoContadoresIniciais = { novos: 0, atualizados: 0, semAlteracao: 0, erros: 0 };
     botaoProcessar.disabled = true;
 
     if (!file) return;
@@ -556,12 +648,14 @@ document.getElementById("csvFile").addEventListener("change", event => {
                 throw new Error("Nenhum registro com Código válido foi encontrado no CSV.");
             }
 
-            importacaoIdAtual = criarIdImportacao();
+            importacaoIdAtual = await gerarHashArquivoImportacao(file);
             botaoProcessar.disabled = false;
 
             log.textContent = linhasInvalidas.length
-                ? `${csvData.length} linhas válidas. ${linhasInvalidas.length} linha(s) sem código ignoradas. Clique em Iniciar Importação.`
-                : `${csvData.length} linhas carregadas. Clique em Iniciar Importação.`;
+                ? `${csvData.length} linhas válidas. ${linhasInvalidas.length} linha(s) sem código ignoradas.`
+                : `${csvData.length} linhas carregadas. Verificando possível retomada...`;
+
+            await consultarRetomadaImportacao();
         } catch (erro) {
             console.error("Erro ao analisar CSV:", erro);
             csvData = [];
@@ -587,7 +681,10 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
         return;
     }
 
-    const TAMANHO_LOTE_IMPORTACAO = 50;
+    if (importacaoIndiceInicial >= csvData.length) {
+        alert("Este arquivo já foi importado completamente.");
+        return;
+    }
 
     importacaoCancelada = false;
     btnProcess.disabled = true;
@@ -595,67 +692,53 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     btnCancelar.style.display = "inline-block";
     progressContainer.style.display = "block";
 
-    let sucessos = 0;
-    let novos = 0;
-    let atualizados = 0;
-    let semAlteracao = 0;
-    let erros = 0;
+    let sucessos = importacaoIndiceInicial;
+    let novos = importacaoContadoresIniciais.novos;
+    let atualizados = importacaoContadoresIniciais.atualizados;
+    let semAlteracao = importacaoContadoresIniciais.semAlteracao;
+    let erros = importacaoContadoresIniciais.erros;
 
-    progressBar.style.width = "0%";
-    progressBar.textContent = "0%";
+    const percentualInicial = Math.round((importacaoIndiceInicial / csvData.length) * 100);
+    progressBar.style.width = `${percentualInicial}%`;
+    progressBar.textContent = `${percentualInicial}%`;
 
-    for (
-        let indiceInicial = 0;
-        indiceInicial < csvData.length;
-        indiceInicial += TAMANHO_LOTE_IMPORTACAO
-    ) {
+    for (let index = importacaoIndiceInicial; index < csvData.length; index++) {
         if (importacaoCancelada) break;
 
-        const fimExclusivo = Math.min(
-            indiceInicial + TAMANHO_LOTE_IMPORTACAO,
-            csvData.length
-        );
-
-        const produtosDoLote = csvData.slice(indiceInicial, fimExclusivo);
-        let resultado = null;
-
         try {
-            resultado = await enviarParaGAS({
-                acao: "importarLote",
+            const resultado = await enviarParaGAS({
+                acao: "importar",
                 adminToken,
                 headers,
                 idImportacao: importacaoIdAtual,
                 nomeArquivo: importacaoArquivoAtual.name,
-                indiceInicial,
+                indiceItem: index,
                 totalItens: csvData.length,
-                items: produtosDoLote.map(produto => ({
-                    data: produto
-                }))
+                items: [{ data: csvData[index] }]
             });
 
             if (resultado.erro) {
                 throw new Error(resultado.erro);
             }
 
-            sucessos = fimExclusivo;
+            sucessos = index + 1;
+            importacaoIndiceInicial = index + 1;
 
             novos = Number(resultado.acumuladoNovos ?? novos);
-            atualizados = Number(
-                resultado.acumuladoAtualizados ?? atualizados
-            );
-            semAlteracao = Number(
-                resultado.acumuladoSemAlteracao ?? semAlteracao
-            );
+            atualizados = Number(resultado.acumuladoAtualizados ?? atualizados);
+            semAlteracao = Number(resultado.acumuladoSemAlteracao ?? semAlteracao);
             erros = Number(resultado.acumuladoErros ?? erros);
 
+            salvarProgressoImportacaoLocal({
+                idImportacao: importacaoIdAtual,
+                nomeArquivo: importacaoArquivoAtual.name,
+                totalItens: csvData.length,
+                ultimoIndice: index,
+                atualizadoEm: new Date().toISOString()
+            });
         } catch (erro) {
-            erros += produtosDoLote.length;
-
-            console.error(
-                `Erro na importação do lote ${indiceInicial + 1} a ${fimExclusivo}:`,
-                produtosDoLote,
-                erro
-            );
+            erros++;
+            console.error(`Erro na importação do item ${index + 1}:`, csvData[index], erro);
 
             try {
                 await enviarParaGAS({
@@ -664,47 +747,29 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
                     idImportacao: importacaoIdAtual,
                     nomeArquivo: importacaoArquivoAtual.name,
                     totalItens: csvData.length,
-                    indiceItem: indiceInicial,
-                    mensagemErro:
-                        `Falha no lote ${indiceInicial + 1} a ${fimExclusivo}: ` +
-                        erro.message
+                    indiceItem: index,
+                    mensagemErro: erro.message
                 });
             } catch (erroRegistro) {
-                console.error(
-                    "Não foi possível registrar o erro do lote:",
-                    erroRegistro
-                );
+                console.error("Não foi possível registrar o erro da importação:", erroRegistro);
             }
         }
 
-        const processados = fimExclusivo;
-        const percentual = Math.round(
-            (processados / csvData.length) * 100
-        );
-
+        const percentual = Math.round(((index + 1) / csvData.length) * 100);
         progressBar.style.width = `${percentual}%`;
         progressBar.textContent = `${percentual}%`;
-
-        const ultimoResultado = resultado?.ultimoResultado || null;
-
-        const camposAlterados = Array.isArray(
-            ultimoResultado?.alteracoes
-        )
-            ? ultimoResultado.alteracoes
-                .map(item => item.campo)
-                .join(", ")
+        const camposAlterados = Array.isArray(resultado?.alteracoes)
+            ? resultado.alteracoes.map(item => item.campo).join(", ")
             : "";
 
-        const detalheAtualizacao =
-            ultimoResultado?.tipo === "ATUALIZADO"
-                ? ` Último atualizado: ${ultimoResultado.codigo}` +
-                  `${camposAlterados ? ` — ${camposAlterados}` : ""}.`
-                : ultimoResultado?.tipo === "NOVO"
-                    ? ` Último novo: ${ultimoResultado.codigo}.`
-                    : "";
+        const detalheAtualizacao = resultado?.tipo === "ATUALIZADO"
+            ? ` Último atualizado: ${resultado.codigo} — ${camposAlterados}.`
+            : resultado?.tipo === "NOVO"
+                ? ` Último novo: ${resultado.codigo}.`
+                : "";
 
         log.textContent =
-            `Processando ${processados} de ${csvData.length} — ` +
+            `Processando ${index + 1} de ${csvData.length} — ` +
             `${novos} novo(s), ${atualizados} atualizado(s), ` +
             `${semAlteracao} sem alteração, ${erros} erro(s).` +
             detalheAtualizacao;
@@ -714,29 +779,28 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
     csvFile.disabled = false;
 
     if (importacaoCancelada) {
+        await enviarParaGAS({
+            acao: "pausarImportacao",
+            adminToken,
+            idImportacao: importacaoIdAtual,
+            nomeArquivo: importacaoArquivoAtual.name,
+            totalItens: csvData.length
+        });
+
         try {
-            const relatorioParcial =
-                await obterEBaixarRelatorioImportacao();
+            const relatorioParcial = await obterEBaixarRelatorioImportacao();
 
             alert(
-                `Importação interrompida após ${sucessos} de ` +
-                `${csvData.length} item(ns).\n` +
-                `${relatorioParcial.length} alteração(ões) ` +
-                `registrada(s) no relatório parcial.\n` +
-                "Para importar novamente, selecione o CSV e inicie " +
-                "uma nova importação."
+                `Importação interrompida no item ${importacaoIndiceInicial} de ${csvData.length}.\n` +
+                `${relatorioParcial.length} alteração(ões) registrada(s) no relatório parcial.\n` +
+                "Ao selecionar novamente o mesmo CSV, ela continuará deste ponto."
             );
         } catch (erroRelatorio) {
-            console.error(
-                "Não foi possível baixar o relatório parcial:",
-                erroRelatorio
-            );
+            console.error("Não foi possível baixar o relatório parcial:", erroRelatorio);
 
             alert(
-                `Importação interrompida após ${sucessos} de ` +
-                `${csvData.length} item(ns).\n` +
-                "Para importar novamente, selecione o CSV e inicie " +
-                "uma nova importação."
+                `Importação interrompida no item ${importacaoIndiceInicial} de ${csvData.length}.\n` +
+                "Ao selecionar novamente o mesmo CSV, ela continuará deste ponto."
             );
         }
 
@@ -750,18 +814,15 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
             totalItens: csvData.length
         });
 
+        limparProgressoImportacaoLocal();
+
         let totalDetalhesRelatorio = 0;
 
         try {
-            const relatorioFinal =
-                await obterEBaixarRelatorioImportacao();
-
+            const relatorioFinal = await obterEBaixarRelatorioImportacao();
             totalDetalhesRelatorio = relatorioFinal.length;
         } catch (erroRelatorio) {
-            console.error(
-                "Não foi possível baixar o relatório final:",
-                erroRelatorio
-            );
+            console.error("Não foi possível baixar o relatório final:", erroRelatorio);
         }
 
         alert(
@@ -770,8 +831,7 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
             `Produtos atualizados: ${atualizados}\n` +
             `Sem alteração: ${semAlteracao}\n` +
             `Erros: ${erros}\n` +
-            `Detalhes registrados no relatório: ` +
-            `${totalDetalhesRelatorio}`
+            `Detalhes registrados no relatório: ${totalDetalhesRelatorio}`
         );
 
         btnProcess.disabled = true;
@@ -786,7 +846,7 @@ document.getElementById("btnCancelar").addEventListener("click", () => {
     const button = document.getElementById("btnCancelar");
     button.disabled = true;
     document.getElementById("log").textContent =
-        "Interrompendo após o item atual...";
+        "Interrompendo após o item atual e salvando o ponto de retomada...";
 
     setTimeout(() => {
         button.disabled = false;
