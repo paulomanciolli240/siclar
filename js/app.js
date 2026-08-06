@@ -68,50 +68,97 @@ function registrarEventosSiclar() {
     });
 }
 
-async function esconderTelaBoasVindas() {
-    if (telaJaFechada) return;
-    telaJaFechada = true;
+async function carregarCatalogoEmSegundoPlano() {
+    const status = document.getElementById("statusCatalogoApresentacao");
 
-    const tela = document.getElementById("telaBoasVindas");
+    try {
+        const carregou = await carregarDadosPlanilha();
+        catalogoCarregadoEmSegundoPlano = Boolean(carregou);
 
-    // Abre o módulo imediatamente para mostrar o estado de carregamento.
+        if (status) {
+            status.textContent = carregou
+                ? `${dadosGlobais.length} produtos preparados. Escolha uma opção para continuar.`
+                : "O catálogo será reconectado quando você tentar abri-lo.";
+            status.classList.toggle("carregado", Boolean(carregou));
+        }
+    } catch (erro) {
+        console.error("Falha no carregamento em segundo plano:", erro);
+        if (status) status.textContent = "O catálogo será reconectado quando você tentar abri-lo.";
+    }
+}
+
+function atualizarCabecalhoModoCatalogo() {
+    const titulo = document.getElementById("tituloModoCatalogo");
+    const subtitulo = document.getElementById("subtituloModoCatalogo");
+
+    if (modoCatalogoAtual === "FUTURA") {
+        if (titulo) titulo.textContent = "Produtos para entrega futura";
+        if (subtitulo) subtitulo.textContent = "Itens sob encomenda, com prazo confirmado antes da conclusão";
+    } else {
+        if (titulo) titulo.textContent = "Produtos em estoque";
+        if (subtitulo) subtitulo.textContent = "Clique em qualquer produto para iniciar seu pedido";
+    }
+}
+
+async function abrirCatalogoSiclar(modo = "ESTOQUE") {
+    modoCatalogoAtual = modo === "FUTURA" ? "FUTURA" : "ESTOQUE";
+    atualizarCabecalhoModoCatalogo();
+
+    const apresentacao = document.getElementById("telaApresentacao");
+    const modulo = document.getElementById("moduloCarrossel");
+
+    if (apresentacao) apresentacao.style.display = "none";
+    if (modulo) modulo.style.display = "flex";
+
+    produtosLoteVitrine = [];
+    historicoLotesVitrine = [];
+    indiceHistoricoLoteVitrine = -1;
+    codigosRecentesVitrine = [];
+    termoPesquisaCarrossel = "";
+    indicePaginaCarrossel = 0;
+    assinaturaUltimaPaginaCarrossel = "";
+
+    const campo = document.getElementById("pesquisaCarrossel");
+    if (campo) campo.value = "";
+
+    carrosselAtivo = true;
+
+    if (!catalogoCarregadoEmSegundoPlano || !dadosGlobais.length) {
+        mostrarEstadoCarrossel("Conectando ao catálogo...", "Aguarde a resposta do Google Sheets.");
+        catalogoCarregadoEmSegundoPlano = await carregarDadosPlanilha();
+    }
+
     iniciarCarrossel();
+}
 
-    const carregou = await carregarDadosPlanilha();
+function voltarParaApresentacao() {
+    pararCarrossel();
 
-    if (tela) {
-        tela.classList.add("tela-oculta");
-        setTimeout(() => {
-            tela.style.display = "none";
-        }, 1200);
-    }
+    const modulo = document.getElementById("moduloCarrossel");
+    const apresentacao = document.getElementById("telaApresentacao");
 
-    if (carregou) {
-        indicePaginaCarrossel = 0;
-        renderizarPaginaCarrossel();
-    }
+    if (modulo) modulo.style.display = "none";
+    if (apresentacao) apresentacao.style.display = "block";
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function iniciarAplicacaoSiclar() {
     try {
         registrarEventosSiclar();
-        esconderTelaBoasVindas();
+
+        const apresentacao = document.getElementById("telaApresentacao");
+        const modulo = document.getElementById("moduloCarrossel");
+
+        if (apresentacao) apresentacao.style.display = "block";
+        if (modulo) modulo.style.display = "none";
+
+        carregarCatalogoEmSegundoPlano();
     } catch (erro) {
         console.error("Falha ao iniciar o SICLAR:", erro);
 
-        const tela = document.getElementById("telaBoasVindas");
-        if (tela) tela.style.display = "none";
-
-        const modulo = document.getElementById("moduloCarrossel");
-        if (modulo) modulo.style.display = "flex";
-
-        if (typeof mostrarEstadoCarrossel === "function") {
-            mostrarEstadoCarrossel(
-                "Falha ao iniciar o catálogo",
-                erro && erro.message ? erro.message : "Erro desconhecido no JavaScript.",
-                true
-            );
-        }
+        const status = document.getElementById("statusCatalogoApresentacao");
+        if (status) status.textContent = "Não foi possível preparar o catálogo neste momento.";
     }
 }
 
@@ -120,21 +167,3 @@ if (document.readyState === "loading") {
 } else {
     iniciarAplicacaoSiclar();
 }
-
-/* Diagnóstico visível: nunca deixa a área preta silenciosamente. */
-setTimeout(() => {
-    const grade = document.getElementById("containerGradeVitrine");
-    const modulo = document.getElementById("moduloCarrossel");
-
-    if (!grade || !modulo || modulo.style.display === "none") return;
-
-    const possuiConteudo = grade.children.length > 0 || grade.textContent.trim().length > 0;
-
-    if (!possuiConteudo && typeof mostrarEstadoCarrossel === "function") {
-        mostrarEstadoCarrossel(
-            "O catálogo não terminou de iniciar",
-            "Atualize a página. Se esta mensagem continuar, envie uma foto dela para identificarmos a etapa exata.",
-            true
-        );
-    }
-}, 10000);

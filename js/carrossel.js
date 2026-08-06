@@ -342,9 +342,11 @@ function obterCabecalhoCodigoCarrossel() {
 }
 
 function selecionarNovoLoteVitrine() {
-    const base = Array.isArray(dadosGlobais)
-        ? dadosGlobais.filter(Boolean)
-        : [];
+    const base = filtrarProdutosPorModoCatalogo(
+        Array.isArray(dadosGlobais)
+            ? dadosGlobais.filter(Boolean)
+            : []
+    );
 
     const cabecalhoCodigo =
         obterCabecalhoCodigoCarrossel();
@@ -420,9 +422,11 @@ function obterBaseProdutosCarrossel() {
         ).trim() !== "";
 
     if (existePesquisa) {
-        return Array.isArray(dadosGlobais)
-            ? dadosGlobais
-            : [];
+        return filtrarProdutosPorModoCatalogo(
+            Array.isArray(dadosGlobais)
+                ? dadosGlobais
+                : []
+        );
     }
 
     if (!produtosLoteVitrine.length) {
@@ -707,6 +711,9 @@ function renderizarPaginaCarrossel() {
                             }
                         '
                     >
+                        ${modoCatalogoAtual === "FUTURA" ? `
+                            <div class="selo-entrega-futura">🚚 Entrega programada</div>
+                        ` : ""}
                         <div class="vitrine-foto-container">
                             ${gerarImagemCarrossel(
                                 foto,

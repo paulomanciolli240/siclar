@@ -2151,3 +2151,119 @@ html body #moduloCarrossel .carrossel-controles-inferior .btn-controle-carrossel
     }
 }
 
+
+
+/* =========================================================
+   APRESENTAÇÃO INSTITUCIONAL LAR DOCE LAR
+   ========================================================= */
+.tela-apresentacao { min-height:100vh; background:#f8fafc; color:#1e293b; }
+.apresentacao-topo { position:sticky; top:0; z-index:200; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:16px clamp(20px,5vw,72px); background:rgba(30,20,14,.96); color:white; box-shadow:0 8px 28px rgba(15,23,42,.2); backdrop-filter:blur(10px); }
+.apresentacao-marca { display:flex; flex-direction:column; gap:2px; }
+.apresentacao-sigla { color:#fb923c; font-size:22px; font-weight:950; letter-spacing:2px; }
+.apresentacao-marca strong { font-size:12px; color:#e2e8f0; }
+.apresentacao-menu { display:flex; gap:18px; flex-wrap:wrap; }
+.apresentacao-menu a { color:#e2e8f0; text-decoration:none; font-size:13px; font-weight:750; }
+.apresentacao-menu a:hover { color:#fb923c; }
+.apresentacao-hero { min-height:calc(100vh - 74px); display:grid; grid-template-columns:minmax(0,1.1fr) minmax(360px,.9fr); align-items:center; gap:50px; padding:clamp(45px,7vw,95px) clamp(22px,7vw,100px); background:radial-gradient(circle at 85% 15%,rgba(249,115,22,.18),transparent 32%),linear-gradient(135deg,#20140d,#3d2f24 55%,#172033); color:white; }
+.apresentacao-etiqueta,.apresentacao-titulo-secao span,.apresentacao-contato>div:first-child>span { display:inline-block; color:#fb923c; font-size:12px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; }
+.apresentacao-hero h1 { max-width:800px; margin:15px 0 18px; font-size:clamp(38px,5.7vw,76px); line-height:1.02; letter-spacing:-2px; }
+.apresentacao-hero-conteudo>p { max-width:720px; color:#cbd5e1; font-size:clamp(15px,1.5vw,20px); line-height:1.7; }
+.apresentacao-acoes-principais,.apresentacao-acoes-finais { display:flex; flex-wrap:wrap; gap:13px; margin-top:28px; }
+.btn-apresentacao { min-height:52px; padding:14px 22px; border:0; border-radius:12px; color:white; font:inherit; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 12px 28px rgba(0,0,0,.2); transition:.2s ease; }
+.btn-apresentacao:hover { transform:translateY(-3px); }
+.btn-catalogo { background:#ea580c; }
+.btn-entrega-futura { background:#0f766e; }
+.status-catalogo-apresentacao { margin-top:16px!important; font-size:12px!important; color:#fde68a!important; }
+.status-catalogo-apresentacao.carregado { color:#86efac!important; }
+.apresentacao-foto-principal { min-height:460px; display:grid; place-content:center; text-align:center; border:2px dashed rgba(255,255,255,.28); border-radius:28px; background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.04)); box-shadow:0 30px 70px rgba(0,0,0,.3); }
+.apresentacao-foto-principal span { color:#fdba74; font-size:24px; font-weight:950; }
+.apresentacao-foto-principal small { margin-top:8px; color:#94a3b8; }
+.apresentacao-secao { padding:clamp(60px,8vw,110px) clamp(22px,7vw,100px); background:#eef2f7; }
+.apresentacao-secao-clara { background:white; }
+.apresentacao-titulo-secao { max-width:760px; margin-bottom:34px; }
+.apresentacao-titulo-secao h2,.apresentacao-contato h2 { margin:8px 0 0; color:#1f2937; font-size:clamp(30px,4vw,52px); }
+.apresentacao-texto-destaque { max-width:1000px; display:grid; grid-template-columns:1.2fr .8fr; gap:28px; font-size:18px; line-height:1.8; }
+.texto-editar-apresentacao { padding:22px; border-left:5px solid #f97316; border-radius:10px; background:#fff7ed; color:#9a3412; font-size:14px; font-weight:750; }
+.apresentacao-galeria,.apresentacao-pessoas { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+.apresentacao-card-foto,.apresentacao-pessoas article { overflow:hidden; padding:18px; border:1px solid #e2e8f0; border-radius:20px; background:white; box-shadow:0 14px 35px rgba(15,23,42,.08); }
+.apresentacao-card-foto>div { height:230px; display:grid; place-items:center; border-radius:14px; background:#e2e8f0; color:#64748b; font-weight:900; }
+.apresentacao-card-foto h3,.apresentacao-pessoas h3 { margin:18px 0 6px; color:#1f2937; }
+.apresentacao-card-foto p,.apresentacao-pessoas p { color:#64748b; line-height:1.55; }
+.apresentacao-pessoas article { text-align:center; }
+.apresentacao-avatar { width:150px; height:150px; margin:auto; display:grid; place-items:center; border-radius:50%; background:#e2e8f0; color:#64748b; font-weight:900; }
+.apresentacao-contato { background:#172033; color:white; }
+.apresentacao-contato h2 { color:white; }
+.apresentacao-contato>div:first-child p { color:#cbd5e1; }
+.apresentacao-contato-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:30px; }
+.apresentacao-contato-grid article { display:flex; flex-direction:column; gap:7px; padding:20px; border:1px solid rgba(255,255,255,.12); border-radius:14px; background:rgba(255,255,255,.06); }
+.apresentacao-contato-grid span { color:#cbd5e1; font-size:13px; }
+.btn-inicio-carrossel { flex:0 0 auto; padding:10px 13px; border:1px solid rgba(255,255,255,.25); border-radius:9px; background:rgba(255,255,255,.08); color:white; cursor:pointer; font-weight:800; }
+.selo-entrega-futura,.selo-pedido-futuro { position:absolute; top:9px; left:9px; z-index:6; padding:6px 9px; border-radius:999px; background:#0f766e; color:white; font-size:9px; font-weight:950; text-transform:uppercase; box-shadow:0 5px 13px rgba(15,118,110,.3); }
+.pedido-card-produto { position:relative; }
+.pedido-card-futuro { border-color:#5eead4; background:#f0fdfa; }
+.item-entrega-futura { margin-top:6px; color:#0f766e; font-size:10px; font-weight:900; text-transform:uppercase; }
+@media(max-width:980px){.apresentacao-hero{grid-template-columns:1fr}.apresentacao-foto-principal{min-height:330px}.apresentacao-galeria,.apresentacao-pessoas{grid-template-columns:1fr}.apresentacao-contato-grid{grid-template-columns:repeat(2,1fr)}.apresentacao-texto-destaque{grid-template-columns:1fr}.apresentacao-menu{display:none}}
+@media(max-width:600px){.apresentacao-topo{padding:13px 16px}.apresentacao-hero{padding:48px 18px}.apresentacao-hero h1{letter-spacing:-1px}.apresentacao-acoes-principais .btn-apresentacao,.apresentacao-acoes-finais .btn-apresentacao{width:100%}.apresentacao-foto-principal{min-height:250px}.apresentacao-secao{padding:55px 18px}.apresentacao-contato-grid{grid-template-columns:1fr}.carrossel-topo-acoes{flex-wrap:wrap}.btn-inicio-carrossel{order:3;width:100%}}
+
+/* === FOTO REAL DA FACHADA NA APRESENTAÇÃO === */
+.apresentacao-foto-principal {
+    position: relative;
+    min-height: 390px;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 24px;
+    background: #1e293b;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .34);
+}
+
+.apresentacao-foto-principal img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 390px;
+    object-fit: cover;
+    object-position: center;
+}
+
+.apresentacao-foto-principal::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        to top,
+        rgba(15, 23, 42, .65),
+        rgba(15, 23, 42, 0) 42%
+    );
+}
+
+.apresentacao-foto-principal figcaption {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 18px;
+    z-index: 2;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
+}
+
+@media (max-width: 760px) {
+    .apresentacao-foto-principal,
+    .apresentacao-foto-principal img {
+        min-height: 260px;
+    }
+
+    .apresentacao-foto-principal {
+        border-radius: 18px;
+    }
+
+    .apresentacao-foto-principal figcaption {
+        left: 16px;
+        right: 16px;
+        bottom: 13px;
+        font-size: 12px;
+    }
+}
+

@@ -68,3 +68,54 @@ function rotuloFormaPagamento(forma = formaPagamentoPedido) {
         ? "A prazo"
         : "À vista";
 }
+
+
+/* Modo de navegação do catálogo público. */
+let modoCatalogoAtual = "ESTOQUE";
+let catalogoCarregadoEmSegundoPlano = false;
+
+function obterCabecalhoTipoEntrega() {
+    return headers.find(cabecalho => {
+        const nome = String(cabecalho || "")
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+        return nome === "tipo_entrega" ||
+            nome === "tipo entrega" ||
+            nome === "tipo_produto" ||
+            nome === "tipo produto" ||
+            nome === "entrega_futura" ||
+            nome === "entrega futura";
+    }) || "";
+}
+
+function produtoEhEntregaFutura(produto) {
+    const cabecalho = obterCabecalhoTipoEntrega();
+    if (!cabecalho || !produto) return false;
+
+    const valor = String(produto[cabecalho] || "")
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    return [
+        "FUTURA",
+        "ENCOMENDA",
+        "SOB ENCOMENDA",
+        "ENTREGA FUTURA",
+        "SIM"
+    ].includes(valor);
+}
+
+function filtrarProdutosPorModoCatalogo(lista) {
+    const produtos = Array.isArray(lista) ? lista : [];
+
+    return produtos.filter(produto =>
+        modoCatalogoAtual === "FUTURA"
+            ? produtoEhEntregaFutura(produto)
+            : !produtoEhEntregaFutura(produto)
+    );
+}

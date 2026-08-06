@@ -82,7 +82,7 @@ function produtosFiltradosPedido() {
     ].filter(Boolean);
 
     return ordenarProdutosPorPesquisa(
-        dadosGlobais,
+        filtrarProdutosPorModoCatalogo(dadosGlobais),
         termo,
         camposPesquisa
     );
@@ -117,7 +117,8 @@ function renderizarProdutosPedido() {
                 : '<span style="color:#94a3b8;font-size:11px;">Sem imagem</span>';
 
             html += `
-                <article class="pedido-card-produto">
+                <article class="pedido-card-produto ${produtoEhEntregaFutura(produto) ? "pedido-card-futuro" : ""}">
+                    ${produtoEhEntregaFutura(produto) ? '<div class="selo-pedido-futuro">🚚 Sob encomenda</div>' : ''}
                     <div class="pedido-card-foto">${foto}</div>
                     <div class="pedido-card-marca">${marca}</div>
                     <div class="pedido-card-descricao">${descricao}</div>
@@ -178,6 +179,7 @@ function adicionarAoCarrinhoPedido(produto, mostrarFeedback = true) {
             descricao: String(produto[cab.descricao] || ''),
             marca: String(produto[cab.marca] || ''),
             precoPrazo: moedaParaNumero(produto[cab.preco]),
+            entregaFutura: produtoEhEntregaFutura(produto),
             quantidade: 1
         });
     }
@@ -248,6 +250,7 @@ function renderizarCarrinhoPedido() {
                 <div class="item-carrinho-titulo">${item.descricao}</div>
                 <div class="item-carrinho-codigo">Cód. ${item.codigo} • ${formatarMoeda(precoUnitarioAtualItem(item))} cada</div>
                 <div class="item-carrinho-forma">${rotuloFormaPagamento()}</div>
+                ${item.entregaFutura ? '<div class="item-entrega-futura">🚚 Produto sob encomenda</div>' : ''}
 
                 <div class="item-carrinho-linha">
                     <div class="controle-quantidade">
@@ -274,10 +277,14 @@ function renderizarCarrinhoPedido() {
         0
     );
 
+    const possuiEntregaFutura = carrinhoPedido.some(item => item.entregaFutura);
+
     document.getElementById('pedidoQuantidadeResumo').textContent =
         quantidadeTotal === 0
             ? 'Nenhum item adicionado'
-            : `${quantidadeTotal} unidade(s) no pedido`;
+            : possuiEntregaFutura
+                ? `${quantidadeTotal} unidade(s) • possui item sob encomenda`
+                : `${quantidadeTotal} unidade(s) no pedido`;
 
     document.getElementById('pedidoQtdTotal').textContent = quantidadeTotal;
     document.getElementById('pedidoItensDiferentes').textContent = carrinhoPedido.length;
@@ -299,7 +306,8 @@ async function finalizarPedido() {
             quantidade: item.quantidade,
             precoPrazo: item.precoPrazo,
             precoUnitario,
-            subtotal: precoUnitario * item.quantidade
+            subtotal: precoUnitario * item.quantidade,
+            entregaFutura: Boolean(item.entregaFutura)
         };
     });
     const observacao = document.getElementById('pedidoObservacao').value.trim().toUpperCase();

@@ -4,19 +4,111 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SICLAR - Catálogo e Gestão</title>
-<link rel="stylesheet" href="css/estilo.css?v=20260731-1745">
+<link rel="stylesheet" href="css/estilo.css?v=20260806-fachada-01">
 </head>
 <body>
 
-<div id="telaBoasVindas">
-    <div class="conteudo-animado">
-        <div class="linha-1">SICLAR</div>
-        <div class="linha-2">Sistema Integrado do Catálogo Lar Doce Lar</div>
-        <div class="linha-3">A sua cyber compra de materiais para construção em Barra do Garças.</div>
-        <div class="linha-boas-vindas">Seja muito bem-vindo!</div>
-    </div>
-    <div class="spinner-carregando"></div>
-</div>
+<main id="telaApresentacao" class="tela-apresentacao">
+    <header class="apresentacao-topo">
+        <div class="apresentacao-marca">
+            <span class="apresentacao-sigla">LAR DOCE LAR</span>
+            <strong>Materiais para Construção</strong>
+        </div>
+        <nav class="apresentacao-menu" aria-label="Navegação da apresentação">
+            <a href="#nossaHistoria">Nossa história</a>
+            <a href="#nossosDepositos">Depósitos</a>
+            <a href="#proprietarios">Proprietários</a>
+            <a href="#contatoEmpresa">Contato</a>
+        </nav>
+    </header>
+
+    <section class="apresentacao-hero">
+        <div class="apresentacao-hero-conteudo">
+            <span class="apresentacao-etiqueta">Bem-vindo à Lar Doce Lar</span>
+            <h1>Materiais para construir seus projetos com confiança.</h1>
+            <p>
+                Conheça nossa empresa e escolha como deseja comprar. Enquanto você navega,
+                o SICLAR prepara o catálogo de produtos em segundo plano.
+            </p>
+            <div class="apresentacao-acoes-principais">
+                <button type="button" class="btn-apresentacao btn-catalogo" onclick="abrirCatalogoSiclar('ESTOQUE')">
+                    🛒 Entrar no catálogo
+                </button>
+                <button type="button" class="btn-apresentacao btn-entrega-futura" onclick="abrirCatalogoSiclar('FUTURA')">
+                    🚚 Produtos para entrega futura
+                </button>
+            </div>
+            <p id="statusCatalogoApresentacao" class="status-catalogo-apresentacao">Preparando o catálogo...</p>
+        </div>
+        <figure class="apresentacao-foto-principal">
+            <img
+                src="imagens/fachada-lar-doce-lar.jpeg"
+                alt="Fachada da Lar Doce Lar Materiais para Construção"
+                loading="eager"
+                decoding="async"
+            >
+            <figcaption>Lar Doce Lar — Materiais para Construção</figcaption>
+        </figure>
+    </section>
+
+    <section id="nossaHistoria" class="apresentacao-secao apresentacao-secao-clara">
+        <div class="apresentacao-titulo-secao">
+            <span>Quem somos</span>
+            <h2>Nossa história</h2>
+        </div>
+        <div class="apresentacao-texto-destaque">
+            <p>
+                Este espaço foi preparado para contar como nasceu a Lar Doce Lar, os principais
+                momentos da empresa e a relação construída com clientes, profissionais e parceiros.
+            </p>
+            <p class="texto-editar-apresentacao">
+                TEXTO PROVISÓRIO — depois substituiremos pelas informações reais da história da empresa.
+            </p>
+        </div>
+    </section>
+
+    <section id="nossosDepositos" class="apresentacao-secao">
+        <div class="apresentacao-titulo-secao">
+            <span>Estrutura</span>
+            <h2>Nossos depósitos e nossa loja</h2>
+        </div>
+        <div class="apresentacao-galeria">
+            <article class="apresentacao-card-foto"><div>FOTO DO DEPÓSITO 1</div><h3>Depósito principal</h3><p>Espaço para apresentação e informações desta unidade.</p></article>
+            <article class="apresentacao-card-foto"><div>FOTO DO DEPÓSITO 2</div><h3>Segundo depósito</h3><p>Espaço para apresentação e informações desta unidade.</p></article>
+            <article class="apresentacao-card-foto"><div>FOTO DA LOJA</div><h3>Nossa loja</h3><p>Espaço para apresentar a loja e o atendimento aos clientes.</p></article>
+        </div>
+    </section>
+
+    <section id="proprietarios" class="apresentacao-secao apresentacao-secao-clara">
+        <div class="apresentacao-titulo-secao">
+            <span>Pessoas</span>
+            <h2>Proprietários e equipe</h2>
+        </div>
+        <div class="apresentacao-pessoas">
+            <article><div class="apresentacao-avatar">FOTO</div><h3>Proprietário(a)</h3><p>Espaço para nome e breve apresentação.</p></article>
+            <article><div class="apresentacao-avatar">FOTO</div><h3>Proprietário(a)</h3><p>Espaço para nome e breve apresentação.</p></article>
+            <article><div class="apresentacao-avatar">EQUIPE</div><h3>Nossa equipe</h3><p>Espaço para apresentar os colaboradores da Lar Doce Lar.</p></article>
+        </div>
+    </section>
+
+    <section id="contatoEmpresa" class="apresentacao-secao apresentacao-contato">
+        <div>
+            <span>Atendimento</span>
+            <h2>Venha conhecer a Lar Doce Lar</h2>
+            <p>Preencha depois o endereço, os telefones, o WhatsApp e os horários reais da empresa.</p>
+        </div>
+        <div class="apresentacao-contato-grid">
+            <article><strong>📍 Endereço</strong><span>Barra do Garças — MT</span></article>
+            <article><strong>💬 WhatsApp</strong><span>Número a informar</span></article>
+            <article><strong>☎️ Telefones</strong><span>Números a informar</span></article>
+            <article><strong>🕒 Horário</strong><span>Horários a informar</span></article>
+        </div>
+        <div class="apresentacao-acoes-finais">
+            <button type="button" class="btn-apresentacao btn-catalogo" onclick="abrirCatalogoSiclar('ESTOQUE')">🛒 Ver produtos em estoque</button>
+            <button type="button" class="btn-apresentacao btn-entrega-futura" onclick="abrirCatalogoSiclar('FUTURA')">🚚 Ver produtos para entrega futura</button>
+        </div>
+    </section>
+</main>
 
 <div id="moduloCarrossel">
     <section id="telaProdutosCarrossel" class="tela-carrossel ativa">
@@ -27,11 +119,12 @@
             </div>
 
             <div class="carrossel-frase-destaque">
-                Aprecie nossos produtos
-                <small>Clique em qualquer produto para iniciar seu pedido</small>
+                <span id="tituloModoCatalogo">Produtos em estoque</span>
+                <small id="subtituloModoCatalogo">Clique em qualquer produto para iniciar seu pedido</small>
             </div>
 
             <div class="carrossel-topo-acoes">
+                <button type="button" class="btn-inicio-carrossel" onclick="voltarParaApresentacao()" aria-label="Voltar à apresentação da empresa">🏠 Início</button>
                 <div class="pesquisa-carrossel">
                     <input
                         type="text"
@@ -730,17 +823,17 @@
 </div>
 
 <script src="js/config.js?v=20260731-1745"></script>
-<script src="js/state.js?v=20260731-1745"></script>
+<script src="js/state.js?v=20260806-apresentacao-01"></script>
 <script src="js/utils.js?v=20260731-1745"></script>
 <script src="js/api.js?v=20260731-1745"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/clientes.js?v=20260731-1745"></script>
 <script src="js/pdf-whatsapp.js?v=20260731-1745"></script>
-<script src="js/pedidos.js?v=20260731-1745"></script>
+<script src="js/pedidos.js?v=20260806-apresentacao-01"></script>
 <script src="js/historico.js?v=20260731-1745"></script>
-<script src="js/carrossel.js?v=20260805-vitrine-estavel-final"></script>
+<script src="js/carrossel.js?v=20260806-apresentacao-01"></script>
 <script src="js/admin.js?v=20260805-sem-retomada"></script>
 <script src="js/admin-dashboard.js?v=20260731-1745"></script>
-<script src="js/app.js?v=20260731-1745"></script>
+<script src="js/app.js?v=20260806-apresentacao-01"></script>
 </body>
 </html>
