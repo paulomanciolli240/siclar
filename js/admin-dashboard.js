@@ -1,9 +1,11 @@
 "use strict";
 
-const GATILHO_OCULTO_ADMIN = "administrar";
+const GATILHO_OCULTO_ADMIN = "1516";
+const TEMPO_MAXIMO_GATILHO_ADMIN_MS = 2000;
 
 let toquesAdminMobile = 0;
 let timerToquesAdminMobile = null;
+let ultimoDigitoGatilhoAdminEm = 0;
 
 function registrarToqueAdminMobile() {
     toquesAdminMobile++;
@@ -107,25 +109,75 @@ function pararManutencaoSessaoAdmin() {
 }
 
 async function tentarAbrirAdminPorDigitacao(evento) {
-    if (document.getElementById("moduloAdministrativo").style.display === "block") return;
-    if (evento.ctrlKey || evento.altKey || evento.metaKey) return;
+    const moduloAdmin = document.getElementById("moduloAdministrativo");
 
-    const alvo = evento.target;
-    const digitandoEmCampo = alvo && (
-        alvo.tagName === "INPUT" ||
-        alvo.tagName === "TEXTAREA" ||
-        alvo.tagName === "SELECT" ||
-        alvo.isContentEditable
-    );
-
-    if (digitandoEmCampo) return;
-
-    if (evento.key.length === 1) {
-        adminDigitacaoOculta = (adminDigitacaoOculta + evento.key.toLowerCase()).slice(-30);
+    if (
+        moduloAdmin &&
+        moduloAdmin.style.display === "block"
+    ) {
+        return;
     }
 
-    if (adminDigitacaoOculta.endsWith(GATILHO_OCULTO_ADMIN)) {
+    if (
+        evento.ctrlKey ||
+        evento.altKey ||
+        evento.metaKey
+    ) {
+        return;
+    }
+
+    /*
+      Regra de segurança:
+      o gatilho 1516 nunca é capturado enquanto o usuário estiver
+      digitando em campos de formulário. Isso impede que uma sequência
+      existente em CPF, telefone, CEP, quantidade, pesquisa, endereço
+      ou qualquer outro campo abra o acesso administrativo.
+    */
+    const alvo = evento.target;
+
+    const digitandoEmCampo =
+        alvo &&
+        (
+            alvo.tagName === "INPUT" ||
+            alvo.tagName === "TEXTAREA" ||
+            alvo.tagName === "SELECT" ||
+            alvo.isContentEditable
+        );
+
+    if (digitandoEmCampo) {
         adminDigitacaoOculta = "";
+        ultimoDigitoGatilhoAdminEm = 0;
+        return;
+    }
+
+    if (evento.key.length !== 1) {
+        return;
+    }
+
+    const agora = Date.now();
+
+    if (
+        ultimoDigitoGatilhoAdminEm &&
+        agora - ultimoDigitoGatilhoAdminEm >
+            TEMPO_MAXIMO_GATILHO_ADMIN_MS
+    ) {
+        adminDigitacaoOculta = "";
+    }
+
+    ultimoDigitoGatilhoAdminEm = agora;
+
+    adminDigitacaoOculta =
+        (
+            adminDigitacaoOculta +
+            evento.key
+        ).slice(-GATILHO_OCULTO_ADMIN.length);
+
+    if (
+        adminDigitacaoOculta ===
+        GATILHO_OCULTO_ADMIN
+    ) {
+        adminDigitacaoOculta = "";
+        ultimoDigitoGatilhoAdminEm = 0;
         abrirAcessoAdminMobile();
     }
 }
@@ -217,7 +269,7 @@ async function abrirPainelAdministrativo() {
     }
     aplicarPermissoesVisuaisAdmin();
     iniciarManutencaoSessaoAdmin();
-    abrirAbaAdmin(usuarioAdminTemAcessoTotal() ? "resumo" : "pedidos");
+    abrirAbaAdmin(usuarioAdminTemAcessoTotal() ? "produtos" : "pedidos");
 }
 
 function sairAdministrativo() {
