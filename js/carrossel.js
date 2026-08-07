@@ -31,6 +31,31 @@ const IMAGEM_SEM_FOTO_SICLAR =
     `);
 
 const imagensComFalhaCarrossel = new Set();
+
+/*
+  SALVO-CONDUTO AUTOMÁTICO DE FOTOS
+  ---------------------------------
+  Ao abrir o site, o SICLAR consulta UMA única vez a árvore pública
+  do repositório no GitHub e registra somente os arquivos que realmente
+  existem dentro da pasta imagens/.
+
+  Depois dessa consulta:
+  - foto existente: pode ser carregada;
+  - foto inexistente: mostra "Sem imagem" SEM fazer requisição 404;
+  - foto nova enviada ao GitHub: será reconhecida na próxima abertura
+    do site, sem arquivo .bat e sem lista manual.
+*/
+const GITHUB_REPOSITORIO_FOTOS =
+    "https://api.github.com/repos/paulomanciolli240/siclar/git/trees/main?recursive=1";
+
+const CHAVE_CACHE_SALVO_CONDUTO_FOTOS =
+    "siclar_fotos_existentes_github_v1";
+
+const fotosAutorizadasCarrossel = new Set();
+
+let salvoCondutoFotosCarregado = false;
+let promessaSalvoCondutoFotos = null;
+
 const MAXIMO_CODIGOS_RECENTES = 240;
 
 let produtosLoteVitrine = [];
@@ -236,15 +261,270 @@ function aplicarEstiloVitrineEstavel() {
     );
 }
 
+
+function normalizarReferenciaFotoCarrossel(valor) {
+    let texto = String(valor == null ? "" : valor)
+        .trim()
+        .replace(/\\/g, "/")
+        .replace(/^\.?\//, "")
+        .toLowerCase();
+
+    try {
+        texto = decodeURIComponent(texto);
+    } catch (erro) {
+        // Mantém a referência original se não houver codificação de URL.
+    }
+
+    return texto;
+}
+
+function registrarFotoAutorizadaCarrossel(valor) {
+    const referencia =
+        normalizarReferenciaFotoCarrossel(valor);
+
+    if (!referencia) return;
+
+    fotosAutorizadasCarrossel.add(referencia);
+
+    if (referencia.startsWith("imagens/")) {
+        fotosAutorizadasCarrossel.add(
+            referencia.slice("imagens/".length)
+        );
+    } else {
+        fotosAutorizadasCarrossel.add(
+            "imagens/" + referencia
+        );
+    }
+}
+
+function carregarCacheSalvoCondutoFotos() {
+    try {
+        const texto =
+            localStorage.getItem(
+                CHAVE_CACHE_SALVO_CONDUTO_FOTOS
+            );
+
+        if (!texto) return false;
+
+        const lista = JSON.parse(texto);
+
+        if (!Array.isArray(lista)) {
+            return false;
+        }
+
+        fotosAutorizadasCarrossel.clear();
+        lista.forEach(registrarFotoAutorizadaCarrossel);
+
+        return lista.length > 0;
+    } catch (erro) {
+        return false;
+    }
+}
+
+function salvarCacheSalvoCondutoFotos(lista) {
+    try {
+        localStorage.setItem(
+            CHAVE_CACHE_SALVO_CONDUTO_FOTOS,
+            JSON.stringify(lista)
+        );
+    } catch (erro) {
+        // Se o navegador bloquear localStorage, o site continua normalmente.
+    }
+}
+
+function fotoPossuiSalvoConduto(valorFoto) {
+    if (!salvoCondutoFotosCarregado) {
+        return false;
+    }
+
+    const referencia =
+        normalizarReferenciaFotoCarrossel(
+            valorFoto
+        );
+
+    if (!referencia) return false;
+
+    if (
+        fotosAutorizadasCarrossel.has(
+            referencia
+        )
+    ) {
+        return true;
+    }
+
+    if (
+        referencia.startsWith("imagens/") &&
+        fotosAutorizadasCarrossel.has(
+            referencia.slice("imagens/".length)
+        )
+    ) {
+        return true;
+    }
+
+    if (
+        !referencia.startsWith("imagens/") &&
+        fotosAutorizadasCarrossel.has(
+            "imagens/" + referencia
+        )
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+async function carregarSalvoCondutoFotosGitHub() {
+    if (promessaSalvoCondutoFotos) {
+        return promessaSalvoCondutoFotos;
+    }
+
+    /*
+      Usa o último salvo-conduto conhecido imediatamente, caso exista.
+      Em seguida faz UMA consulta ao GitHub para atualizar a lista.
+    */
+    const possuiCache =
+        carregarCacheSalvoCondutoFotos();
+
+    if (possuiCache) {
+        salvoCondutoFotosCarregado = true;
+    }
+
+    promessaSalvoCondutoFotos = (async () => {
+        try {
+            const resposta = await fetch(
+                GITHUB_REPOSITORIO_FOTOS,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept":
+                            "application/vnd.github+json"
+                    }
+                }
+            );
+
+            if (!resposta.ok) {
+                throw new Error(
+                    "GitHub respondeu HTTP " +
+                    resposta.status
+                );
+            }
+
+            const dados = await resposta.json();
+
+            if (
+                !dados ||
+                !Array.isArray(dados.tree)
+            ) {
+                throw new Error(
+                    "Resposta inválida da árvore do GitHub."
+                );
+            }
+
+            if (dados.truncated) {
+                throw new Error(
+                    "A lista de arquivos do GitHub veio incompleta."
+                );
+            }
+
+            const extensoesPermitidas =
+                /\.(jpg|jpeg|png|webp|gif|avif)$/i;
+
+            const listaFotos = dados.tree
+                .filter(item =>
+                    item &&
+                    item.type === "blob" &&
+                    typeof item.path === "string" &&
+                    item.path
+                        .toLowerCase()
+                        .startsWith("imagens/") &&
+                    extensoesPermitidas.test(
+                        item.path
+                    )
+                )
+                .map(item => item.path);
+
+            fotosAutorizadasCarrossel.clear();
+
+            listaFotos.forEach(
+                registrarFotoAutorizadaCarrossel
+            );
+
+            salvarCacheSalvoCondutoFotos(
+                listaFotos
+            );
+
+            salvoCondutoFotosCarregado = true;
+
+            /*
+              Uma imagem confirmada pelo GitHub deve ganhar nova chance,
+              mesmo que tenha falhado antes nesta mesma sessão.
+            */
+            imagensComFalhaCarrossel.clear();
+
+            assinaturaUltimaPaginaCarrossel = "";
+
+            if (
+                carrosselAtivo &&
+                typeof renderizarPaginaCarrossel ===
+                    "function"
+            ) {
+                renderizarPaginaCarrossel();
+            }
+
+            console.info(
+                "SICLAR: salvo-conduto atualizado com " +
+                listaFotos.length +
+                " foto(s) existentes no GitHub."
+            );
+
+            return true;
+        } catch (erro) {
+            /*
+              Se a API do GitHub estiver indisponível ou atingir limite,
+              usa a última lista salva no navegador. Sem cache, bloqueia
+              tentativas de fotos para não gerar uma tempestade de 404.
+            */
+            salvoCondutoFotosCarregado = true;
+
+            console.warn(
+                "SICLAR: não foi possível atualizar o salvo-conduto de fotos. " +
+                (
+                    possuiCache
+                        ? "Usando a última lista salva."
+                        : "As fotos ficarão bloqueadas nesta abertura para proteger o site."
+                ),
+                erro
+            );
+
+            return possuiCache;
+        }
+    })();
+
+    return promessaSalvoCondutoFotos;
+}
+
 function obterUrlImagemCarrossel(valor) {
-    const texto = String(valor == null ? "" : valor).trim();
+    const texto = String(
+        valor == null ? "" : valor
+    ).trim();
 
     if (!texto) return "";
+
+    /*
+      Só resolve/carrega imagens que o GitHub confirmou que existem.
+      Produtos fora do salvo-conduto mostram "Sem imagem" e não geram 404.
+    */
+    if (!fotoPossuiSalvoConduto(texto)) {
+        return "";
+    }
 
     try {
         const url = resolverUrlImagem(texto);
 
-        if (!url || imagensComFalhaCarrossel.has(url)) {
+        if (
+            !url ||
+            imagensComFalhaCarrossel.has(url)
+        ) {
             return "";
         }
 
@@ -967,6 +1247,12 @@ function iniciarCarrossel() {
     carrosselAtivo = true;
     pausarTimerCarrossel();
     aplicarEstiloVitrineEstavel();
+
+    /*
+      Uma única consulta à árvore do GitHub por abertura do site.
+      Não consulta foto por foto.
+    */
+    carregarSalvoCondutoFotosGitHub();
 
     itensPorPagina =
         obterQuantidadeProdutosVitrine();
