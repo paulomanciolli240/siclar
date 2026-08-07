@@ -41,7 +41,24 @@ function resolverUrlImagem(valFoto) {
     const nomeArquivo = caminho.split("/").pop() || "";
     const nomeSemExtensao = nomeArquivo.replace(/\.[^.]+$/, "");
 
-    if (!nomeArquivo || /^\d+$/.test(nomeSemExtensao)) {
+    /*
+      Regra de foto manual:
+      - nomes somente numéricos, como 5948.png, continuam ignorados;
+      - nomes com a letra "a" imediatamente antes OU depois do código
+        são considerados válidos:
+          a5948.png
+          5948a.png
+      - nomes descritivos continuam válidos como antes.
+    */
+    const nomeSomenteNumerico = /^\d+$/.test(nomeSemExtensao);
+    const codigoComLetraA =
+        /^a\d+$/i.test(nomeSemExtensao) ||
+        /^\d+a$/i.test(nomeSemExtensao);
+
+    if (
+        !nomeArquivo ||
+        (nomeSomenteNumerico && !codigoComLetraA)
+    ) {
         return "";
     }
 
