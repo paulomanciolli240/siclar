@@ -1,11 +1,9 @@
 "use strict";
 
 const GATILHO_OCULTO_ADMIN = "1516";
-const TEMPO_MAXIMO_GATILHO_ADMIN_MS = 2000;
 
 let toquesAdminMobile = 0;
 let timerToquesAdminMobile = null;
-let ultimoDigitoGatilhoAdminEm = 0;
 
 function registrarToqueAdminMobile() {
     toquesAdminMobile++;
@@ -111,73 +109,33 @@ function pararManutencaoSessaoAdmin() {
 async function tentarAbrirAdminPorDigitacao(evento) {
     const moduloAdmin = document.getElementById("moduloAdministrativo");
 
-    if (
-        moduloAdmin &&
-        moduloAdmin.style.display === "block"
-    ) {
-        return;
-    }
+    if (moduloAdmin && moduloAdmin.style.display === "block") return;
+    if (evento.ctrlKey || evento.altKey || evento.metaKey) return;
 
-    if (
-        evento.ctrlKey ||
-        evento.altKey ||
-        evento.metaKey
-    ) {
-        return;
-    }
+    const alvo = evento.target;
+    const digitandoEmCampo = alvo && (
+        alvo.tagName === "INPUT" ||
+        alvo.tagName === "TEXTAREA" ||
+        alvo.tagName === "SELECT" ||
+        alvo.isContentEditable
+    );
 
     /*
-      Regra de segurança:
-      o gatilho 1516 nunca é capturado enquanto o usuário estiver
-      digitando em campos de formulário. Isso impede que uma sequência
-      existente em CPF, telefone, CEP, quantidade, pesquisa, endereço
-      ou qualquer outro campo abra o acesso administrativo.
+      O gatilho 1516 é ignorado durante preenchimento de CPF,
+      telefone, CEP, pesquisa, quantidade ou qualquer outro campo.
     */
-    const alvo = evento.target;
-
-    const digitandoEmCampo =
-        alvo &&
-        (
-            alvo.tagName === "INPUT" ||
-            alvo.tagName === "TEXTAREA" ||
-            alvo.tagName === "SELECT" ||
-            alvo.isContentEditable
-        );
-
     if (digitandoEmCampo) {
         adminDigitacaoOculta = "";
-        ultimoDigitoGatilhoAdminEm = 0;
         return;
     }
 
-    if (evento.key.length !== 1) {
-        return;
+    if (evento.key.length === 1) {
+        adminDigitacaoOculta =
+            (adminDigitacaoOculta + evento.key).slice(-GATILHO_OCULTO_ADMIN.length);
     }
 
-    const agora = Date.now();
-
-    if (
-        ultimoDigitoGatilhoAdminEm &&
-        agora - ultimoDigitoGatilhoAdminEm >
-            TEMPO_MAXIMO_GATILHO_ADMIN_MS
-    ) {
+    if (adminDigitacaoOculta === GATILHO_OCULTO_ADMIN) {
         adminDigitacaoOculta = "";
-    }
-
-    ultimoDigitoGatilhoAdminEm = agora;
-
-    adminDigitacaoOculta =
-        (
-            adminDigitacaoOculta +
-            evento.key
-        ).slice(-GATILHO_OCULTO_ADMIN.length);
-
-    if (
-        adminDigitacaoOculta ===
-        GATILHO_OCULTO_ADMIN
-    ) {
-        adminDigitacaoOculta = "";
-        ultimoDigitoGatilhoAdminEm = 0;
         abrirAcessoAdminMobile();
     }
 }
@@ -199,7 +157,7 @@ async function autenticarAdministrador(usuario, senha) {
 
         sessionStorage.setItem("siclar_admin_token", adminToken);
         sessionStorage.setItem("siclar_admin_usuario", JSON.stringify(adminUsuario));
-        abrirPainelAdministrativo();
+        await abrirPainelAdministrativoAutenticado();
         return true;
     } catch (erro) {
         console.error("Falha no acesso administrativo:", erro);
@@ -250,26 +208,65 @@ function aplicarPermissoesVisuaisAdmin() {
     }
 }
 
-async function abrirPainelAdministrativo() {
+async function abrirPainelAdministrativoAutenticado() {
     if (!adminToken) {
         const valido = await validarSessaoAdminSalva();
-        if (!valido) return;
+        if (!valido) return false;
     }
 
-    pararCarrossel();
-    ["moduloCarrossel","moduloPedidos","moduloHistoricoPedidos"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = "none";
+    if (typeof pararCarrossel === "function") {
+        pararCarrossel();
+    }
+
+    /*
+      Fecha qualquer tela pública que possa estar visível.
+      A tela de apresentação foi acrescentada depois e precisa ser
+      escondida também; caso contrário ela fica por cima do painel.
+    */
+    [
+        "telaApresentacao",
+        "moduloCarrossel",
+        "moduloPedidos",
+        "moduloHistoricoPedidos"
+    ].forEach(id => {
+        const elemento = document.getElementById(id);
+        if (elemento) elemento.style.display = "none";
     });
-    document.getElementById("telaCadastroCliente").classList.remove("ativa");
-    document.getElementById("moduloAdministrativo").style.display = "block";
+
+    const telaCliente = document.getElementById("telaCadastroCliente");
+    if (telaCliente) {
+        telaCliente.classList.remove("ativa");
+        telaCliente.style.display = "";
+    }
+
+    const moduloAdmin = document.getElementById("moduloAdministrativo");
+    if (!moduloAdmin) {
+        throw new Error("A tela administrativa não foi encontrada.");
+    }
+
+    moduloAdmin.style.display = "block";
+
     const statusSessao = document.getElementById("adminSessaoStatus");
     if (statusSessao) {
-        statusSessao.textContent = "Sessão ativa por até 6 horas e renovada automaticamente";
+        statusSessao.textContent =
+            "Sessão ativa por até 6 horas e renovada automaticamente";
     }
+
     aplicarPermissoesVisuaisAdmin();
     iniciarManutencaoSessaoAdmin();
-    abrirAbaAdmin(usuarioAdminTemAcessoTotal() ? "produtos" : "pedidos");
+
+    /*
+      Usuário com acesso total entra diretamente no controle de estoque.
+      Usuário restrito continua indo para Pedidos.
+    */
+    abrirAbaAdmin(
+        usuarioAdminTemAcessoTotal()
+            ? "produtos"
+            : "pedidos"
+    );
+
+    window.scrollTo({ top: 0, behavior: "auto" });
+    return true;
 }
 
 function sairAdministrativo() {
