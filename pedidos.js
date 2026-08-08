@@ -330,7 +330,9 @@ async function finalizarPedido() {
         };
     });
     const observacao = document.getElementById('pedidoObservacao').value.trim().toUpperCase();
-    const vendedor = 'EMPRESA';
+    // Encaminhamento interno fixo para a empresa.
+    // O backend atual reconhece PAULO e esse cadastro usa o WhatsApp da empresa.
+    const vendedor = 'PAULO';
 
     botao.disabled = true;
     botao.textContent = 'Registrando pedido...';
@@ -401,4 +403,25 @@ async function finalizarPedido() {
 function fecharPedidoConcluido() {
     document.getElementById('modalPedidoSucesso').classList.remove('ativo');
     voltarAoCarrosselDoPedido();
+}
+
+
+/*
+  SICLAR — WhatsApp único da empresa
+  O pdf-whatsapp.js é carregado antes deste arquivo.
+  Esta função, carregada depois, substitui a anterior e garante que
+  pedidos concluídos e pedidos do histórico sejam enviados somente para:
+  +55 66 98439-7034
+*/
+function abrirWhatsAppComPedido(dados) {
+    const mensagem = montarMensagemWhatsApp(dados);
+    const numeroEmpresa = "5566984397034";
+    const url =
+        `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
 }
