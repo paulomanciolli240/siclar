@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SICLAR - Catálogo e Gestão</title>
-<link rel="stylesheet" href="css/estilo.css?v=20260808-responsivo-01">
+<link rel="stylesheet" href="css/estilo.css?v=20260808-responsivo-02">
 </head>
 <body>
 
@@ -22,6 +22,18 @@
         </nav>
     </header>
 
+    <div class="apresentacao-acoes-mobile" aria-label="Ações principais no celular">
+        <button type="button" class="btn-mobile-principal btn-mobile-catalogo" onclick="abrirCatalogoSiclar('ESTOQUE')">
+            🛒 Produtos
+        </button>
+        <button type="button" class="btn-mobile-principal btn-mobile-futura" onclick="abrirCatalogoSiclar('FUTURA')">
+            🚚 Entrega futura
+        </button>
+        <button type="button" class="btn-mobile-principal btn-mobile-conheca" onclick="document.getElementById('nossaHistoria').scrollIntoView({behavior:'smooth', block:'start'})">
+            🏠 Conheça a Lar Doce Lar
+        </button>
+    </div>
+
     <section class="apresentacao-hero">
         <div class="apresentacao-hero-conteudo">
             <span class="apresentacao-etiqueta">Bem-vindo à Lar Doce Lar</span>
@@ -36,9 +48,6 @@
                 </button>
                 <button type="button" class="btn-apresentacao btn-entrega-futura" onclick="abrirCatalogoSiclar('FUTURA')">
                     🚚 Produtos para entrega futura
-                </button>
-                <button type="button" class="btn-apresentacao btn-conheca-mobile" onclick="document.getElementById('nossaHistoria').scrollIntoView({behavior:'smooth', block:'start'})">
-                    🏠 Conheça a Lar Doce Lar
                 </button>
             </div>
             <p id="statusCatalogoApresentacao" class="status-catalogo-apresentacao">Preparando o catálogo...</p>
@@ -592,31 +601,37 @@
 
 <div id="modalPedidoSucesso" class="pedido-sucesso">
     <div class="pedido-sucesso-card">
-        <div class="pedido-sucesso-icone">✓</div>
-        <h3>Pedido registrado!</h3>
-        <p id="mensagemPedidoSucesso"></p>
+        <div class="pedido-sucesso-cabecalho-fixo">
+            <div class="pedido-sucesso-icone">✓</div>
+            <div class="pedido-sucesso-titulo">
+                <h3>Pedido registrado!</h3>
+                <p id="mensagemPedidoSucesso"></p>
+            </div>
 
-        <div id="resumoPedidoConcluido" class="resumo-pedido-concluido"></div>
-
-        <div class="acoes-pedido-concluido">
-            <button class="btn btn-pdf-pedido" type="button" onclick="baixarPdfPedidoConcluido()">
-                📄 Baixar PDF
-            </button>
-            <button class="btn btn-whatsapp-pedido" type="button" onclick="enviarPedidoConcluidoWhatsApp()">
-                💬 Enviar pelo WhatsApp
-            </button>
-            <button class="btn" style="background:#0f766e;" type="button" onclick="abrirMeusPedidosAposConclusao()">
-                📋 Meus pedidos
-            </button>
-            <button class="btn" style="background:#475569;" type="button" onclick="fecharPedidoConcluido()">
-                Voltar ao catálogo
-            </button>
+            <div class="acoes-pedido-concluido">
+                <button class="btn btn-whatsapp-pedido acao-confirmacao-principal" type="button" onclick="enviarPedidoConcluidoWhatsApp()">
+                    💬 Enviar pelo WhatsApp
+                </button>
+                <button class="btn btn-pdf-pedido" type="button" onclick="baixarPdfPedidoConcluido()">
+                    📄 Baixar PDF
+                </button>
+                <button class="btn" style="background:#0f766e;" type="button" onclick="abrirMeusPedidosAposConclusao()">
+                    📋 Meus pedidos
+                </button>
+                <button class="btn" style="background:#475569;" type="button" onclick="fecharPedidoConcluido()">
+                    ← Voltar ao catálogo
+                </button>
+            </div>
         </div>
 
-        <p class="nota-pdf-whatsapp">
-            O PDF só será baixado quando você escolher “Baixar PDF”.
-            O WhatsApp abrirá com o resumo do pedido pronto para envio.
-        </p>
+        <div class="pedido-sucesso-corpo">
+            <div id="resumoPedidoConcluido" class="resumo-pedido-concluido"></div>
+
+            <p class="nota-pdf-whatsapp">
+                O PDF só será baixado quando você escolher “Baixar PDF”.
+                O WhatsApp abrirá com o resumo do pedido pronto para envio.
+            </p>
+        </div>
     </div>
 </div>
 

@@ -365,7 +365,19 @@ async function finalizarPedido() {
             <div><span>Valor total</span><strong>${formatarMoeda(pedidoConcluidoAtual.valorTotal)}</strong></div>
         `;
 
-        document.getElementById('modalPedidoSucesso').classList.add('ativo');
+        const modalSucesso = document.getElementById('modalPedidoSucesso');
+        modalSucesso.classList.add('ativo');
+
+        requestAnimationFrame(() => {
+            modalSucesso.scrollTop = 0;
+
+            const cardSucesso = modalSucesso.querySelector('.pedido-sucesso-card');
+            const corpoSucesso = modalSucesso.querySelector('.pedido-sucesso-corpo');
+
+            if (cardSucesso) cardSucesso.scrollTop = 0;
+            if (corpoSucesso) corpoSucesso.scrollTop = 0;
+        });
+
         carrinhoPedido = [];
         document.getElementById('pedidoObservacao').value = '';
         renderizarCarrinhoPedido();

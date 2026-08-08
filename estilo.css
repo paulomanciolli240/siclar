@@ -2268,28 +2268,260 @@ html body #moduloCarrossel .carrossel-controles-inferior .btn-controle-carrossel
 }
 
 
-/* === 2026-08-08: RESPONSIVIDADE APRESENTACAO E CONFIRMACAO === */
-.btn-conheca-mobile{display:none}
 
-/* confirmação sempre começa no alto, inclusive no PC */
-.pedido-sucesso{align-items:flex-start;overflow-y:auto;box-sizing:border-box;padding:24px 20px}
-.pedido-sucesso-card{margin:0 auto;width:min(620px,calc(100% - 12px));max-height:calc(100vh - 48px);overflow-y:auto;box-sizing:border-box;padding:24px 28px}
-.pedido-sucesso-icone{width:58px;height:58px;font-size:29px;margin-bottom:10px}
-.pedido-sucesso-card h3{margin-bottom:5px}
-.resumo-pedido-concluido{margin:12px 0}
-.acoes-pedido-concluido{position:sticky;bottom:0;z-index:3;margin:12px -28px -24px;padding:14px 28px 18px;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -8px 20px rgba(15,23,42,.08)}
+/* ============================================================
+   SICLAR 08/08/2026
+   RESPONSIVIDADE REAL — AÇÕES MOBILE + CONFIRMAÇÃO DO PEDIDO
+   ============================================================ */
 
-@media(max-width:600px){
- .btn-conheca-mobile{display:block!important;width:100%;background:#475569}
- .pedido-sucesso{padding:8px}
- .pedido-sucesso-card{width:100%;max-height:calc(100vh - 16px);border-radius:14px;padding:16px 14px}
- .pedido-sucesso-icone{width:48px;height:48px;font-size:24px;margin-bottom:7px}
- .pedido-sucesso-card h3{font-size:20px}
- .pedido-sucesso-card>p{margin:6px 0;font-size:13px}
- .resumo-pedido-concluido{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
- .resumo-pedido-concluido>div{padding:9px}
- .resumo-pedido-concluido strong{font-size:12px;overflow-wrap:anywhere}
- .acoes-pedido-concluido{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px -14px -16px;padding:10px 14px 14px}
- .acoes-pedido-concluido .btn{width:100%;min-height:46px;padding:10px 8px;font-size:12px}
- .nota-pdf-whatsapp{font-size:10px;margin:8px 0 0}
+/* Barra exclusiva do celular: fica visível ANTES do conteúdo da apresentação. */
+.apresentacao-acoes-mobile {
+    display: none;
+}
+
+/* CONFIRMAÇÃO — PC E CELULAR
+   O modal deixa de depender de conteúdo centralizado verticalmente.
+   O cabeçalho com os botões fica sempre no alto e o resumo rola abaixo. */
+.pedido-sucesso {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: 18px !important;
+}
+
+.pedido-sucesso-card {
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(760px, calc(100vw - 36px)) !important;
+    max-width: 760px !important;
+    height: min(720px, calc(100vh - 36px)) !important;
+    max-height: calc(100vh - 36px) !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+    text-align: left !important;
+    border-radius: 18px !important;
+}
+
+.pedido-sucesso-cabecalho-fixo {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 5;
+    padding: 18px 20px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 8px 20px rgba(15,23,42,.08);
+}
+
+.pedido-sucesso-cabecalho-fixo .pedido-sucesso-icone {
+    width: 54px !important;
+    height: 54px !important;
+    margin: 0 12px 0 0 !important;
+    display: inline-grid !important;
+    vertical-align: middle;
+    font-size: 28px !important;
+}
+
+.pedido-sucesso-titulo {
+    display: inline-block;
+    vertical-align: middle;
+    width: calc(100% - 74px);
+}
+
+.pedido-sucesso-titulo h3 {
+    margin: 0 0 3px !important;
+    font-size: 24px !important;
+}
+
+.pedido-sucesso-titulo p {
+    margin: 0 !important;
+    font-size: 13px !important;
+}
+
+.acoes-pedido-concluido {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px !important;
+    margin: 16px 0 0 !important;
+}
+
+.acoes-pedido-concluido .btn {
+    width: 100% !important;
+    min-height: 48px;
+    padding: 10px 8px !important;
+    font-size: 12px !important;
+    line-height: 1.25;
+}
+
+.acao-confirmacao-principal {
+    box-shadow: 0 6px 16px rgba(22,138,69,.25);
+}
+
+.pedido-sucesso-corpo {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 20px 22px;
+    background: #f8fafc;
+}
+
+.resumo-pedido-concluido {
+    margin: 0 !important;
+}
+
+.nota-pdf-whatsapp {
+    margin: 14px 0 0 !important;
+}
+
+/* CELULAR */
+@media (max-width: 640px) {
+    /* A apresentação ganha uma faixa de ações logo no alto.
+       Os botões antigos do hero somem no celular para não duplicar. */
+    .apresentacao-menu {
+        display: none !important;
+    }
+
+    .apresentacao-topo {
+        position: sticky;
+        top: 0;
+        z-index: 80;
+        padding: 12px 14px !important;
+    }
+
+    .apresentacao-marca strong {
+        font-size: 11px;
+    }
+
+    .apresentacao-acoes-mobile {
+        position: sticky;
+        top: 66px;
+        z-index: 79;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 10px;
+        background: #1a110c;
+        border-bottom: 1px solid rgba(255,255,255,.1);
+        box-shadow: 0 8px 20px rgba(0,0,0,.28);
+    }
+
+    .btn-mobile-principal {
+        min-height: 48px;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 8px;
+        color: #fff;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .btn-mobile-catalogo {
+        background: #ea580c;
+    }
+
+    .btn-mobile-futura {
+        background: #0f766e;
+    }
+
+    .btn-mobile-conheca {
+        grid-column: 1 / -1;
+        min-height: 52px;
+        background: #475569;
+        border: 2px solid #fdba74;
+        color: #fff7ed;
+        font-size: 14px;
+    }
+
+    .apresentacao-hero .apresentacao-acoes-principais {
+        display: none !important;
+    }
+
+    .apresentacao-hero {
+        padding-top: 18px !important;
+    }
+
+    /* Confirmação ocupa praticamente a tela toda e os botões ficam no topo. */
+    .pedido-sucesso {
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .pedido-sucesso-card {
+        width: 100vw !important;
+        max-width: none !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .pedido-sucesso-cabecalho-fixo {
+        padding: 12px 12px 10px !important;
+    }
+
+    .pedido-sucesso-cabecalho-fixo .pedido-sucesso-icone {
+        width: 42px !important;
+        height: 42px !important;
+        margin-right: 8px !important;
+        font-size: 22px !important;
+    }
+
+    .pedido-sucesso-titulo {
+        width: calc(100% - 56px);
+    }
+
+    .pedido-sucesso-titulo h3 {
+        font-size: 19px !important;
+    }
+
+    .pedido-sucesso-titulo p {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+
+    .acoes-pedido-concluido {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 7px !important;
+        margin-top: 10px !important;
+    }
+
+    .acoes-pedido-concluido .btn {
+        min-height: 52px !important;
+        font-size: 12px !important;
+        padding: 9px 6px !important;
+    }
+
+    .acao-confirmacao-principal {
+        grid-column: 1 / -1;
+        min-height: 58px !important;
+        font-size: 14px !important;
+    }
+
+    .pedido-sucesso-corpo {
+        padding: 12px !important;
+    }
+
+    .resumo-pedido-concluido {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 7px !important;
+    }
+
+    .resumo-pedido-concluido > div {
+        padding: 9px !important;
+    }
+
+    .resumo-pedido-concluido span {
+        font-size: 9px !important;
+    }
+
+    .resumo-pedido-concluido strong {
+        font-size: 12px !important;
+        overflow-wrap: anywhere;
+    }
+
+    .nota-pdf-whatsapp {
+        font-size: 10px !important;
+    }
 }
