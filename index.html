@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SICLAR - Catálogo e Gestão</title>
-<link rel="stylesheet" href="css/estilo.css?v=20260808-responsivo-02">
+<link rel="stylesheet" href="css/estilo.css?v=20260808-checkout-03">
 </head>
 <body>
 
@@ -512,90 +512,102 @@
 
         <aside class="pedido-carrinho">
             <div class="pedido-carrinho-topo">
-                <h3>Seu pedido</h3>
-                <p id="pedidoQuantidadeResumo">Nenhum item adicionado</p>
+                <div>
+                    <h3>Seu pedido</h3>
+                    <p id="pedidoQuantidadeResumo">Nenhum item adicionado</p>
+                </div>
+                <div class="pedido-total-destaque-topo">
+                    <small>Total</small>
+                    <strong id="pedidoValorTotal">R$ 0,00</strong>
+                </div>
             </div>
 
-            <div id="pedidoItens" class="pedido-itens"></div>
-
-            <div class="pedido-resumo">
-                <div class="pedido-resumo-linha">
-                    <span>Quantidade de produtos</span>
-                    <strong id="pedidoQtdTotal">0</strong>
-                </div>
-
-                <div class="pedido-resumo-linha">
-                    <span>Itens diferentes</span>
-                    <strong id="pedidoItensDiferentes">0</strong>
-                </div>
-
-                <div class="pedido-resumo-total">
-                    <span>Total</span>
-                    <span id="pedidoValorTotal">R$ 0,00</span>
-                </div>
-
-
+            <div class="pedido-checkout-principal">
                 <fieldset class="pedido-forma-pagamento" id="pedidoFormaPagamentoGrupo">
-                    <legend>Forma de pagamento</legend>
+                    <legend>Como deseja pagar?</legend>
 
-                    <label class="opcao-forma-pagamento">
-                        <input
-                            type="radio"
-                            name="pedidoFormaPagamento"
-                            value="A VISTA"
-                            checked
-                            onchange="alterarFormaPagamentoPedido(this.value)"
-                        >
-                        <span>
-                            <strong>À vista</strong>
-                            <small>4,9% de desconto sobre o preço a prazo</small>
-                        </span>
-                    </label>
+                    <div class="pedido-formas-linha">
+                        <label class="opcao-forma-pagamento">
+                            <input
+                                type="radio"
+                                name="pedidoFormaPagamento"
+                                value="A VISTA"
+                                checked
+                                onchange="alterarFormaPagamentoPedido(this.value)"
+                            >
+                            <span>
+                                <strong>À vista</strong>
+                                <small>4,9% de desconto</small>
+                            </span>
+                        </label>
 
-                    <label class="opcao-forma-pagamento">
-                        <input
-                            type="radio"
-                            name="pedidoFormaPagamento"
-                            value="A PRAZO"
-                            onchange="alterarFormaPagamentoPedido(this.value)"
-                        >
-                        <span>
-                            <strong>A prazo</strong>
-                            <small>Utiliza o preço cadastrado do produto</small>
-                        </span>
-                    </label>
+                        <label class="opcao-forma-pagamento">
+                            <input
+                                type="radio"
+                                name="pedidoFormaPagamento"
+                                value="A PRAZO"
+                                onchange="alterarFormaPagamentoPedido(this.value)"
+                            >
+                            <span>
+                                <strong>A prazo</strong>
+                                <small>Preço cadastrado</small>
+                            </span>
+                        </label>
+                    </div>
                 </fieldset>
 
-                <div class="pedido-vendedor">
-                    <label for="pedidoVendedor"><strong>Enviar o pedido para</strong></label>
+                <div class="pedido-vendedor pedido-vendedor-compacto">
+                    <label for="pedidoVendedor"><strong>Quem receberá seu pedido?</strong></label>
                     <select id="pedidoVendedor">
                         <option value="">Selecione o vendedor</option>
                         <option value="PAULO">Paulo</option>
                         <option value="WALDIR">Waldir</option>
                         <option value="RONEOMAR">Roneomar</option>
                     </select>
-                    <small>O WhatsApp será aberto para o vendedor escolhido.</small>
-                </div>
-
-                <div class="pedido-observacao">
-                    <label for="pedidoObservacao">Observação do pedido</label>
-                    <textarea
-                        id="pedidoObservacao"
-                        placeholder="Ex.: preferência de entrega, cor, modelo ou outra informação..."
-                    ></textarea>
                 </div>
 
                 <button
                     id="btnFinalizarPedido"
-                    class="btn-finalizar-pedido"
+                    class="btn-finalizar-pedido btn-finalizar-destaque"
                     type="button"
                     onclick="finalizarPedido()"
                     disabled
                 >
-                    Finalizar pedido
+                    ✅ Confirmar e finalizar pedido
                 </button>
+
+                <details class="pedido-opcoes-adicionais">
+                    <summary>Observação do pedido (opcional)</summary>
+                    <div class="pedido-observacao">
+                        <textarea
+                            id="pedidoObservacao"
+                            placeholder="Ex.: preferência de entrega, cor, modelo ou outra informação..."
+                        ></textarea>
+                    </div>
+                </details>
             </div>
+
+            <div class="pedido-itens-cabecalho">
+                <strong>Itens do pedido</strong>
+                <span><span id="pedidoQtdTotal">0</span> unidade(s) • <span id="pedidoItensDiferentes">0</span> produto(s)</span>
+            </div>
+
+            <div id="pedidoItens" class="pedido-itens"></div>
         </aside>
+    </div>
+    <div class="pedido-atalho-mobile" id="pedidoAtalhoMobile">
+        <div class="pedido-atalho-mobile-total">
+            <small>Total do pedido</small>
+            <strong id="pedidoValorTotalMobile">R$ 0,00</strong>
+        </div>
+        <button
+            type="button"
+            id="btnIrFinalizacaoMobile"
+            onclick="irParaFinalizacaoPedido()"
+            disabled
+        >
+            Revisar e finalizar
+        </button>
     </div>
 </div>
 

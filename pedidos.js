@@ -289,7 +289,36 @@ function renderizarCarrinhoPedido() {
     document.getElementById('pedidoQtdTotal').textContent = quantidadeTotal;
     document.getElementById('pedidoItensDiferentes').textContent = carrinhoPedido.length;
     document.getElementById('pedidoValorTotal').textContent = formatarMoeda(valorTotal);
-    document.getElementById('btnFinalizarPedido').disabled = carrinhoPedido.length === 0;
+
+    const valorMobile = document.getElementById('pedidoValorTotalMobile');
+    if (valorMobile) {
+        valorMobile.textContent = formatarMoeda(valorTotal);
+    }
+
+    const semItens = carrinhoPedido.length === 0;
+    document.getElementById('btnFinalizarPedido').disabled = semItens;
+
+    const botaoMobile = document.getElementById('btnIrFinalizacaoMobile');
+    if (botaoMobile) {
+        botaoMobile.disabled = semItens;
+    }
+}
+
+function irParaFinalizacaoPedido() {
+    const checkout = document.querySelector(".pedido-checkout-principal");
+
+    if (!checkout) return;
+
+    checkout.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    checkout.classList.add("pedido-checkout-destaque");
+
+    setTimeout(() => {
+        checkout.classList.remove("pedido-checkout-destaque");
+    }, 1400);
 }
 
 async function finalizarPedido() {
