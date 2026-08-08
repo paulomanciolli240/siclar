@@ -30,16 +30,6 @@ function abrirMontagemPedido(numeroPedidoComplemento = null) {
 
     paginaPedidoAtual = 0;
     document.getElementById('pedidoPesquisaProduto').value = '';
-    const seletorVendedor = document.getElementById('pedidoVendedor');
-    if (seletorVendedor) {
-        seletorVendedor.disabled = Boolean(numeroPedidoComplemento);
-        if (!numeroPedidoComplemento) {
-            seletorVendedor.value = '';
-        } else if (pedidoVisualizadoAtual?.VENDEDOR) {
-            seletorVendedor.value = String(pedidoVisualizadoAtual.VENDEDOR).toUpperCase();
-        }
-    }
-
     sincronizarSeletorFormaPagamento(Boolean(numeroPedidoComplemento));
     document.querySelector('.pedido-carrinho-topo h3').textContent = numeroPedidoComplemento
         ? 'Complemento do pedido'
@@ -340,16 +330,7 @@ async function finalizarPedido() {
         };
     });
     const observacao = document.getElementById('pedidoObservacao').value.trim().toUpperCase();
-    const seletorVendedor = document.getElementById('pedidoVendedor');
-    const vendedor = modoPedidoAtual === 'COMPLEMENTO'
-        ? ''
-        : String(seletorVendedor?.value || '').trim().toUpperCase();
-
-    if (modoPedidoAtual !== 'COMPLEMENTO' && !vendedor) {
-        alert('Escolha o vendedor que receberá o pedido.');
-        seletorVendedor?.focus();
-        return;
-    }
+    const vendedor = 'EMPRESA';
 
     botao.disabled = true;
     botao.textContent = 'Registrando pedido...';
@@ -388,7 +369,6 @@ async function finalizarPedido() {
         document.getElementById('resumoPedidoConcluido').innerHTML = `
             <div><span>Pedido</span><strong>${pedidoConcluidoAtual.numeroPedido}</strong></div>
             <div><span>Status</span><strong>${pedidoConcluidoAtual.status}</strong></div>
-            <div><span>Vendedor</span><strong>${pedidoConcluidoAtual.vendedor || ""}</strong></div>
             <div><span>Pagamento</span><strong>${pedidoConcluidoAtual.formaPagamento || ""}</strong></div>
             <div><span>Quantidade</span><strong>${pedidoConcluidoAtual.quantidadeTotal}</strong></div>
             <div><span>Valor total</span><strong>${formatarMoeda(pedidoConcluidoAtual.valorTotal)}</strong></div>
