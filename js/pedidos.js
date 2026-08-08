@@ -30,16 +30,6 @@ function abrirMontagemPedido(numeroPedidoComplemento = null) {
 
     paginaPedidoAtual = 0;
     document.getElementById('pedidoPesquisaProduto').value = '';
-    const seletorVendedor = document.getElementById('pedidoVendedor');
-    if (seletorVendedor) {
-        seletorVendedor.disabled = Boolean(numeroPedidoComplemento);
-        if (!numeroPedidoComplemento) {
-            seletorVendedor.value = '';
-        } else if (pedidoVisualizadoAtual?.VENDEDOR) {
-            seletorVendedor.value = String(pedidoVisualizadoAtual.VENDEDOR).toUpperCase();
-        }
-    }
-
     sincronizarSeletorFormaPagamento(Boolean(numeroPedidoComplemento));
     document.querySelector('.pedido-carrinho-topo h3').textContent = numeroPedidoComplemento
         ? 'Complemento do pedido'
@@ -289,7 +279,36 @@ function renderizarCarrinhoPedido() {
     document.getElementById('pedidoQtdTotal').textContent = quantidadeTotal;
     document.getElementById('pedidoItensDiferentes').textContent = carrinhoPedido.length;
     document.getElementById('pedidoValorTotal').textContent = formatarMoeda(valorTotal);
-    document.getElementById('btnFinalizarPedido').disabled = carrinhoPedido.length === 0;
+
+    const valorMobile = document.getElementById('pedidoValorTotalMobile');
+    if (valorMobile) {
+        valorMobile.textContent = formatarMoeda(valorTotal);
+    }
+
+    const semItens = carrinhoPedido.length === 0;
+    document.getElementById('btnFinalizarPedido').disabled = semItens;
+
+    const botaoMobile = document.getElementById('btnIrFinalizacaoMobile');
+    if (botaoMobile) {
+        botaoMobile.disabled = semItens;
+    }
+}
+
+function irParaFinalizacaoPedido() {
+    const checkout = document.querySelector(".pedido-checkout-principal");
+
+    if (!checkout) return;
+
+    checkout.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    checkout.classList.add("pedido-checkout-destaque");
+
+    setTimeout(() => {
+        checkout.classList.remove("pedido-checkout-destaque");
+    }, 1400);
 }
 
 async function finalizarPedido() {
@@ -311,16 +330,9 @@ async function finalizarPedido() {
         };
     });
     const observacao = document.getElementById('pedidoObservacao').value.trim().toUpperCase();
-    const seletorVendedor = document.getElementById('pedidoVendedor');
-    const vendedor = modoPedidoAtual === 'COMPLEMENTO'
-        ? ''
-        : String(seletorVendedor?.value || '').trim().toUpperCase();
-
-    if (modoPedidoAtual !== 'COMPLEMENTO' && !vendedor) {
-        alert('Escolha o vendedor que receberá o pedido.');
-        seletorVendedor?.focus();
-        return;
-    }
+    // Encaminhamento interno fixo para a empresa.
+    // O backend atual reconhece PAULO e esse cadastro usa o WhatsApp da empresa.
+    const vendedor = 'PAULO';
 
     botao.disabled = true;
     botao.textContent = 'Registrando pedido...';
@@ -359,13 +371,24 @@ async function finalizarPedido() {
         document.getElementById('resumoPedidoConcluido').innerHTML = `
             <div><span>Pedido</span><strong>${pedidoConcluidoAtual.numeroPedido}</strong></div>
             <div><span>Status</span><strong>${pedidoConcluidoAtual.status}</strong></div>
-            <div><span>Vendedor</span><strong>${pedidoConcluidoAtual.vendedor || ""}</strong></div>
             <div><span>Pagamento</span><strong>${pedidoConcluidoAtual.formaPagamento || ""}</strong></div>
             <div><span>Quantidade</span><strong>${pedidoConcluidoAtual.quantidadeTotal}</strong></div>
             <div><span>Valor total</span><strong>${formatarMoeda(pedidoConcluidoAtual.valorTotal)}</strong></div>
         `;
 
-        document.getElementById('modalPedidoSucesso').classList.add('ativo');
+        const modalSucesso = document.getElementById('modalPedidoSucesso');
+        modalSucesso.classList.add('ativo');
+
+        requestAnimationFrame(() => {
+            modalSucesso.scrollTop = 0;
+
+            const cardSucesso = modalSucesso.querySelector('.pedido-sucesso-card');
+            const corpoSucesso = modalSucesso.querySelector('.pedido-sucesso-corpo');
+
+            if (cardSucesso) cardSucesso.scrollTop = 0;
+            if (corpoSucesso) corpoSucesso.scrollTop = 0;
+        });
+
         carrinhoPedido = [];
         document.getElementById('pedidoObservacao').value = '';
         renderizarCarrinhoPedido();
@@ -380,4 +403,25 @@ async function finalizarPedido() {
 function fecharPedidoConcluido() {
     document.getElementById('modalPedidoSucesso').classList.remove('ativo');
     voltarAoCarrosselDoPedido();
+}
+
+
+/*
+  SICLAR — WhatsApp único da empresa
+  O pdf-whatsapp.js é carregado antes deste arquivo.
+  Esta função, carregada depois, substitui a anterior e garante que
+  pedidos concluídos e pedidos do histórico sejam enviados somente para:
+  +55 66 98439-7034
+*/
+function abrirWhatsAppComPedido(dados) {
+    const mensagem = montarMensagemWhatsApp(dados);
+    const numeroEmpresa = "5566984397034";
+    const url =
+        `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
 }
