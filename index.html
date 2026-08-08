@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SICLAR - Catálogo e Gestão</title>
-<link rel="stylesheet" href="css/estilo.css?v=20260806-fachada-01">
+<link rel="stylesheet" href="css/estilo.css?v=20260808-responsivo-01">
 </head>
 <body>
 
@@ -36,6 +36,9 @@
                 </button>
                 <button type="button" class="btn-apresentacao btn-entrega-futura" onclick="abrirCatalogoSiclar('FUTURA')">
                     🚚 Produtos para entrega futura
+                </button>
+                <button type="button" class="btn-apresentacao btn-conheca-mobile" onclick="document.getElementById('nossaHistoria').scrollIntoView({behavior:'smooth', block:'start'})">
+                    🏠 Conheça a Lar Doce Lar
                 </button>
             </div>
             <p id="statusCatalogoApresentacao" class="status-catalogo-apresentacao">Preparando o catálogo...</p>
