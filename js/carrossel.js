@@ -376,9 +376,54 @@ function selecionarNovoLoteVitrine() {
         candidatos = base.slice();
     }
 
-    const novoLote =
-        embaralharProdutosCarrossel(candidatos)
-            .slice(0, quantidade);
+    const cabecalhoFoto =
+        headers.find(cabecalho =>
+            String(cabecalho || "").includes("Foto") ||
+            String(cabecalho || "")
+                .toLowerCase()
+                .includes("imagem")
+        ) ||
+        "";
+
+    const produtoTemFoto = produto => {
+        if (!cabecalhoFoto) return false;
+
+        const valorFoto = String(
+            produto[cabecalhoFoto] || ""
+        ).trim();
+
+        if (!valorFoto) return false;
+
+        const normalizado =
+            valorFoto.toLowerCase();
+
+        return ![
+            "não",
+            "nao",
+            "n",
+            "false",
+            "0",
+            "sem foto",
+            "sem imagem"
+        ].includes(normalizado);
+    };
+
+    const candidatosComFoto =
+        embaralharProdutosCarrossel(
+            candidatos.filter(produtoTemFoto)
+        );
+
+    const candidatosSemFoto =
+        embaralharProdutosCarrossel(
+            candidatos.filter(
+                produto => !produtoTemFoto(produto)
+            )
+        );
+
+    const novoLote = [
+        ...candidatosComFoto,
+        ...candidatosSemFoto
+    ].slice(0, quantidade);
 
     if (
         indiceHistoricoLoteVitrine <
@@ -1171,3 +1216,96 @@ window.addEventListener(
         }
     }
 );
+
+/*
+  ACESSO ADMINISTRATIVO NO CELULAR
+  - 5 toques/cliques rápidos em "SICLAR VIRTUAL";
+  - funciona com touch/pointer e mouse;
+  - abre o modal de login administrativo já existente no index.html.
+*/
+let contadorToquesAdminSiclar = 0;
+let timerToquesAdminSiclar = null;
+let ultimoPointerAdminSiclar = 0;
+
+function abrirAcessoAdminPorCincoToques() {
+    const modal =
+        document.getElementById("modalAcessoAdminMobile");
+
+    if (!modal) return;
+
+    if (typeof abrirAcessoAdminMobile === "function") {
+        abrirAcessoAdminMobile();
+        return;
+    }
+
+    modal.style.display = "flex";
+
+    const usuario =
+        document.getElementById("usuarioAdminMobile");
+
+    if (usuario) {
+        setTimeout(() => usuario.focus(), 100);
+    }
+}
+
+function registrarToqueAdminSiclar(evento) {
+    if (
+        evento &&
+        evento.type === "click" &&
+        Date.now() - ultimoPointerAdminSiclar < 500
+    ) {
+        return;
+    }
+
+    if (evento && evento.type === "pointerup") {
+        ultimoPointerAdminSiclar = Date.now();
+    }
+
+    contadorToquesAdminSiclar += 1;
+
+    clearTimeout(timerToquesAdminSiclar);
+
+    if (contadorToquesAdminSiclar >= 5) {
+        contadorToquesAdminSiclar = 0;
+        abrirAcessoAdminPorCincoToques();
+        return;
+    }
+
+    timerToquesAdminSiclar = setTimeout(() => {
+        contadorToquesAdminSiclar = 0;
+    }, 2200);
+}
+
+function configurarGatilhoAdminSiclar() {
+    const gatilho =
+        document.getElementById("gatilhoAdminMobile");
+
+    if (!gatilho || gatilho.dataset.adminCincoToques === "1") {
+        return;
+    }
+
+    gatilho.dataset.adminCincoToques = "1";
+    gatilho.style.cursor = "pointer";
+    gatilho.style.userSelect = "none";
+    gatilho.style.webkitUserSelect = "none";
+    gatilho.style.touchAction = "manipulation";
+
+    gatilho.addEventListener(
+        "pointerup",
+        registrarToqueAdminSiclar
+    );
+
+    gatilho.addEventListener(
+        "click",
+        registrarToqueAdminSiclar
+    );
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        configurarGatilhoAdminSiclar
+    );
+} else {
+    configurarGatilhoAdminSiclar();
+}
