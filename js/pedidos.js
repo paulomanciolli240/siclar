@@ -205,11 +205,60 @@ function precoUnitarioAtualItem(item) {
     return obterPrecoPorForma(item.precoPrazo, formaPagamentoPedido);
 }
 
+function normalizarQuantidadePedido(valor) {
+    const texto = String(valor == null ? "" : valor)
+        .trim()
+        .replace(/\s+/g, "")
+        .replace(",", ".");
+
+    if (!texto) return null;
+
+    const numero = Number(texto);
+
+    if (!Number.isFinite(numero) || numero <= 0) {
+        return null;
+    }
+
+    // Até 3 casas decimais: atende unidades e produtos fracionados
+    // sem acumular ruído de ponto flutuante.
+    return Math.round(numero * 1000) / 1000;
+}
+
+function formatarQuantidadePedido(valor) {
+    const numero = Number(valor);
+
+    if (!Number.isFinite(numero)) return "0";
+
+    return numero.toLocaleString("pt-BR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3
+    });
+}
+
+function definirQuantidadePedido(codigo, valor) {
+    const item = carrinhoPedido.find(
+        produto => produto.codigo === codigo
+    );
+
+    if (!item) return;
+
+    const quantidade = normalizarQuantidadePedido(valor);
+
+    if (quantidade === null) {
+        renderizarCarrinhoPedido();
+        return;
+    }
+
+    item.quantidade = quantidade;
+    renderizarCarrinhoPedido();
+}
+
 function alterarQuantidadePedido(codigo, variacao) {
     const item = carrinhoPedido.find(produto => produto.codigo === codigo);
     if (!item) return;
 
-    item.quantidade += variacao;
+    item.quantidade =
+        Math.round((Number(item.quantidade) + variacao) * 1000) / 1000;
 
     if (item.quantidade <= 0) {
         carrinhoPedido = carrinhoPedido.filter(produto => produto.codigo !== codigo);
@@ -245,7 +294,21 @@ function renderizarCarrinhoPedido() {
                 <div class="item-carrinho-linha">
                     <div class="controle-quantidade">
                         <button type="button" onclick='alterarQuantidadePedido(${JSON.stringify(item.codigo)}, -1)'>−</button>
-                        <span>${item.quantidade}</span>
+                        <input
+                            type="text"
+                            inputmode="decimal"
+                            value="${formatarQuantidadePedido(item.quantidade)}"
+                            aria-label="Quantidade de ${item.descricao}"
+                            style="width:72px;text-align:center;font-weight:700;"
+                            onfocus="this.select()"
+                            onchange='definirQuantidadePedido(${JSON.stringify(item.codigo)}, this.value)'
+                            onkeydown='
+                                if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    definirQuantidadePedido(${JSON.stringify(item.codigo)}, this.value);
+                                }
+                            '
+                        >
                         <button type="button" onclick='alterarQuantidadePedido(${JSON.stringify(item.codigo)}, 1)'>+</button>
                     </div>
 
@@ -273,10 +336,11 @@ function renderizarCarrinhoPedido() {
         quantidadeTotal === 0
             ? 'Nenhum item adicionado'
             : possuiEntregaFutura
-                ? `${quantidadeTotal} unidade(s) • possui item sob encomenda`
-                : `${quantidadeTotal} unidade(s) no pedido`;
+                ? `${formatarQuantidadePedido(quantidadeTotal)} unidade(s) • possui item sob encomenda`
+                : `${formatarQuantidadePedido(quantidadeTotal)} unidade(s) no pedido`;
 
-    document.getElementById('pedidoQtdTotal').textContent = quantidadeTotal;
+    document.getElementById('pedidoQtdTotal').textContent =
+        formatarQuantidadePedido(quantidadeTotal);
     document.getElementById('pedidoItensDiferentes').textContent = carrinhoPedido.length;
     document.getElementById('pedidoValorTotal').textContent = formatarMoeda(valorTotal);
 

@@ -236,22 +236,101 @@ function aplicarEstiloVitrineEstavel() {
     );
 }
 
+function nomeFotoPermitidoCarrossel(valor) {
+    const texto = String(valor == null ? "" : valor).trim();
+
+    if (!texto) return false;
+
+    const semParametros = texto.split(/[?#]/, 1)[0];
+    const nomeArquivo = semParametros
+        .replace(/\\/g, "/")
+        .split("/")
+        .pop()
+        .trim();
+
+    // Só nomes reais de arquivo JPG/PNG são considerados fotos.
+    // Isso impede que valores como SIM, NÃO, 1 etc. gerem requisições.
+    if (!/\.(?:jpg|png)$/i.test(nomeArquivo)) {
+        return false;
+    }
+
+    // Regra SICLAR: arquivos puramente numéricos não devem sequer ser procurados.
+    // Bloqueados: 123.jpg, 123.png, imagens/123.jpg.
+    // Permitidos: a123.jpg, a123.png, cimento votoran.jpg.
+    if (/^\d+\.(?:jpg|png)$/i.test(nomeArquivo)) {
+        return false;
+    }
+
+    return true;
+}
+
+function obterCabecalhoArquivoFotoCarrossel() {
+    const candidatos = headers.filter(cabecalho => {
+        const chave = String(cabecalho || "").toLowerCase();
+        return chave.includes("foto") || chave.includes("imagem");
+    });
+
+    if (!candidatos.length) return "";
+
+    let melhorCabecalho = "";
+    let maiorQuantidade = 0;
+
+    candidatos.forEach(cabecalho => {
+        let quantidade = 0;
+
+        for (const produto of (Array.isArray(dadosGlobais) ? dadosGlobais : [])) {
+            if (nomeFotoPermitidoCarrossel(produto && produto[cabecalho])) {
+                quantidade += 1;
+            }
+        }
+
+        if (quantidade > maiorQuantidade) {
+            maiorQuantidade = quantidade;
+            melhorCabecalho = cabecalho;
+        }
+    });
+
+    // Só retorna uma coluna se ela realmente contiver ao menos um arquivo válido.
+    // Assim uma coluna com SIM/NÃO nunca será usada como caminho de imagem.
+    return maiorQuantidade > 0 ? melhorCabecalho : "";
+}
+
 function obterUrlImagemCarrossel(valor) {
     const texto = String(valor == null ? "" : valor).trim();
 
-    if (!texto) return "";
+    // Regra SICLAR: só tenta carregar nomes de foto permitidos.
+    // 123.jpg / 123.png são barrados antes de qualquer requisição.
+    if (!nomeFotoPermitidoCarrossel(texto)) return "";
 
-    try {
-        const url = resolverUrlImagem(texto);
+    const caminhoLimpo = texto
+        .replace(/\\/g, "/")
+        .replace(/^\.\//, "");
 
-        if (!url || imagensComFalhaCarrossel.has(url)) {
-            return "";
-        }
-
-        return url;
-    } catch (erro) {
-        return "";
+    // URLs completas continuam válidas.
+    if (/^https?:\/\//i.test(caminhoLimpo)) {
+        return imagensComFalhaCarrossel.has(caminhoLimpo)
+            ? ""
+            : caminhoLimpo;
     }
+
+    // Aceita tanto "a123.jpg" quanto "imagens/a123.jpg".
+    // Se vier apenas o nome, acrescenta a pasta imagens sem consultar o GitHub antes.
+    const caminhoImagem =
+        caminhoLimpo.toLowerCase().startsWith("imagens/")
+            ? caminhoLimpo
+            : "imagens/" + caminhoLimpo;
+
+    const base =
+        window.location.href.substring(
+            0,
+            window.location.href.lastIndexOf("/") + 1
+        );
+
+    const url = base + caminhoImagem;
+
+    return imagensComFalhaCarrossel.has(url)
+        ? ""
+        : url;
 }
 
 function gerarImagemCarrossel(valorFoto, descricao) {
@@ -357,33 +436,11 @@ function selecionarNovoLoteVitrine() {
         return;
     }
 
-    const recentes =
-        new Set(codigosRecentesVitrine);
-
-    let candidatos = base.filter(produto => {
-        const codigo = String(
-            produto[cabecalhoCodigo] || ""
-        ).trim();
-
-        return codigo && !recentes.has(codigo);
-    });
-
     const quantidade =
         obterQuantidadeProdutosVitrine();
 
-    if (candidatos.length < quantidade) {
-        codigosRecentesVitrine = [];
-        candidatos = base.slice();
-    }
-
     const cabecalhoFoto =
-        headers.find(cabecalho =>
-            String(cabecalho || "").includes("Foto") ||
-            String(cabecalho || "")
-                .toLowerCase()
-                .includes("imagem")
-        ) ||
-        "";
+        obterCabecalhoArquivoFotoCarrossel();
 
     const produtoTemFoto = produto => {
         if (!cabecalhoFoto) return false;
@@ -394,36 +451,76 @@ function selecionarNovoLoteVitrine() {
 
         if (!valorFoto) return false;
 
-        const normalizado =
-            valorFoto.toLowerCase();
-
-        return ![
-            "não",
-            "nao",
-            "n",
-            "false",
-            "0",
-            "sem foto",
-            "sem imagem"
-        ].includes(normalizado);
+        return nomeFotoPermitidoCarrossel(valorFoto);
     };
 
-    const candidatosComFoto =
-        embaralharProdutosCarrossel(
-            candidatos.filter(produtoTemFoto)
+    const obterCodigo = produto =>
+        String(
+            produto[cabecalhoCodigo] || ""
+        ).trim();
+
+    let recentes =
+        new Set(codigosRecentesVitrine);
+
+    const todosComFoto = base.filter(produto => {
+        const codigo = obterCodigo(produto);
+        return codigo && produtoTemFoto(produto);
+    });
+
+    const todosSemFoto = base.filter(produto => {
+        const codigo = obterCodigo(produto);
+        return codigo && !produtoTemFoto(produto);
+    });
+
+    /*
+      REGRA SICLAR DAS FOTOS:
+      1) enquanto existir qualquer produto COM FOTO VÁLIDA ainda não exibido,
+         a visualização contém SOMENTE produtos com foto;
+      2) a última visualização de fotos pode ter menos cartões e NÃO é
+         completada com produtos sem foto;
+      3) somente depois de esgotar todas as fotos válidas começam os
+         produtos sem foto;
+      4) nomes puramente numéricos, como 123.jpg / 123.png, já são
+         classificados como sem foto por nomeFotoPermitidoCarrossel().
+    */
+    let candidatosComFoto = todosComFoto.filter(
+        produto => !recentes.has(obterCodigo(produto))
+    );
+
+    let novoLote = [];
+
+    if (candidatosComFoto.length) {
+        novoLote = embaralharProdutosCarrossel(
+            candidatosComFoto
+        ).slice(0, quantidade);
+    } else {
+        let candidatosSemFoto = todosSemFoto.filter(
+            produto => !recentes.has(obterCodigo(produto))
         );
 
-    const candidatosSemFoto =
-        embaralharProdutosCarrossel(
-            candidatos.filter(
-                produto => !produtoTemFoto(produto)
-            )
-        );
+        if (!candidatosSemFoto.length) {
+            /*
+              Terminou também o grupo sem foto. Reinicia o ciclo completo,
+              voltando a priorizar as fotos válidas.
+            */
+            codigosRecentesVitrine = [];
+            recentes = new Set();
 
-    const novoLote = [
-        ...candidatosComFoto,
-        ...candidatosSemFoto
-    ].slice(0, quantidade);
+            if (todosComFoto.length) {
+                novoLote = embaralharProdutosCarrossel(
+                    todosComFoto
+                ).slice(0, quantidade);
+            } else {
+                novoLote = embaralharProdutosCarrossel(
+                    todosSemFoto
+                ).slice(0, quantidade);
+            }
+        } else {
+            novoLote = embaralharProdutosCarrossel(
+                candidatosSemFoto
+            ).slice(0, quantidade);
+        }
+    }
 
     if (
         indiceHistoricoLoteVitrine <
@@ -444,11 +541,7 @@ function selecionarNovoLoteVitrine() {
     produtosLoteVitrine = novoLote;
 
     const codigos = novoLote
-        .map(produto =>
-            String(
-                produto[cabecalhoCodigo] || ""
-            ).trim()
-        )
+        .map(obterCodigo)
         .filter(Boolean);
 
     codigosRecentesVitrine = [
@@ -591,13 +684,7 @@ function renderizarPaginaCarrossel() {
             headers[3];
 
         const hFoto =
-            headers.find(cabecalho =>
-                String(cabecalho || "").includes("Foto") ||
-                String(cabecalho || "")
-                    .toLowerCase()
-                    .includes("imagem")
-            ) ||
-            "";
+            obterCabecalhoArquivoFotoCarrossel();
 
         const existePesquisa =
             String(
