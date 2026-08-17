@@ -116,7 +116,9 @@ async function consultarCpfCliente() {
 
     definirMensagemCliente('mensagemConsultaCliente', '');
 
-    if (!cpfValido(cpf)) {
+    const modoConsumidor = cpf === '1';
+
+    if (!modoConsumidor && !cpfValido(cpf)) {
         definirMensagemCliente('mensagemConsultaCliente', 'Digite um CPF válido.', 'erro');
         campoCpf.focus();
         return;
@@ -136,6 +138,13 @@ async function consultarCpfCliente() {
         if (resultado.encontrado) {
             clienteEncontradoAtual = resultado.cliente || null;
             modoEdicaoCliente = false;
+
+            if (modoConsumidor) {
+                clientePedidoAtual = clienteEncontradoAtual;
+                abrirMontagemPedido();
+                return;
+            }
+
             mostrarEtapaCliente('etapaClienteExistente');
             return;
         }

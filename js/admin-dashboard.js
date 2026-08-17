@@ -531,6 +531,13 @@ function renderizarDetalhePedidoAdmin(pedido, itens) {
                 ${opcoes.map(status => `<option ${status === String(pedido.STATUS || "").toUpperCase() ? "selected" : ""}>${status}</option>`).join("")}
             </select>
             <button class="admin-btn-pequeno" onclick="salvarStatusPedidoAdmin()">Salvar status</button>
+            ${usuarioAdminTemAcessoTotal() ? `
+                <button
+                    class="admin-btn-pequeno"
+                    style="background:#b91c1c;color:#fff;margin-left:8px;"
+                    onclick="excluirPedidoAdmin()"
+                >Excluir pedido</button>
+            ` : ""}
         </div>
 
         <div style="overflow:auto;">
@@ -565,6 +572,50 @@ async function salvarStatusPedidoAdmin() {
         alert("Status atualizado com sucesso.");
     } catch (erro) {
         alert("Erro: " + erro.message);
+    }
+}
+
+
+async function excluirPedidoAdmin() {
+    if (!adminPedidoSelecionado) return;
+
+    if (!usuarioAdminTemAcessoTotal()) {
+        alert("Seu usuário não possui permissão para excluir pedidos.");
+        return;
+    }
+
+    const numeroPedido = adminPedidoSelecionado.NUMERO_PEDIDO || "";
+
+    const confirmou = confirm(
+        `ATENÇÃO: deseja excluir definitivamente o pedido ${numeroPedido}?\n\n` +
+        "O pedido e todos os seus itens serão apagados. Esta operação não pode ser desfeita."
+    );
+
+    if (!confirmou) return;
+
+    try {
+        const resultado = await enviarParaGAS({
+            acao: "excluirPedidoAdmin",
+            adminToken,
+            numeroPedido
+        });
+
+        adminPedidoSelecionado = null;
+
+        document.getElementById("adminDetalhePedido").innerHTML =
+            '<div class="admin-vazio">Selecione um pedido.</div>';
+
+        await carregarPedidosAdmin();
+
+        if (usuarioAdminTemAcessoTotal()) {
+            try {
+                await carregarResumoAdmin();
+            } catch (ignorar) {}
+        }
+
+        alert(resultado.mensagem || "Pedido excluído com sucesso.");
+    } catch (erro) {
+        alert("Erro ao excluir pedido: " + erro.message);
     }
 }
 
