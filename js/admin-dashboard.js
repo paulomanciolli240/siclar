@@ -341,7 +341,7 @@ function renderizarClientesAdmin() {
     const termo = document.getElementById("adminBuscaCliente").value.trim().toLowerCase();
     const filtrados = adminClientes.filter(cliente => {
         const alvo = [
-            cliente.CPF, cliente.NOME_COMPLETO, cliente.TELEFONE,
+            cliente.CODIGO_CLIENTE, cliente.CPF, cliente.NOME_COMPLETO, cliente.TELEFONE,
             cliente.EMAIL, cliente.CIDADE, cliente.STATUS
         ].join(" ").toLowerCase();
         return termo.split(/\s+/).filter(Boolean).every(parte => alvo.includes(parte));
@@ -349,6 +349,7 @@ function renderizarClientesAdmin() {
 
     const linhas = filtrados.map(cliente => `
         <tr>
+            <td><strong>${cliente.CODIGO_CLIENTE || ""}</strong></td>
             <td>${formatarCpf(cliente.CPF || "")}</td>
             <td>${cliente.NOME_COMPLETO || ""}</td>
             <td>${cliente.TELEFONE || ""}</td>
@@ -360,8 +361,8 @@ function renderizarClientesAdmin() {
 
     document.getElementById("adminListaClientes").innerHTML = `
         <table class="admin-tabela">
-            <thead><tr><th>CPF</th><th>Nome</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ação</th></tr></thead>
-            <tbody>${linhas || '<tr><td colspan="6">Nenhum cliente encontrado.</td></tr>'}</tbody>
+            <thead><tr><th>Código</th><th>CPF</th><th>Nome</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody>${linhas || '<tr><td colspan="7">Nenhum cliente encontrado.</td></tr>'}</tbody>
         </table>
     `;
 }
@@ -373,19 +374,25 @@ function abrirClienteAdmin(cpf) {
     if (!adminClienteEmEdicao) return;
 
     const campos = [
-        "CPF","NOME_COMPLETO","TELEFONE","EMAIL","CEP","ENDERECO","NUMERO",
+        "CODIGO_CLIENTE","CPF","NOME_COMPLETO","TELEFONE","EMAIL","CEP","ENDERECO","NUMERO",
         "BAIRRO","CIDADE","UF","PONTO DE REFERENCIA","OBSERVAÇÕES","STATUS"
     ];
 
     document.getElementById("adminClienteCpfInfo").textContent =
-        `CPF ${formatarCpf(adminClienteEmEdicao.CPF || "")}`;
+        `Código ${adminClienteEmEdicao.CODIGO_CLIENTE || "—"} • CPF ${formatarCpf(adminClienteEmEdicao.CPF || "")}`;
 
     document.getElementById("adminCamposCliente").innerHTML = campos.map(campo => {
-        const readonly = campo === "CPF" ? "readonly" : "";
+        const readonly = campo === "CPF" || (campo === "CODIGO_CLIENTE" && !usuarioAdminTemAcessoTotal())
+            ? "readonly"
+            : "";
         const valor = adminClienteEmEdicao[campo] || "";
+        const dica = campo === "CODIGO_CLIENTE" && usuarioAdminTemAcessoTotal()
+            ? '<small style="display:block;margin-top:4px;color:#64748b;">Usuário TOTAL pode alterar este código. O número 1 é reservado para CONSUMIDOR.</small>'
+            : "";
         return `<div class="grupo-campo-edicao">
-            <label>${campo}</label>
+            <label>${campo === "CODIGO_CLIENTE" ? "CÓDIGO DO CLIENTE" : campo}</label>
             <input type="text" data-admin-cliente-campo="${campo}" value="${escaparHtml(valor)}" ${readonly}>
+            ${dica}
         </div>`;
     }).join("");
 
@@ -408,6 +415,27 @@ async function salvarClienteAdmin() {
             : input.value.trim().toUpperCase();
     });
 
+    const codigoOriginal = somenteNumeros(adminClienteEmEdicao.CODIGO_CLIENTE || "");
+    const codigoNovo = somenteNumeros(dadosCliente.CODIGO_CLIENTE || "");
+
+    if (!codigoNovo || codigoNovo === "1" || codigoNovo.length > 10) {
+        alert('Informe um código de cliente válido. O código "1" é reservado para CONSUMIDOR.');
+        return;
+    }
+
+    if (codigoNovo !== codigoOriginal) {
+        if (!usuarioAdminTemAcessoTotal()) {
+            alert("Seu usuário não possui permissão para alterar o código do cliente.");
+            return;
+        }
+
+        const confirmou = confirm(
+            `Deseja alterar o código do cliente de ${codigoOriginal} para ${codigoNovo}?`
+        );
+
+        if (!confirmou) return;
+    }
+
     const botao = document.getElementById("btnSalvarAdminCliente");
     botao.disabled = true;
     botao.textContent = "Salvando...";
@@ -416,6 +444,7 @@ async function salvarClienteAdmin() {
         await enviarParaGAS({
             acao: "atualizarClienteAdmin",
             adminToken,
+            codigoOriginal,
             dadosCliente
         });
         fecharModalAdminCliente();

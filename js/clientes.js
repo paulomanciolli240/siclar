@@ -27,7 +27,11 @@ function iniciarFluxoCliente(codigo, descricao) {
     modoEdicaoCliente = false;
 
     const cpfSalvo = localStorage.getItem(CHAVE_CPF_SICLAR) || '';
-    document.getElementById('clienteCpfConsulta').value = formatarCpf(cpfSalvo);
+    const campoConsulta = document.getElementById('clienteCpfConsulta');
+    campoConsulta.placeholder = 'Digite seu CPF ou código do cliente';
+    campoConsulta.value = somenteNumeros(cpfSalvo).length === 11
+        ? formatarCpf(cpfSalvo)
+        : somenteNumeros(cpfSalvo);
     document.getElementById('formCadastroCliente').reset();
     definirMensagemCliente('mensagemConsultaCliente', '');
     definirMensagemCliente('mensagemCadastroCliente', '');
@@ -111,16 +115,45 @@ function continuarComprandoCliente() {
 
 async function consultarCpfCliente() {
     const campoCpf = document.getElementById('clienteCpfConsulta');
-    const cpf = somenteNumeros(campoCpf.value);
+    const identificador = somenteNumeros(campoCpf.value);
     const botao = document.getElementById('btnConsultarCpf');
 
     definirMensagemCliente('mensagemConsultaCliente', '');
+    definirMensagemCliente('mensagemCadastroCliente', '');
 
-    const modoConsumidor = cpf === '1';
-
-    if (!modoConsumidor && !cpfValido(cpf)) {
-        definirMensagemCliente('mensagemConsultaCliente', 'Digite um CPF válido.', 'erro');
+    if (!identificador) {
+        definirMensagemCliente(
+            'mensagemConsultaCliente',
+            'Digite seu CPF ou o código do cliente.',
+            'erro'
+        );
         campoCpf.focus();
+        return;
+    }
+
+    const modoConsumidor = identificador === '1';
+    const modoCpf = identificador.length === 11;
+    const modoCodigo = !modoConsumidor && !modoCpf;
+
+    // Quando houver 11 dígitos, o sistema SEMPRE entende que é CPF.
+    // Se estiver inválido, avisa e abre o cadastro para o cliente corrigir.
+    if (modoCpf && !cpfValido(identificador)) {
+        clienteEncontradoAtual = null;
+        modoEdicaoCliente = false;
+        prepararFormularioCliente(null);
+        document.getElementById('clienteCpf').value = formatarCpf(identificador);
+        document.getElementById('btnSalvarCliente').textContent = 'Salvar cadastro';
+        definirMensagemCliente(
+            'mensagemCadastroCliente',
+            'CPF inválido. Confira os números, corrija o CPF e complete seu cadastro.',
+            'erro'
+        );
+        mostrarEtapaCliente('etapaCadastroCliente');
+        setTimeout(() => {
+            const campoCadastroCpf = document.getElementById('clienteCpf');
+            campoCadastroCpf.focus();
+            campoCadastroCpf.select();
+        }, 100);
         return;
     }
 
@@ -130,28 +163,44 @@ async function consultarCpfCliente() {
     try {
         const resultado = await enviarParaGAS({
             acao: 'buscarCliente',
-            cpf
+            cpf: identificador
         });
 
-        localStorage.setItem(CHAVE_CPF_SICLAR, cpf);
+        if (resultado.consumidor) {
+            clienteEncontradoAtual = resultado.cliente || {
+                CODIGO_CLIENTE: '1',
+                CPF: '1',
+                NOME_COMPLETO: 'CONSUMIDOR'
+            };
+            clientePedidoAtual = clienteEncontradoAtual;
+            modoEdicaoCliente = false;
+            localStorage.setItem(CHAVE_CPF_SICLAR, '1');
+            abrirMontagemPedido();
+            return;
+        }
 
         if (resultado.encontrado) {
             clienteEncontradoAtual = resultado.cliente || null;
             modoEdicaoCliente = false;
+            localStorage.setItem(CHAVE_CPF_SICLAR, identificador);
 
-            if (modoConsumidor) {
+            // Código de cliente é atalho de venda: encontrou, abre o pedido direto.
+            if (modoCodigo || resultado.tipoConsulta === 'CODIGO') {
                 clientePedidoAtual = clienteEncontradoAtual;
                 abrirMontagemPedido();
                 return;
             }
 
+            // CPF encontrado mantém o fluxo normal do cliente.
             mostrarEtapaCliente('etapaClienteExistente');
             return;
         }
 
+        // CPF válido, porém ainda não cadastrado: abre cadastro normalmente.
         clienteEncontradoAtual = null;
         modoEdicaoCliente = false;
         prepararFormularioCliente(null);
+        document.getElementById('clienteCpf').value = formatarCpf(identificador);
         document.getElementById('btnSalvarCliente').textContent = 'Salvar cadastro';
         mostrarEtapaCliente('etapaCadastroCliente');
         setTimeout(() => document.getElementById('clienteNome').focus(), 100);
