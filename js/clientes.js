@@ -26,12 +26,16 @@ function iniciarFluxoCliente(codigo, descricao) {
     clienteEncontradoAtual = null;
     modoEdicaoCliente = false;
 
-    const cpfSalvo = localStorage.getItem(CHAVE_CPF_SICLAR) || '';
+    const cpfSalvoBruto = localStorage.getItem(CHAVE_CPF_SICLAR) || '';
+    const cpfSalvo = somenteNumeros(cpfSalvoBruto).length === 10
+        ? normalizarCpfCliente(cpfSalvoBruto)
+        : somenteNumeros(cpfSalvoBruto);
+
     const campoConsulta = document.getElementById('clienteCpfConsulta');
     campoConsulta.placeholder = 'Digite seu CPF ou código do cliente';
-    campoConsulta.value = somenteNumeros(cpfSalvo).length === 11
+    campoConsulta.value = cpfSalvo.length === 11
         ? formatarCpf(cpfSalvo)
-        : somenteNumeros(cpfSalvo);
+        : cpfSalvo;
     document.getElementById('formCadastroCliente').reset();
     definirMensagemCliente('mensagemConsultaCliente', '');
     definirMensagemCliente('mensagemCadastroCliente', '');
@@ -67,9 +71,21 @@ function obterValorCliente(cliente, nomeCampo) {
     return chave ? cliente[chave] : '';
 }
 
+function normalizarCpfCliente(valor) {
+    const numeros = somenteNumeros(valor);
+
+    // CPF tem 11 dígitos. Quando a planilha/GAS devolve o CPF como número,
+    // um zero à esquerda pode ter sido perdido. Nesse caso, restauramos o zero.
+    if (numeros.length === 10) {
+        return numeros.padStart(11, '0');
+    }
+
+    return numeros;
+}
+
 function prepararFormularioCliente(cliente = null) {
     const cpf = cliente
-        ? somenteNumeros(obterValorCliente(cliente, 'CPF'))
+        ? normalizarCpfCliente(obterValorCliente(cliente, 'CPF'))
         : somenteNumeros(document.getElementById('clienteCpfConsulta').value);
 
     document.getElementById('clienteCpf').value = formatarCpf(cpf);
@@ -300,7 +316,7 @@ async function salvarCadastroCliente(evento) {
     evento.preventDefault();
 
     const botao = document.getElementById('btnSalvarCliente');
-    const cpf = somenteNumeros(document.getElementById('clienteCpf').value);
+    const cpf = normalizarCpfCliente(document.getElementById('clienteCpf').value);
     const cep = somenteNumeros(document.getElementById('clienteCep').value);
 
     const dadosCliente = {
